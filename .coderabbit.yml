@@ -1,0 +1,19 @@
+language: "ko-KR"
+
+reviews:
+  profile: "intensive"
+  comment_style: "verbose"
+  summarization: true
+
+exclude:
+  - '**/package-lock.json'
+  - '**/*.log'
+  - 'docs/**/*'
+  - "**/*.md"
+
+exclude_file_types:
+  - '.jpg'
+  - '.jpeg'
+  - '.png'
+  - '.svg'
+  - '.gif'
