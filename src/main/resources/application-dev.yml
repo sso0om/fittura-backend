@@ -8,6 +8,8 @@ spring:
     console:
       enabled: true
       path: /h2-console
+      settings:
+        web-allow-others: false
   output:
     ansi:
       enabled: always
@@ -16,4 +18,4 @@ logging:
     org.hibernate.orm.jdbc.bind: TRACE
     org.hibernate.orm.jdbc.extract: TRACE
     org.springframework.transaction.interceptor: TRACE
-    com.back: DEBUG
+    com.fittura: DEBUG
