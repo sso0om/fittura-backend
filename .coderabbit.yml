@@ -1,9 +1,8 @@
 language: "ko-KR"
 
 reviews:
-  profile: "intensive"
-  comment_style: "verbose"
-  summarization: true
+  profile: "assertive"
+  high_level_summary: true
 
 exclude:
   - '**/package-lock.json'
