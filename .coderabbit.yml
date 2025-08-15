@@ -1,7 +1,7 @@
 language: "ko-KR"
 
 reviews:
-  profile: "intensive"
+  profile: "assertive"
   comment_style: "verbose"
   summarization: true
 
