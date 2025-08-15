@@ -41,3 +41,6 @@ out/
 /src/main/resources/application-local.yml
 .env
 .env.*
+*.mv.db
+*.trace.db
+db_dev.mv.db
