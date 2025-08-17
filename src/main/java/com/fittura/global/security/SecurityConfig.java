@@ -34,7 +34,7 @@ public class SecurityConfig {
                 auth -> auth
                     .requestMatchers("/favicon.ico").permitAll()
                     .requestMatchers("/h2-console/**").permitAll()
-                    .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                    .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                     .requestMatchers("/api/*/adm/**").hasRole("ADMIN")
                     .requestMatchers("/api/*/auth/**").permitAll()
                     .anyRequest().permitAll()
