@@ -39,7 +39,7 @@ public class JwtTokenProvider {
         this.jwtParser = Jwts.parser().verifyWith(key).build();
     }
 
-    public String generateAccessToken(String memberId, String memberEmail, Set<String> roles) {
+    public String generateAccessToken(String memberId, Set<String> roles) {
         return Jwts.builder()
             .subject(memberId)
             .claim(ROLES_CLAIM_KEY, roles)
