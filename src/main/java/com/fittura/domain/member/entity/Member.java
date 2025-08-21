@@ -17,14 +17,14 @@ import static lombok.AccessLevel.PROTECTED;
 @Getter
 public class Member extends BaseEntity {
 
-    @Column(unique = true, nullable = false, length = 50)
+    @Column(unique = true, nullable = false, length = 254)
     private String email;
 
     @Column(nullable = false)
     private String name;
 
-    @Column(unique = true, nullable = false, length = 20)
-    private String nickName;
+    @Column(unique = true, nullable = false, length = 60)
+    private String nickname;
 
     @Column(nullable = false)
     private String password;
@@ -36,31 +36,45 @@ public class Member extends BaseEntity {
     private Set<Role> roles = new HashSet<>();
 
     @Builder
-    private Member(String email, String name, String nickName, String password, Set<Role> roles) {
+    private Member(String email, String name, String nickname, String password, Set<Role> roles) {
         this.email = email;
         this.name = name;
-        this.nickName = nickName;
+        this.nickname = nickname;
         this.password = password;
-        this.roles = roles;
+        this.roles = new HashSet<>(roles);
     }
 
-    public static Member createUser(String email, String name, String nickName, String password) {
+    public static Member createUser(String email, String name, String nickname, String password) {
         return Member.builder()
                 .email(email)
                 .name(name)
-                .nickName(nickName)
+                .nickname(nickname)
                 .password(password)
-                .roles(Set.of(Role.USER))
+                .roles(Set.of(Role.ROLE_USER))
                 .build();
     }
 
-    public static Member createAdmin(String email, String name, String nickName, String password) {
+    public static Member createAdmin(String email, String name, String nickname, String password) {
         return Member.builder()
                 .email(email)
                 .name(name)
-                .nickName(nickName)
+                .nickname(nickname)
                 .password(password)
-                .roles(Set.of(Role.ADMIN))
+                .roles(Set.of(Role.ROLE_ADMIN))
                 .build();
+    }
+
+    public void grantRole(Role role) {
+        if(role == null) return;
+        this.roles.add(role);
+    }
+
+    public void revokeRole(Role role) {
+        if(role == null) return;
+        this.roles.remove(role);
+    }
+
+    public boolean hasRole(Role role) {
+        return this.roles.contains(role);
     }
 }
