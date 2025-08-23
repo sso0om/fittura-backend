@@ -5,11 +5,19 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -98,5 +106,24 @@ public class JwtTokenProvider {
 
     public String getSubject(String token) {
         return getClaims(token).getSubject();
+    }
+
+    public Authentication getAuthentication(String accessToken) {
+        // 토큰 복호화
+        Claims claims = getClaims(accessToken);
+
+        if (claims.get(ROLES_CLAIM_KEY) == null) {
+            throw new UnsupportedJwtException("권한 정보가 없는 토큰입니다.");
+        }
+
+        Collection<? extends GrantedAuthority> authorities = ((Collection<String>) claims.get(ROLES_CLAIM_KEY, Collection.class))
+                .stream()
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toList());
+
+        // 인증된 사용자
+        UserDetails principal = new User(claims.getSubject(), "", authorities);
+
+        return new UsernamePasswordAuthenticationToken(principal, "", authorities);
     }
 }
