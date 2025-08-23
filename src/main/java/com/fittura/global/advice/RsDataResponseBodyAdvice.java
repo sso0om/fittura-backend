@@ -1,6 +1,8 @@
 package com.fittura.global.advice;
 
+import com.fittura.global.error.CommonErrorCode;
 import com.fittura.global.rsdata.RsData;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -10,6 +12,7 @@ import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 
+@Slf4j
 @RestControllerAdvice
 public class RsDataResponseBodyAdvice implements ResponseBodyAdvice<RsData<?>> {
     @Override
@@ -30,7 +33,19 @@ public class RsDataResponseBodyAdvice implements ResponseBodyAdvice<RsData<?>> {
             ServerHttpRequest request,
             ServerHttpResponse response
     ) {
-        response.setStatusCode(HttpStatus.valueOf(body.status()));
+        if (body == null) return null;
+
+        // 유효하지 않은 status 값일 경우를 방어
+        try {
+            HttpStatus status = HttpStatus.valueOf(body.status());
+            response.setStatusCode(status);
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid status code {} in RsData. Falling back to 500.", body.status(), e);
+            response.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR);
+
+            return RsData.error(CommonErrorCode.INTERNAL_SERVER_ERROR);
+        }
+
         return body;
     }
 }

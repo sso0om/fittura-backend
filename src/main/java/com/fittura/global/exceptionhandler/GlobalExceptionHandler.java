@@ -2,12 +2,11 @@ package com.fittura.global.exceptionhandler;
 
 import com.fittura.global.error.CommonErrorCode;
 import com.fittura.global.error.ErrorCode;
-import com.fittura.global.exception.ServiceException;
 import com.fittura.global.error.ValidationError;
+import com.fittura.global.exception.ServiceException;
 import com.fittura.global.rsdata.RsData;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
@@ -37,17 +36,12 @@ public class GlobalExceptionHandler {
         );
     }
 
+    // @RequestParam 또는 @PathVariable 등 개별 파라미터 유효성 검사 실패
     @ExceptionHandler(ConstraintViolationException.class)
     public  ResponseEntity<RsData<List<ValidationError>>> handle(ConstraintViolationException e) {
         List<ValidationError> validationErrors = e.getConstraintViolations()
                 .stream()
-                .map(violation -> {
-                    String field = violation.getPropertyPath().toString();
-                    if (field.contains(".")) {
-                        field = field.substring(field.lastIndexOf(".") + 1);
-                    }
-                    return new ValidationError(field, violation.getMessage());
-                })
+                .map(ValidationError::from)
                 .toList();
 
         return new ResponseEntity<>(
@@ -59,6 +53,7 @@ public class GlobalExceptionHandler {
         );
     }
 
+    // @RequestBody 유효성 검사 실패 (dto)
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<RsData<List<ValidationError>>> handle(MethodArgumentNotValidException e) {
         List<ValidationError> validationErrors = e.getBindingResult()
@@ -66,7 +61,7 @@ public class GlobalExceptionHandler {
                 .stream()
                 .map(error -> {
                     if (error instanceof FieldError fieldError) {
-                        return new ValidationError(fieldError.getField(), fieldError.getDefaultMessage());
+                        return ValidationError.from(fieldError);
                     } else {
                         return new ValidationError(error.getObjectName(), error.getDefaultMessage());
                     }
@@ -100,7 +95,7 @@ public class GlobalExceptionHandler {
                 RsData.error(
                         errorCode
                 ),
-                HttpStatus.valueOf(errorCode.getStatus())
+                errorCode.httpStatus()
         );
     }
 
@@ -118,7 +113,7 @@ public class GlobalExceptionHandler {
                         errorCode,
                         Map.of("traceId", traceId)
                 ),
-                HttpStatus.valueOf(errorCode.getStatus())
+                errorCode.httpStatus()
         );
     }
 }
