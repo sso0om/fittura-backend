@@ -113,10 +113,11 @@ public class JwtTokenProvider {
         Claims claims = getClaims(accessToken);
 
         if (claims.get(ROLES_CLAIM_KEY) == null) {
-            throw new UnsupportedJwtException("권한 정보가 없는 토큰입니다.");
+            throw new JwtException("권한 정보가 없는 토큰입니다.");
         }
 
-        Collection<? extends GrantedAuthority> authorities = ((Collection<String>) claims.get(ROLES_CLAIM_KEY, Collection.class))
+        Collection<String> roles = claims.get(ROLES_CLAIM_KEY, Collection.class);
+        Collection<? extends GrantedAuthority> authorities = roles
                 .stream()
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
@@ -124,6 +125,6 @@ public class JwtTokenProvider {
         // 인증된 사용자
         UserDetails principal = new User(claims.getSubject(), "", authorities);
 
-        return new UsernamePasswordAuthenticationToken(principal, "", authorities);
+        return new UsernamePasswordAuthenticationToken(principal, null, authorities);
     }
 }
