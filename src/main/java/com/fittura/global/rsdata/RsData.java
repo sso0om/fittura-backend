@@ -9,7 +9,7 @@ import java.util.List;
 public record RsData<T>(
         int status,
         String code,
-        String msg,
+        String message,
         T data
 ) {
     public static RsData<Void> success() {
@@ -20,8 +20,8 @@ public record RsData<T>(
         return new RsData<>(HttpStatus.OK.value(), "S-01", "요청이 성공적으로 처리되었습니다.", data);
     }
 
-    public static <T> RsData<T> success(String msg, T data) {
-        return new RsData<>(HttpStatus.OK.value(), "S-01", msg, data);
+    public static <T> RsData<T> success(String message, T data) {
+        return new RsData<>(HttpStatus.OK.value(), "S-01", message, data);
     }
 
     public static RsData<Void> error(ErrorCode errorCode) {
