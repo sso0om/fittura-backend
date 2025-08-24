@@ -9,7 +9,7 @@ public record RsData<T>(
         String message,
         T data
 ) {
-    private static final String DEFAULT_SUCCESS_CODE = "S-01";
+    private static final String DEFAULT_SUCCESS_CODE = "S200-01";
     private static final String DEFAULT_SUCCESS_MESSAGE = "요청이 성공적으로 처리되었습니다.";
 
     public static RsData<Void> success() {
