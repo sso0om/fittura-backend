@@ -1,5 +1,7 @@
 package com.fittura.global.security;
 
+import com.fittura.global.exceptionhandler.CustomAccessDeniedHandler;
+import com.fittura.global.exceptionhandler.CustomAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,6 +21,8 @@ import static org.springframework.security.config.Customizer.withDefaults;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+    private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -39,7 +43,7 @@ public class SecurityConfig {
                     .requestMatchers("/h2-console/**").permitAll()
                     .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                     .requestMatchers("/api/*/adm/**").hasRole("ADMIN")
-                    .requestMatchers("/api/*/auth/**").permitAll()
+                    .requestMatchers("/api/*/auth/**").permitAll() // TODO: 로그인 기능 구현 후 .anyRequest().authenticated()
                     .anyRequest().permitAll()
             )
             .headers(
@@ -48,7 +52,14 @@ public class SecurityConfig {
             )
             .httpBasic(AbstractHttpConfigurer::disable)
             .formLogin(AbstractHttpConfigurer::disable)
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+            // JWT 필터
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+            // 예외 처리 핸들러 - 인증, 인가
+            .exceptionHandling(
+                exception -> exception
+                    .authenticationEntryPoint(customAuthenticationEntryPoint)
+                    .accessDeniedHandler(customAccessDeniedHandler)
+            );
 
         return http.build();
     }
