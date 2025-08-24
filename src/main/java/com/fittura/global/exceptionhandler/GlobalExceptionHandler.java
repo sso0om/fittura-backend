@@ -38,7 +38,7 @@ public class GlobalExceptionHandler {
 
     // @RequestParam 또는 @PathVariable 등 개별 파라미터 유효성 검사 실패
     @ExceptionHandler(ConstraintViolationException.class)
-    public  ResponseEntity<RsData<List<ValidationError>>> handle(ConstraintViolationException e) {
+    public ResponseEntity<RsData<List<ValidationError>>> handle(ConstraintViolationException e) {
         List<ValidationError> validationErrors = e.getConstraintViolations()
                 .stream()
                 .map(ValidationError::from)
@@ -53,7 +53,7 @@ public class GlobalExceptionHandler {
         );
     }
 
-    // @RequestBody 유효성 검사 실패 (dto)
+    // @RequestBody dto 유효성 검사 실패
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<RsData<List<ValidationError>>> handle(MethodArgumentNotValidException e) {
         List<ValidationError> validationErrors = e.getBindingResult()
@@ -79,6 +79,10 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<RsData<Void>> handle(HttpMessageNotReadableException e) {
+        // 요청 바디(JSON 등)가 올바르지 않아 역직렬화 실패 시 근본 원인 메시지를 가져와 로깅
+        String reason = e.getMostSpecificCause() != null ? e.getMostSpecificCause().getMessage() : e.getMessage();
+        log.warn("Bad request payload: {}", reason);
+
         return new ResponseEntity<>(
                 RsData.error(
                         CommonErrorCode.BAD_REQUEST

@@ -1,10 +1,7 @@
 package com.fittura.global.rsdata;
 
 import com.fittura.global.error.ErrorCode;
-import com.fittura.global.error.ValidationError;
 import org.springframework.http.HttpStatus;
-
-import java.util.List;
 
 public record RsData<T>(
         int status,
@@ -12,16 +9,19 @@ public record RsData<T>(
         String message,
         T data
 ) {
+    private static final String DEFAULT_SUCCESS_CODE = "S-01";
+    private static final String DEFAULT_SUCCESS_MESSAGE = "요청이 성공적으로 처리되었습니다.";
+
     public static RsData<Void> success() {
-        return new RsData<>(HttpStatus.OK.value(), "S-01", "요청이 성공적으로 처리되었습니다.", null);
+        return new RsData<>(HttpStatus.OK.value(), DEFAULT_SUCCESS_CODE, DEFAULT_SUCCESS_MESSAGE, null);
     }
 
     public static <T> RsData<T> success(T data) {
-        return new RsData<>(HttpStatus.OK.value(), "S-01", "요청이 성공적으로 처리되었습니다.", data);
+        return new RsData<>(HttpStatus.OK.value(), DEFAULT_SUCCESS_CODE, DEFAULT_SUCCESS_MESSAGE, data);
     }
 
     public static <T> RsData<T> success(String message, T data) {
-        return new RsData<>(HttpStatus.OK.value(), "S-01", message, data);
+        return new RsData<>(HttpStatus.OK.value(), DEFAULT_SUCCESS_CODE, message, data);
     }
 
     public static RsData<Void> error(ErrorCode errorCode) {
@@ -30,9 +30,5 @@ public record RsData<T>(
 
     public static <T> RsData<T> error(ErrorCode errorCode, T data) {
         return new RsData<>(errorCode.getStatus(), errorCode.getCode(), errorCode.getMessage(), data);
-    }
-
-    public static RsData<List<ValidationError>> validationError(ErrorCode errorCode, List<ValidationError> errors) {
-        return new RsData<>(errorCode.getStatus(), errorCode.getCode(), errorCode.getMessage(), errors);
     }
 }
