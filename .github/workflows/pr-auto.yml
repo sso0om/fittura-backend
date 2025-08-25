@@ -1,0 +1,35 @@
+name: PR 자동화
+
+on:
+  pull_request:
+    branches: [ develop ]
+    types: [opened, synchronize]
+
+jobs:
+  pr-automation:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      issues: write
+      contents: read
+
+    steps:
+      - name: PR 작성자를 담당자로 할당
+        uses: li-sumup/actions-assigner@v1.0.2
+
+      - name: PR 라벨 자동화
+        uses: actions-ecosystem/action-add-labels@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # PR 제목에 따라 라벨 자동 지정
+          labels: |
+            ${{ github.event.pull_request.title.startsWith('[fix]') && 'bug' || 
+               github.event.pull_request.title.startsWith('[chore]') && 'chore' || 
+               github.event.pull_request.title.startsWith('[feat]') && 'feature' || 
+               github.event.pull_request.title.startsWith('[refactor]') && 'refactor' }}
+
+      - name: GitHub 프로젝트에 추가
+        uses: actions/add-to-project@v1.0.2
+        with:
+          project-url: "https://github.com/users/sso0om/projects/4/views/1"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
