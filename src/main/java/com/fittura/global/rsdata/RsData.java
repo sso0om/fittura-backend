@@ -10,6 +10,7 @@ public record RsData<T>(
         T data
 ) {
     private static final String DEFAULT_SUCCESS_CODE = "S200-01";
+    private static final String DEFAULT_CREATE_SUCCESS_CODE = "S201-01";
     private static final String DEFAULT_SUCCESS_MESSAGE = "요청이 성공적으로 처리되었습니다.";
 
     public static RsData<Void> success() {
@@ -22,6 +23,14 @@ public record RsData<T>(
 
     public static <T> RsData<T> success(String message, T data) {
         return new RsData<>(HttpStatus.OK.value(), DEFAULT_SUCCESS_CODE, message, data);
+    }
+
+    public static <T> RsData<T> createSuccess() {
+        return new RsData<>(HttpStatus.CREATED.value(), DEFAULT_CREATE_SUCCESS_CODE, DEFAULT_SUCCESS_MESSAGE, null);
+    }
+
+    public static <T> RsData<T> createSuccess(String message, T data) {
+        return new RsData<>(HttpStatus.CREATED.value(), DEFAULT_CREATE_SUCCESS_CODE, message, data);
     }
 
     public static RsData<Void> error(ErrorCode errorCode) {
