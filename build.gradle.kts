@@ -36,7 +36,6 @@ dependencies {
 
     // Common utils
     implementation("org.apache.commons:commons-lang3:3.18.0")
-    implementation("me.paulschwarz:spring-dotenv:4.0.0")
 
     // JWT
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")
