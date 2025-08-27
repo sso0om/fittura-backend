@@ -1,8 +1,9 @@
+---
 name: PR 자동화
 
 on:
   pull_request:
-    branches: [ develop ]
+    branches: [develop]
     types: [opened, synchronize]
 
 jobs:
@@ -17,16 +18,29 @@ jobs:
       - name: PR 작성자를 담당자로 할당
         uses: li-sumup/actions-assigner@v1.0.2
 
-      - name: PR 라벨 자동화
+      - name: bug 라벨 추가
+        if: ${{ startsWith(github.event.pull_request.title, '[Fix]') || startsWith(github.event.pull_request.title, '[fix]')}}
         uses: actions-ecosystem/action-add-labels@v1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          # PR 제목에 따라 라벨 자동 지정
-          labels: |
-            ${{ github.event.pull_request.title.startsWith('[fix]') && 'bug' || 
-               github.event.pull_request.title.startsWith('[chore]') && 'chore' || 
-               github.event.pull_request.title.startsWith('[feat]') && 'feature' || 
-               github.event.pull_request.title.startsWith('[refactor]') && 'refactor' }}
+          labels: bug
+
+      - name: chore 라벨 추가
+        if: ${{ startsWith(github.event.pull_request.title, '[Chore]') || startsWith(github.event.pull_request.title, '[chore]')}}
+        uses: actions-ecosystem/action-add-labels@v1
+        with:
+          labels: chore
+
+      - name: feature 라벨 추가
+        if: ${{ startsWith(github.event.pull_request.title, '[Feat]') || startsWith(github.event.pull_request.title, '[feat]') }}
+        uses: actions-ecosystem/action-add-labels@v1
+        with:
+          labels: feature
+
+      - name: refactor 라벨 추가
+        if: ${{ startsWith(github.event.pull_request.title, '[Refactor]') || startsWith(github.event.pull_request.title, '[refactor]') }}
+        uses: actions-ecosystem/action-add-labels@v1
+        with:
+          labels: refactor
 
       - name: GitHub 프로젝트에 추가
         uses: actions/add-to-project@v1.0.2
