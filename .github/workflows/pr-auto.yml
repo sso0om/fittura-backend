@@ -45,5 +45,5 @@ jobs:
       - name: GitHub 프로젝트에 추가
         uses: actions/add-to-project@v1.0.2
         with:
-          project-url: "https://github.com/users/sso0om/projects/4/views/1"
+          project-url: "https://github.com/users/sso0om/projects/4"
           github-token: ${{ secrets.GITHUB_TOKEN }}
