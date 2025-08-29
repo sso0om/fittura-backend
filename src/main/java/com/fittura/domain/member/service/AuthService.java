@@ -8,7 +8,6 @@ import com.fittura.domain.member.error.AuthError;
 import com.fittura.domain.member.repository.MemberRepository;
 import com.fittura.global.config.AppProperties;
 import com.fittura.global.exception.ServiceException;
-import com.fittura.global.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -16,17 +15,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
     private final MemberRepository memberRepository;
-    private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
     private final AppProperties appProperties;
+    private final TokenService tokenService;
 
     @Transactional
     public SignUpResultDto signUp(SignUpReqDto req) {
@@ -40,7 +37,7 @@ public class AuthService {
         );
         Member savedMember = memberRepository.save(member);
 
-        TokenDto tokenDto = generateTokens(savedMember);
+        TokenDto tokenDto = tokenService.issueTokens(savedMember);
 
         return new SignUpResultDto(
             savedMember.getId(),
@@ -60,24 +57,6 @@ public class AuthService {
             .maxAge(Duration.ofMillis(tokenDto.refreshTokenExpiresInMillis()))
             .sameSite(cookieProps.sameSite())
             .build();
-    }
-
-    private TokenDto generateTokens(Member savedMember) {
-        String memberId = savedMember.getId().toString();
-        String accessToken = generateAccessToken(savedMember, memberId);
-
-        String refreshToken = jwtTokenProvider.generateRefreshToken(memberId);
-        long refreshTokenExpiresInMillis = jwtTokenProvider.getRefreshTokenValidityInMilliseconds();
-
-        return new TokenDto(accessToken, refreshToken, refreshTokenExpiresInMillis);
-    }
-
-    private String generateAccessToken(Member savedMember, String memberId) {
-        Set<String> roles = savedMember.getRoles()
-            .stream()
-            .map(Enum::name)
-            .collect(Collectors.toUnmodifiableSet());
-        return jwtTokenProvider.generateAccessToken(memberId, roles);
     }
 
     private void validateSignUpRequest(SignUpReqDto req) {
