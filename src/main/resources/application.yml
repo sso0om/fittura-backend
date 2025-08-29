@@ -25,7 +25,6 @@ jwt:
 app:
   cookie:
     refresh-token-name: "refreshToken"
-    domain: "localhost"
     path: "/"
     secure: false
     http-only: true

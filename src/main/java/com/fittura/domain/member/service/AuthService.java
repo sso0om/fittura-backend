@@ -58,7 +58,7 @@ public class AuthService {
             if (memberRepository.existsByNickname(nickname)) {
                 throw new ServiceException(AuthError.DUPLICATED_NICKNAME);
             }
-            log.error("Unknown DataIntegrityViolationException during sign up: {}", email, e);
+            log.error("Unknown DataIntegrityViolationException during sign up: email={}, nickname={}", email, nickname, e);
             throw new ServiceException(CommonErrorCode.INTERNAL_SERVER_ERROR);
         }
 
@@ -78,6 +78,7 @@ public class AuthService {
         return ResponseCookie.from(cookieProps.refreshTokenName(), tokenDto.refreshToken())
             .httpOnly(cookieProps.httpOnly())
             .secure(cookieProps.secure())
+            .domain(cookieProps.domain())
             .path(cookieProps.path())
             .maxAge(Duration.ofMillis(tokenDto.refreshTokenExpiresInMillis()))
             .sameSite(cookieProps.sameSite())

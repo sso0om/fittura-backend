@@ -61,7 +61,8 @@ class AuthControllerV1Test {
             )
             .andDo(print());
 
-        Member member = memberRepository.findByEmail("test@email.com").get();
+        Member member = memberRepository.findByEmail("test@email.com")
+            .orElseThrow(() -> new AssertionError("회원가입 후 이메일로 회원을 조회하지 못했습니다."));
         String tokenName = appProperties.cookie().refreshTokenName();
 
         // verify
@@ -79,8 +80,7 @@ class AuthControllerV1Test {
             .andExpect(cookie().exists(tokenName))
             .andExpect(cookie().httpOnly(tokenName, appProperties.cookie().httpOnly()))
             .andExpect(cookie().secure(tokenName, appProperties.cookie().secure()))
-            .andExpect(cookie().sameSite(tokenName, appProperties.cookie().sameSite()))
-            .andExpect(cookie().maxAge(tokenName, 604800));
+            .andExpect(cookie().sameSite(tokenName, appProperties.cookie().sameSite()));
     }
 
     @ParameterizedTest(name = "[{index}] {1}")

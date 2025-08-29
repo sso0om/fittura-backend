@@ -25,7 +25,7 @@ public record RsData<T>(
         return new RsData<>(HttpStatus.OK.value(), DEFAULT_SUCCESS_CODE, message, data);
     }
 
-    public static <T> RsData<T> createSuccess() {
+    public static RsData<Void> createSuccess() {
         return new RsData<>(HttpStatus.CREATED.value(), DEFAULT_CREATE_SUCCESS_CODE, DEFAULT_SUCCESS_MESSAGE, null);
     }
 
