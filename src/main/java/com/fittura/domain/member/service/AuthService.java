@@ -6,13 +6,16 @@ import com.fittura.domain.member.dto.request.SignUpReqDto;
 import com.fittura.domain.member.entity.Member;
 import com.fittura.domain.member.error.AuthError;
 import com.fittura.domain.member.repository.MemberRepository;
+import com.fittura.global.config.AppProperties;
 import com.fittura.global.exception.ServiceException;
 import com.fittura.global.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -23,6 +26,7 @@ public class AuthService {
     private final MemberRepository memberRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
+    private final AppProperties appProperties;
 
     @Transactional
     public SignUpResultDto signUp(SignUpReqDto req) {
@@ -44,6 +48,18 @@ public class AuthService {
             savedMember.getNickname(),
             tokenDto
         );
+    }
+
+    public ResponseCookie generateRefreshTokenCookie(TokenDto tokenDto) {
+        AppProperties.Cookie cookieProps = appProperties.cookie();
+
+        return ResponseCookie.from(cookieProps.refreshTokenName(), tokenDto.refreshToken())
+            .httpOnly(cookieProps.httpOnly())
+            .secure(cookieProps.secure())
+            .path(cookieProps.path())
+            .maxAge(Duration.ofMillis(tokenDto.refreshTokenExpiresInMillis()))
+            .sameSite(cookieProps.sameSite())
+            .build();
     }
 
     private TokenDto generateTokens(Member savedMember) {

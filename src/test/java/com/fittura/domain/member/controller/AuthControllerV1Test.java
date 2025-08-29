@@ -1,8 +1,8 @@
 package com.fittura.domain.member.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fittura.domain.member.entity.Member;
 import com.fittura.domain.member.repository.MemberRepository;
+import com.fittura.global.config.AppProperties;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -33,7 +33,7 @@ class AuthControllerV1Test {
     private MockMvc mockMvc;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private AppProperties appProperties;
 
     @Autowired
     private MemberRepository memberRepository;
@@ -62,6 +62,7 @@ class AuthControllerV1Test {
             .andDo(print());
 
         Member member = memberRepository.findByEmail("test@email.com").get();
+        String tokenName = appProperties.cookie().refreshTokenName();
 
         // verify
         resultActions
@@ -75,12 +76,11 @@ class AuthControllerV1Test {
             .andExpect(jsonPath("$.data.email").value(member.getEmail()))
             .andExpect(jsonPath("$.data.nickname").value(member.getNickname()))
             .andExpect(jsonPath("$.data.accessToken").exists())
-            .andExpect(cookie().exists("refreshToken"))
-            .andExpect(cookie().httpOnly("refreshToken", true))
-            .andExpect(cookie().secure("refreshToken", true))
-            .andExpect(cookie().sameSite("refreshToken", "Strict"))
-            .andExpect(cookie().maxAge("refreshToken", 604800));
-
+            .andExpect(cookie().exists(tokenName))
+            .andExpect(cookie().httpOnly(tokenName, appProperties.cookie().httpOnly()))
+            .andExpect(cookie().secure(tokenName, appProperties.cookie().secure()))
+            .andExpect(cookie().sameSite(tokenName, appProperties.cookie().sameSite()))
+            .andExpect(cookie().maxAge(tokenName, 604800));
     }
 
     @ParameterizedTest(name = "[{index}] {1}")

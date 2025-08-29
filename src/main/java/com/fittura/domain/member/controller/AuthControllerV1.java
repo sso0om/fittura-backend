@@ -18,8 +18,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.Duration;
-
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
@@ -37,13 +35,7 @@ public class AuthControllerV1 {
         SignUpResultDto resultDto = authService.signUp(signUpReqDto);
         TokenDto tokenDto = resultDto.tokenDto();
 
-        ResponseCookie cookie = ResponseCookie.from("refreshToken", tokenDto.refreshToken())
-            .httpOnly(true)
-            .secure(true)
-            .path("/")
-            .sameSite("Strict")
-            .maxAge(Duration.ofMillis(tokenDto.refreshTokenExpiresInMillis()))
-            .build();
+        ResponseCookie cookie = authService.generateRefreshTokenCookie(tokenDto);
         httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
         SignUpResDto resDto = SignUpResDto.from(resultDto, tokenDto.accessToken());
