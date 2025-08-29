@@ -1,7 +1,6 @@
 package com.fittura.domain.member.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fittura.domain.member.dto.request.SignUpReqDto;
 import com.fittura.domain.member.entity.Member;
 import com.fittura.domain.member.repository.MemberRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -45,8 +44,14 @@ class AuthControllerV1Test {
     @DisplayName("회원가입 성공")
     void signUpSuccess() throws Exception {
         // given
-        SignUpReqDto reqDto = new SignUpReqDto("test@email.com", "테스트 유저", "테스터1", "password123!");
-        String reqBody = objectMapper.writeValueAsString(reqDto);
+        String reqBody = """
+             {
+                 "email": "test@email.com",
+                 "name": "테스트 유저",
+                 "nickname": "테스터1",
+                 "password": "password123!"
+             }
+             """;
 
         // when & then
         ResultActions resultActions = mockMvc
@@ -56,7 +61,7 @@ class AuthControllerV1Test {
             )
             .andDo(print());
 
-        Member member = memberRepository.findTopByOrderByIdDesc().orElseThrow();
+        Member member = memberRepository.findByEmail("test@email.com").get();
 
         // verify
         resultActions
@@ -69,18 +74,22 @@ class AuthControllerV1Test {
             .andExpect(jsonPath("$.data.id").value(member.getId()))
             .andExpect(jsonPath("$.data.email").value(member.getEmail()))
             .andExpect(jsonPath("$.data.nickname").value(member.getNickname()))
-            .andExpect(jsonPath("$.data.accessToken").exists());
+            .andExpect(jsonPath("$.data.accessToken").exists())
+            .andExpect(cookie().exists("refreshToken"))
+            .andExpect(cookie().httpOnly("refreshToken", true))
+            .andExpect(cookie().secure("refreshToken", true))
+            .andExpect(cookie().sameSite("refreshToken", "Strict"))
+            .andExpect(cookie().maxAge("refreshToken", 604800));
+
     }
 
     @ParameterizedTest(name = "[{index}] {1}")
     @DisplayName("회원가입 실패 - 중복 이메일/닉네임")
     @MethodSource("duplicateSignUpInfoProvider")
-    void signUpFailWithDuplicationEmail(SignUpReqDto reqDto, String testName, String errorCode, String errorMessage) throws Exception {
+    void signUpFailWithDuplicationEmail(String reqBody, String testName, String errorCode, String errorMessage) throws Exception {
         // given
         Member existingMember = Member.createUser("test@email.com", "유저", "테스터", "password123!");
         memberRepository.save(existingMember);
-
-        String reqBody = objectMapper.writeValueAsString(reqDto);
 
         // when
         ResultActions resultActions = mockMvc
@@ -103,13 +112,17 @@ class AuthControllerV1Test {
     private static Stream<Arguments> duplicateSignUpInfoProvider() {
         return Stream.of(
             Arguments.of(
-                new SignUpReqDto("test@email.com", "유저", "유저", "password123!"),
+                """
+                 {"email":"test@email.com","name":"유저","nickname":"유저","password":"password123!"}
+                 """,
                 "중복 이메일",
                 "A409-01",
                 "이미 사용중인 이메일입니다."
             ),
             Arguments.of(
-                new SignUpReqDto("test1@email.com", "유저", "테스터", "password123!"),
+                """
+                 {"email":"test1@email.com","name":"유저","nickname":"테스터","password":"password123!"}
+                 """,
                 "중복 닉네임",
                 "A409-02",
                 "이미 사용중인 닉네임입니다."
