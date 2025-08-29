@@ -1,6 +1,6 @@
 package com.fittura.domain.member.dto.response;
 
-import com.fittura.domain.member.entity.Member;
+import com.fittura.domain.member.dto.SignUpResultDto;
 
 public record SignUpResDto(
     Long id,
@@ -8,11 +8,11 @@ public record SignUpResDto(
     String nickname,
     String accessToken
 ) {
-    public static SignUpResDto from(Member member, String accessToken) {
+    public static SignUpResDto from(SignUpResultDto resultDto, String accessToken) {
         return new SignUpResDto(
-            member.getId(),
-            member.getEmail(),
-            member.getNickname(),
+            resultDto.id(),
+            resultDto.email(),
+            resultDto.nickname(),
             accessToken
         );
     }

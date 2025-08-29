@@ -1,9 +1,9 @@
 package com.fittura.domain.member.dto;
 
-import com.fittura.domain.member.entity.Member;
-
 public record SignUpResultDto(
-    Member member,
+    Long id,
+    String email,
+    String nickname,
     TokenDto tokenDto
 ) {
 }

@@ -8,7 +8,6 @@ import com.fittura.domain.member.error.AuthError;
 import com.fittura.domain.member.repository.MemberRepository;
 import com.fittura.global.exception.ServiceException;
 import com.fittura.global.security.JwtTokenProvider;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -26,7 +25,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
-    public SignUpResultDto signUp(@Valid SignUpReqDto req) {
+    public SignUpResultDto signUp(SignUpReqDto req) {
         validateSignUpRequest(req);
 
         Member member = Member.createUser(
@@ -38,7 +37,13 @@ public class AuthService {
         Member savedMember = memberRepository.save(member);
 
         TokenDto tokenDto = generateTokens(savedMember);
-        return new SignUpResultDto(savedMember, tokenDto);
+
+        return new SignUpResultDto(
+            savedMember.getId(),
+            savedMember.getEmail(),
+            savedMember.getNickname(),
+            tokenDto
+        );
     }
 
     private TokenDto generateTokens(Member savedMember) {
@@ -46,16 +51,16 @@ public class AuthService {
         String accessToken = generateAccessToken(savedMember, memberId);
 
         String refreshToken = jwtTokenProvider.generateRefreshToken(memberId);
-        long refreshTokenExpirationTime = jwtTokenProvider.getRefreshTokenValidityInMilliseconds();
+        long refreshTokenExpiresInMillis = jwtTokenProvider.getRefreshTokenValidityInMilliseconds();
 
-        return new TokenDto(accessToken, refreshToken, refreshTokenExpirationTime);
+        return new TokenDto(accessToken, refreshToken, refreshTokenExpiresInMillis);
     }
 
     private String generateAccessToken(Member savedMember, String memberId) {
         Set<String> roles = savedMember.getRoles()
             .stream()
             .map(Enum::name)
-            .collect(Collectors.toSet());
+            .collect(Collectors.toUnmodifiableSet());
         return jwtTokenProvider.generateAccessToken(memberId, roles);
     }
 

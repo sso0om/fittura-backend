@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Duration;
+
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
@@ -39,11 +41,12 @@ public class AuthControllerV1 {
             .httpOnly(true)
             .secure(true)
             .path("/")
-            .maxAge(tokenDto.refreshTokenExpirationTime() / 1000)
+            .sameSite("Strict")
+            .maxAge(Duration.ofMillis(tokenDto.refreshTokenExpiresInMillis()))
             .build();
         httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
-        SignUpResDto resDto = SignUpResDto.from(resultDto.member(), tokenDto.accessToken());
+        SignUpResDto resDto = SignUpResDto.from(resultDto, tokenDto.accessToken());
 
         return RsData.createSuccess(
             "회원가입이 완료되었습니다.",
