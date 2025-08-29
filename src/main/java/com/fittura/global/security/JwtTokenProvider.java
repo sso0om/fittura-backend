@@ -3,6 +3,7 @@ package com.fittura.global.security;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -27,6 +28,7 @@ public class JwtTokenProvider {
 
     private final SecretKey key;
     private final long accessTokenValidityInMilliseconds;
+    @Getter
     private final long refreshTokenValidityInMilliseconds;
     private final JwtParser jwtParser;
 
@@ -82,28 +84,6 @@ public class JwtTokenProvider {
         }
     }
 
-    public TokenStatus validateToken(String token) {
-        if (token == null || token.isBlank()) {
-            return TokenStatus.INVALID;
-        }
-
-        try {
-            jwtParser.parseSignedClaims(token); // 서명 검증, 토큰 검증 + 파싱
-            return TokenStatus.VALID;
-        } catch (SecurityException | MalformedJwtException e) {
-            log.warn("잘못된 JWT 서명입니다. {}", e.getMessage());
-            return TokenStatus.INVALID;
-        } catch (ExpiredJwtException e) { // 만료된 JWT 토큰
-            return TokenStatus.EXPIRED;
-        } catch (UnsupportedJwtException e) {
-            log.warn("지원되지 않는 JWT 토큰입니다. {}", e.getMessage());
-            return TokenStatus.UNSUPPORTED;
-        } catch (JwtException | IllegalArgumentException e) {
-            log.warn("JWT 토큰이 잘못되었습니다. {}", e.getMessage());
-            return TokenStatus.INVALID;
-        }
-    }
-
     public String getSubject(String token) {
         return getClaims(token).getSubject();
     }
@@ -126,5 +106,27 @@ public class JwtTokenProvider {
         UserDetails principal = new User(claims.getSubject(), "", authorities);
 
         return new UsernamePasswordAuthenticationToken(principal, null, authorities);
+    }
+
+    public TokenStatus validateToken(String token) {
+        if (token == null || token.isBlank()) {
+            return TokenStatus.INVALID;
+        }
+
+        try {
+            jwtParser.parseSignedClaims(token); // 서명 검증, 토큰 검증 + 파싱
+            return TokenStatus.VALID;
+        } catch (SecurityException | MalformedJwtException e) {
+            log.warn("잘못된 JWT 서명입니다. {}", e.getMessage());
+            return TokenStatus.INVALID;
+        } catch (ExpiredJwtException e) { // 만료된 JWT 토큰
+            return TokenStatus.EXPIRED;
+        } catch (UnsupportedJwtException e) {
+            log.warn("지원되지 않는 JWT 토큰입니다. {}", e.getMessage());
+            return TokenStatus.UNSUPPORTED;
+        } catch (JwtException | IllegalArgumentException e) {
+            log.warn("JWT 토큰이 잘못되었습니다. {}", e.getMessage());
+            return TokenStatus.INVALID;
+        }
     }
 }

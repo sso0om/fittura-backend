@@ -21,3 +21,11 @@ logging:
 jwt:
   access-token-validity-in-seconds: 1800
   refresh-token-validity-in-seconds: 604800
+
+app:
+  cookie:
+    refresh-token-name: "refreshToken"
+    path: "/"
+    secure: false
+    http-only: true
+    same-site: "Strict"
