@@ -41,9 +41,3 @@ jobs:
         uses: actions-ecosystem/action-add-labels@v1
         with:
           labels: refactor
-
-      - name: GitHub 프로젝트에 추가
-        uses: actions/add-to-project@v1.0.2
-        with:
-          project-url: "https://github.com/users/sso0om/projects/4"
-          github-token: ${{ secrets.GITHUB_TOKEN }}

@@ -1,9 +1,10 @@
 package com.fittura.domain.member.controller;
 
-import com.fittura.domain.member.dto.SignUpResultDto;
+import com.fittura.domain.member.dto.AuthResultDto;
 import com.fittura.domain.member.dto.TokenDto;
+import com.fittura.domain.member.dto.request.SignInReqDto;
 import com.fittura.domain.member.dto.request.SignUpReqDto;
-import com.fittura.domain.member.dto.response.SignUpResDto;
+import com.fittura.domain.member.dto.response.AuthResDto;
 import com.fittura.domain.member.service.AuthService;
 import com.fittura.global.rsdata.RsData;
 import io.swagger.v3.oas.annotations.Operation;
@@ -28,21 +29,52 @@ public class AuthControllerV1 {
 
     @PostMapping("/signup")
     @Operation(summary = "회원가입", description = "회원가입 API")
-    public RsData<SignUpResDto> signUp(
+    public RsData<AuthResDto> signUp(
         @RequestBody @Valid SignUpReqDto signUpReqDto,
         HttpServletResponse httpServletResponse
     ) {
-        SignUpResultDto resultDto = authService.signUp(signUpReqDto);
-        TokenDto tokenDto = resultDto.tokenDto();
-
-        ResponseCookie cookie = authService.generateRefreshTokenCookie(tokenDto);
-        httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-
-        SignUpResDto resDto = SignUpResDto.from(resultDto, tokenDto.accessToken());
+        AuthResultDto resultDto = authService.signUp(signUpReqDto);
+        AuthResDto resDto = processAuthResult(resultDto, httpServletResponse);
 
         return RsData.createSuccess(
             "회원가입이 완료되었습니다.",
             resDto
         );
+    }
+
+    @PostMapping("/signin")
+    @Operation(summary = "로그인", description = "로그인 API")
+    public RsData<AuthResDto> signIn(
+        @RequestBody @Valid SignInReqDto signInReqDto,
+        HttpServletResponse httpServletResponse
+    ) {
+        AuthResultDto resultDto = authService.signIn(signInReqDto);
+        AuthResDto resDto = processAuthResult(resultDto, httpServletResponse);
+
+        return RsData.success(
+            "로그인되었습니다.",
+            resDto
+        );
+    }
+
+
+    // ========== 헬퍼 메서드 ==========
+
+    /**
+     * 회원가입 또는 로그인 성공 후 공통으로 수행되는 후처리 작업을 담당
+     * 1. Refresh Token 쿠키를 HttpServletResponse에 추가
+     * 2. Access Token을 포함한 AuthResDto를 생성하여 반환
+     *
+     * @param authResultDto       인증 서비스의 결과(사용자 정보, 토큰)를 담은 DTO
+     * @param httpServletResponse 쿠키를 헤더에 추가하기 위한 서블릿 응답 객체
+     * @return                    API 응답 본문에 포함될 DTO
+     */
+    private AuthResDto processAuthResult(AuthResultDto authResultDto, HttpServletResponse httpServletResponse) {
+        TokenDto tokenDto = authResultDto.tokenDto();
+
+        ResponseCookie cookie = authService.generateRefreshTokenCookie(tokenDto);
+        httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
+        return AuthResDto.of(authResultDto, tokenDto.accessToken());
     }
 }
