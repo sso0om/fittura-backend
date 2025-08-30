@@ -18,6 +18,7 @@ import javax.crypto.SecretKey;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -61,6 +62,7 @@ public class JwtTokenProvider {
 
     public String generateRefreshToken(String memberId) {
         return Jwts.builder()
+            .id(UUID.randomUUID().toString())
             .subject(memberId)
             .issuedAt(new Date())
             .expiration(new Date(System.currentTimeMillis() + refreshTokenValidityInMilliseconds))

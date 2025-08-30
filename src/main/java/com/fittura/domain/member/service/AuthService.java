@@ -5,7 +5,7 @@ import com.fittura.domain.member.dto.TokenDto;
 import com.fittura.domain.member.dto.request.SignInReqDto;
 import com.fittura.domain.member.dto.request.SignUpReqDto;
 import com.fittura.domain.member.entity.Member;
-import com.fittura.domain.member.error.AuthError;
+import com.fittura.domain.member.error.MemberError;
 import com.fittura.global.config.AppProperties;
 import com.fittura.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
@@ -62,25 +62,36 @@ public class AuthService {
         return AuthResultDto.of(member, tokenDto);
     }
 
-    public ResponseCookie generateRefreshTokenCookie(TokenDto tokenDto) {
-        AppProperties.Cookie cookieProps = appProperties.cookie();
+    @Transactional(readOnly = true)
+    public AuthResultDto reissueTokens(String refreshToken) {
+        String subject = tokenService.findSubjectByRefreshToken(refreshToken);
+        Member member = memberService.findById(Long.parseLong(subject));
 
+        TokenDto tokenDto = tokenService.issueTokens(member);
+        return AuthResultDto.of(member, tokenDto);
+    }
+
+
+    // ========== 리프래시 토큰 쿠키 관련 메서드 ==========
+
+    public ResponseCookie generateRefreshTokenCookie(TokenDto tokenDto) {
         return baseRefreshCookieBuilder(tokenDto.refreshToken())
             .maxAge(Duration.ofMillis(tokenDto.refreshTokenExpiresInMillis()))
             .build();
     }
 
     public ResponseCookie createLogoutCookie() {
-        AppProperties.Cookie cookieProps = appProperties.cookie();
-
         return baseRefreshCookieBuilder("")
             .maxAge(Duration.ZERO)
             .build();
     }
 
+
+    // ========== 헬퍼 메서드 ==========
+
     private void validatePassword(SignInReqDto req, Member member) {
         if (!passwordEncoder.matches(req.password(), member.getPassword())) {
-            throw new ServiceException(AuthError.INVALID_CREDENTIALS);
+            throw new ServiceException(MemberError.INVALID_CREDENTIALS);
         }
     }
 

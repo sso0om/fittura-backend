@@ -1,9 +1,11 @@
 package com.fittura.domain.member.controller;
 
 import com.fittura.domain.member.entity.Member;
-import com.fittura.domain.member.error.AuthError;
+import com.fittura.domain.member.error.MemberError;
 import com.fittura.domain.member.repository.MemberRepository;
 import com.fittura.global.config.AppProperties;
+import com.fittura.global.security.JwtTokenProvider;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -21,6 +23,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.stream.Stream;
 
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -45,7 +49,10 @@ class AuthControllerV1Test {
 
     private static final String SIGN_UP_URL = "/api/v1/auth/signup";
     private static final String SIGN_IN_URL = "/api/v1/auth/signin";
+    private static final String REISSUE_URL = "/api/v1/auth/reissue";
     private static final String LOGOUT_URL = "/api/v1/auth/logout";
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
 
     @Test
     @DisplayName("회원가입 성공")
@@ -204,7 +211,7 @@ class AuthControllerV1Test {
             .andExpect(status().isUnauthorized())
             .andExpect(jsonPath("$.status").value(401))
             .andExpect(jsonPath("$.code").value("A401-01"))
-            .andExpect(jsonPath("$.message").value(AuthError.INVALID_CREDENTIALS.getMessage()));
+            .andExpect(jsonPath("$.message").value(MemberError.INVALID_CREDENTIALS.getMessage()));
     }
 
     @Test
@@ -241,7 +248,50 @@ class AuthControllerV1Test {
             .andExpect(status().isUnauthorized())
             .andExpect(jsonPath("$.status").value(401))
             .andExpect(jsonPath("$.code").value("A401-01"))
-            .andExpect(jsonPath("$.message").value(AuthError.INVALID_CREDENTIALS.getMessage()));
+            .andExpect(jsonPath("$.message").value(MemberError.INVALID_CREDENTIALS.getMessage()));
+    }
+
+    @Test
+    @DisplayName("토큰 재발급 성공")
+    void reissueSuccess() throws Exception {
+        // given
+        Member member = Member.createUser(
+            "test@email.com",
+            "유저",
+            "테스트 유저",
+            passwordEncoder.encode("password123!")
+        );
+        memberRepository.save(member);
+
+        String refreshToken = jwtTokenProvider.generateRefreshToken(member.getId().toString());
+        String tokenName = appProperties.cookie().refreshTokenName();
+        Cookie refreshTokenCookie = new Cookie(tokenName, refreshToken);
+
+        // when & then
+        ResultActions resultActions = mockMvc
+            .perform(post(REISSUE_URL)
+                .cookie(refreshTokenCookie)
+            )
+            .andDo(print());
+
+        // verify
+        resultActions
+            .andExpect(handler().handlerType(AuthControllerV1.class))
+            .andExpect(handler().methodName("reissueTokens"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value(200))
+            .andExpect(jsonPath("$.code").value("S200-01"))
+            .andExpect(jsonPath("$.message").value("토큰이 재발급되었습니다."))
+            .andExpect(jsonPath("$.data.id").value(member.getId()))
+            .andExpect(jsonPath("$.data.email").value(member.getEmail()))
+            .andExpect(jsonPath("$.data.nickname").value(member.getNickname()))
+            .andExpect(jsonPath("$.data.accessToken").exists())
+            .andExpect(cookie().exists(tokenName))
+            .andExpect(cookie().value(tokenName, not(equalTo(refreshToken)))) // 새 토큰이 발급되었는지 확인
+            .andExpect(cookie().httpOnly(tokenName, appProperties.cookie().httpOnly()))
+            .andExpect(cookie().secure(tokenName, appProperties.cookie().secure()))
+            .andExpect(cookie().sameSite(tokenName, appProperties.cookie().sameSite()))
+            .andExpect(cookie().path(tokenName, appProperties.cookie().path()));
     }
 
     @Test
