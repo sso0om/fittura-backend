@@ -45,7 +45,7 @@ class AuthControllerV1Test {
 
     private static final String SIGN_UP_URL = "/api/v1/auth/signup";
     private static final String SIGN_IN_URL = "/api/v1/auth/signin";
-    private static final String LOG_OUT_URL = "/api/v1/auth/logout";
+    private static final String LOGOUT_URL = "/api/v1/auth/logout";
 
     @Test
     @DisplayName("회원가입 성공")
@@ -87,7 +87,8 @@ class AuthControllerV1Test {
             .andExpect(cookie().exists(tokenName))
             .andExpect(cookie().httpOnly(tokenName, appProperties.cookie().httpOnly()))
             .andExpect(cookie().secure(tokenName, appProperties.cookie().secure()))
-            .andExpect(cookie().sameSite(tokenName, appProperties.cookie().sameSite()));
+            .andExpect(cookie().sameSite(tokenName, appProperties.cookie().sameSite()))
+            .andExpect(cookie().path(tokenName, appProperties.cookie().path()));
     }
 
     @ParameterizedTest(name = "[{index}] {1}")
@@ -165,7 +166,8 @@ class AuthControllerV1Test {
             .andExpect(cookie().exists(tokenName))
             .andExpect(cookie().httpOnly(tokenName, appProperties.cookie().httpOnly()))
             .andExpect(cookie().secure(tokenName, appProperties.cookie().secure()))
-            .andExpect(cookie().sameSite(tokenName, appProperties.cookie().sameSite()));
+            .andExpect(cookie().sameSite(tokenName, appProperties.cookie().sameSite()))
+            .andExpect(cookie().path(tokenName, appProperties.cookie().path()));
     }
 
     @Test
@@ -250,12 +252,12 @@ class AuthControllerV1Test {
 
         // when
         ResultActions resultActions = mockMvc
-            .perform(post(LOG_OUT_URL))
+            .perform(post(LOGOUT_URL))
             .andDo(print());
 
         resultActions
             .andExpect(handler().handlerType(AuthControllerV1.class))
-            .andExpect(handler().methodName("logOut"))
+            .andExpect(handler().methodName("logout"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.status").value(200))
             .andExpect(jsonPath("$.code").value("S200-01"))
@@ -264,7 +266,9 @@ class AuthControllerV1Test {
             .andExpect(cookie().value(tokenName, ""))
             .andExpect(cookie().maxAge(tokenName, 0))
             .andExpect(cookie().httpOnly(tokenName, appProperties.cookie().httpOnly()))
-            .andExpect(cookie().secure(tokenName, appProperties.cookie().secure()));
+            .andExpect(cookie().secure(tokenName, appProperties.cookie().secure()))
+            .andExpect(cookie().sameSite(tokenName, appProperties.cookie().sameSite()))
+            .andExpect(cookie().path(tokenName, appProperties.cookie().path()));
     }
 
 

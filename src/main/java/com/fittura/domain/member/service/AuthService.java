@@ -65,26 +65,16 @@ public class AuthService {
     public ResponseCookie generateRefreshTokenCookie(TokenDto tokenDto) {
         AppProperties.Cookie cookieProps = appProperties.cookie();
 
-        return ResponseCookie.from(cookieProps.refreshTokenName(), tokenDto.refreshToken())
-            .httpOnly(cookieProps.httpOnly())
-            .secure(cookieProps.secure())
-            .domain(cookieProps.domain())
-            .path(cookieProps.path())
+        return baseRefreshCookieBuilder(tokenDto.refreshToken())
             .maxAge(Duration.ofMillis(tokenDto.refreshTokenExpiresInMillis()))
-            .sameSite(cookieProps.sameSite())
             .build();
     }
 
-    public ResponseCookie createLogOutCookie() {
+    public ResponseCookie createLogoutCookie() {
         AppProperties.Cookie cookieProps = appProperties.cookie();
 
-        return ResponseCookie.from(cookieProps.refreshTokenName(), "")
-            .httpOnly(cookieProps.httpOnly())
-            .secure(cookieProps.secure())
-            .domain(cookieProps.domain())
-            .path(cookieProps.path())
-            .maxAge(0)
-            .sameSite(cookieProps.sameSite())
+        return baseRefreshCookieBuilder("")
+            .maxAge(Duration.ZERO)
             .build();
     }
 
@@ -92,5 +82,16 @@ public class AuthService {
         if (!passwordEncoder.matches(req.password(), member.getPassword())) {
             throw new ServiceException(AuthError.INVALID_CREDENTIALS);
         }
+    }
+
+    private ResponseCookie.ResponseCookieBuilder baseRefreshCookieBuilder(String value) {
+        AppProperties.Cookie cookieProps = appProperties.cookie();
+
+        return ResponseCookie.from(cookieProps.refreshTokenName(), value)
+            .httpOnly(cookieProps.httpOnly())
+            .secure(cookieProps.secure())
+            .domain(cookieProps.domain())
+            .path(cookieProps.path())
+            .sameSite(cookieProps.sameSite());
     }
 }

@@ -59,10 +59,10 @@ public class AuthControllerV1 {
 
     @PostMapping("/logout")
     @Operation(summary = "로그아웃", description = "로그아웃 API")
-    public RsData<Void> logOut(
+    public RsData<Void> logout(
         HttpServletResponse httpServletResponse
     ) {
-        ResponseCookie cookie = authService.createLogOutCookie();
+        ResponseCookie cookie = authService.createLogoutCookie();
         httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
         return RsData.success(
