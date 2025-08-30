@@ -69,12 +69,12 @@ public class AuthControllerV1 {
      * @param httpServletResponse 쿠키를 헤더에 추가하기 위한 서블릿 응답 객체
      * @return                    API 응답 본문에 포함될 DTO
      */
-    public AuthResDto processAuthResult(AuthResultDto authResultDto, HttpServletResponse httpServletResponse) {
+    private AuthResDto processAuthResult(AuthResultDto authResultDto, HttpServletResponse httpServletResponse) {
         TokenDto tokenDto = authResultDto.tokenDto();
 
         ResponseCookie cookie = authService.generateRefreshTokenCookie(tokenDto);
         httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
-        return AuthResDto.from(authResultDto, tokenDto.accessToken());
+        return AuthResDto.of(authResultDto, tokenDto.accessToken());
     }
 }

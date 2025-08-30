@@ -8,12 +8,17 @@ public record AuthResDto(
     String nickname,
     String accessToken
 ) {
-    public static AuthResDto from(AuthResultDto resultDto, String accessToken) {
+    public static AuthResDto of(AuthResultDto resultDto, String accessToken) {
         return new AuthResDto(
             resultDto.id(),
             resultDto.email(),
             resultDto.nickname(),
             accessToken
         );
+    }
+
+    @Override
+    public String toString() {
+        return "AuthResDto[id=%d, email=%s, nickname=%s, accessToken=****]".formatted(id, email, nickname);
     }
 }

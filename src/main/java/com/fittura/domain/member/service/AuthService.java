@@ -50,9 +50,11 @@ public class AuthService {
         return AuthResultDto.of(savedMember, tokenDto);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public AuthResultDto signIn(SignInReqDto req) {
-        Member member = memberService.findByEmail(req.email());
+        final String email = req.email().trim();
+
+        Member member = memberService.findByEmail(email);
         validatePassword(req, member);
 
         TokenDto tokenDto = tokenService.issueTokens(member);
@@ -75,7 +77,7 @@ public class AuthService {
 
     private void validatePassword(SignInReqDto req, Member member) {
         if (!passwordEncoder.matches(req.password(), member.getPassword())) {
-            throw new ServiceException(AuthError.INVALID_PASSWORD);
+            throw new ServiceException(AuthError.INVALID_CREDENTIALS);
         }
     }
 }

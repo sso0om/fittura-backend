@@ -1,6 +1,7 @@
 package com.fittura.domain.member.controller;
 
 import com.fittura.domain.member.entity.Member;
+import com.fittura.domain.member.error.AuthError;
 import com.fittura.domain.member.repository.MemberRepository;
 import com.fittura.global.config.AppProperties;
 import org.junit.jupiter.api.DisplayName;
@@ -12,7 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -38,6 +39,9 @@ class AuthControllerV1Test {
 
     @Autowired
     private MemberRepository memberRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     private static final String SIGN_UP_URL = "/api/v1/auth/signup";
     private static final String SIGN_IN_URL = "/api/v1/auth/signin";
@@ -94,7 +98,7 @@ class AuthControllerV1Test {
             "test@email.com",
             "유저",
             "테스트 유저",
-            new BCryptPasswordEncoder().encode("password123!")
+            passwordEncoder.encode("password123!")
         );
         memberRepository.save(existingMember);
 
@@ -124,7 +128,7 @@ class AuthControllerV1Test {
             "test@email.com",
             "유저",
             "테스트 유저",
-            new BCryptPasswordEncoder().encode("password123!")
+            passwordEncoder.encode("password123!")
         );
         memberRepository.save(member);
         
@@ -161,6 +165,84 @@ class AuthControllerV1Test {
             .andExpect(cookie().httpOnly(tokenName, appProperties.cookie().httpOnly()))
             .andExpect(cookie().secure(tokenName, appProperties.cookie().secure()))
             .andExpect(cookie().sameSite(tokenName, appProperties.cookie().sameSite()));
+    }
+
+    @Test
+    @DisplayName("로그인 실패 - 존재하지 않는 이메일")
+    void signInFailWithNotExistingEmail() throws Exception {
+        // given
+        Member member = Member.createUser(
+            "test@email.com",
+            "유저",
+            "테스트 유저",
+            passwordEncoder.encode("password123!")
+        );
+        memberRepository.save(member);
+
+        String reqBody = """
+             {
+                 "email": "otherTest@email.com",
+                 "password": "password123!"
+             }
+             """;
+
+        // when & then
+        ResultActions resultActions = mockMvc
+            .perform(post(SIGN_IN_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody)
+            )
+            .andDo(print());
+
+        String tokenName = appProperties.cookie().refreshTokenName();
+
+        // verify
+        resultActions
+            .andExpect(handler().handlerType(AuthControllerV1.class))
+            .andExpect(handler().methodName("signIn"))
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.status").value(401))
+            .andExpect(jsonPath("$.code").value("A401-01"))
+            .andExpect(jsonPath("$.message").value(AuthError.INVALID_CREDENTIALS.getMessage()));
+    }
+
+    @Test
+    @DisplayName("로그인 실패 - 잘못된 비밀번호")
+    void signInFailWithWrongPassword() throws Exception {
+        // given
+        Member member = Member.createUser(
+            "test@email.com",
+            "유저",
+            "테스트 유저",
+            passwordEncoder.encode("password123!")
+        );
+        memberRepository.save(member);
+
+        String reqBody = """
+             {
+                 "email": "test@email.com",
+                 "password": "password"
+             }
+             """;
+
+        // when & then
+        ResultActions resultActions = mockMvc
+            .perform(post(SIGN_IN_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody)
+            )
+            .andDo(print());
+
+        String tokenName = appProperties.cookie().refreshTokenName();
+
+        // verify
+        resultActions
+            .andExpect(handler().handlerType(AuthControllerV1.class))
+            .andExpect(handler().methodName("signIn"))
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.status").value(401))
+            .andExpect(jsonPath("$.code").value("A401-01"))
+            .andExpect(jsonPath("$.message").value(AuthError.INVALID_CREDENTIALS.getMessage()));
     }
 
 

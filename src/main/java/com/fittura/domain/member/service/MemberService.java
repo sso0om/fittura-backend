@@ -20,16 +20,15 @@ public class MemberService {
 
     public Member findByEmail(String email) {
         return memberRepository.findByEmail(email)
-            .orElseThrow(() -> new ServiceException(AuthError.INVALID_EMAIL));
+            .orElseThrow(() -> new ServiceException(AuthError.INVALID_CREDENTIALS));
     }
 
     @Transactional
     public Member createMember(Member member) {
         try {
-            // 3. DB 저장
             return memberRepository.save(member);
         } catch (DataIntegrityViolationException e) {
-            // 4. 동시성 문제로 인한 DB 유니크 제약 위반 처리
+            // 동시성 문제로 인한 DB 유니크 제약 위반 처리
             validateSignUpRequest(member.getEmail(), member.getNickname());
             log.error("Unknown DataIntegrityViolationException during sign up: email={}, nickname={}", member.getEmail(), member.getNickname(), e);
             throw new ServiceException(CommonErrorCode.INTERNAL_SERVER_ERROR);

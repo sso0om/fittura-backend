@@ -12,6 +12,11 @@ public record SignUpReqDto(
     String name,
     @NotBlank @Size(min = 2, max = 60)
     String nickname,
-    @NotBlank @Size(min = 8, max = 60) @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @NotBlank @Size(min = 8, max = 128) @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     String password
-) {}
+) {
+    @Override
+    public String toString() {
+        return "SignUpReqDto[email=%s, name=%s, nickname=%s, password=****]".formatted(email, name, nickname);
+    }
+}

@@ -8,7 +8,11 @@ import jakarta.validation.constraints.Size;
 public record SignInReqDto(
     @Email @NotBlank @Size(min = 6, max = 254)
     String email,
-    @NotBlank @Size(min = 8, max = 60) @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @NotBlank @Size(min = 8, max = 128) @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     String password
 ) {
+    @Override
+    public String toString() {
+        return "SignInReqDto[email=%s, password=****]".formatted(email);
+    }
 }

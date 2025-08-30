@@ -9,11 +9,8 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum AuthError implements ErrorCode {
 
-    // 400
-    INVALID_PASSWORD(HttpStatus.BAD_REQUEST.value(), "A400-01", "비밀번호를 확인해 주세요"),
-
-    // 404
-    INVALID_EMAIL(HttpStatus.NOT_FOUND.value(), "A404-01", "아이디를 확인해 주세요"),
+    // 401
+    INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED.value(), "A401-01", "이메일 또는 비밀번호를 확인해 주세요"),
 
     // 409
     DUPLICATED_EMAIL(HttpStatus.CONFLICT.value(), "A409-01", "이미 사용중인 이메일입니다."),
