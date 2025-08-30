@@ -45,6 +45,7 @@ class AuthControllerV1Test {
 
     private static final String SIGN_UP_URL = "/api/v1/auth/signup";
     private static final String SIGN_IN_URL = "/api/v1/auth/signin";
+    private static final String LOGOUT_URL = "/api/v1/auth/logout";
 
     @Test
     @DisplayName("회원가입 성공")
@@ -86,7 +87,8 @@ class AuthControllerV1Test {
             .andExpect(cookie().exists(tokenName))
             .andExpect(cookie().httpOnly(tokenName, appProperties.cookie().httpOnly()))
             .andExpect(cookie().secure(tokenName, appProperties.cookie().secure()))
-            .andExpect(cookie().sameSite(tokenName, appProperties.cookie().sameSite()));
+            .andExpect(cookie().sameSite(tokenName, appProperties.cookie().sameSite()))
+            .andExpect(cookie().path(tokenName, appProperties.cookie().path()));
     }
 
     @ParameterizedTest(name = "[{index}] {1}")
@@ -164,7 +166,8 @@ class AuthControllerV1Test {
             .andExpect(cookie().exists(tokenName))
             .andExpect(cookie().httpOnly(tokenName, appProperties.cookie().httpOnly()))
             .andExpect(cookie().secure(tokenName, appProperties.cookie().secure()))
-            .andExpect(cookie().sameSite(tokenName, appProperties.cookie().sameSite()));
+            .andExpect(cookie().sameSite(tokenName, appProperties.cookie().sameSite()))
+            .andExpect(cookie().path(tokenName, appProperties.cookie().path()));
     }
 
     @Test
@@ -193,8 +196,6 @@ class AuthControllerV1Test {
                 .content(reqBody)
             )
             .andDo(print());
-
-        String tokenName = appProperties.cookie().refreshTokenName();
 
         // verify
         resultActions
@@ -233,8 +234,6 @@ class AuthControllerV1Test {
             )
             .andDo(print());
 
-        String tokenName = appProperties.cookie().refreshTokenName();
-
         // verify
         resultActions
             .andExpect(handler().handlerType(AuthControllerV1.class))
@@ -243,6 +242,33 @@ class AuthControllerV1Test {
             .andExpect(jsonPath("$.status").value(401))
             .andExpect(jsonPath("$.code").value("A401-01"))
             .andExpect(jsonPath("$.message").value(AuthError.INVALID_CREDENTIALS.getMessage()));
+    }
+
+    @Test
+    @DisplayName("로그아웃 성공")
+    void logoutSuccess() throws Exception {
+        // given
+        String tokenName = appProperties.cookie().refreshTokenName();
+
+        // when
+        ResultActions resultActions = mockMvc
+            .perform(post(LOGOUT_URL))
+            .andDo(print());
+
+        resultActions
+            .andExpect(handler().handlerType(AuthControllerV1.class))
+            .andExpect(handler().methodName("logout"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value(200))
+            .andExpect(jsonPath("$.code").value("S200-01"))
+            .andExpect(jsonPath("$.message").value("로그아웃되었습니다."))
+            .andExpect(cookie().exists(tokenName))
+            .andExpect(cookie().value(tokenName, ""))
+            .andExpect(cookie().maxAge(tokenName, 0))
+            .andExpect(cookie().httpOnly(tokenName, appProperties.cookie().httpOnly()))
+            .andExpect(cookie().secure(tokenName, appProperties.cookie().secure()))
+            .andExpect(cookie().sameSite(tokenName, appProperties.cookie().sameSite()))
+            .andExpect(cookie().path(tokenName, appProperties.cookie().path()));
     }
 
 

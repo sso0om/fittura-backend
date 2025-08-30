@@ -57,6 +57,20 @@ public class AuthControllerV1 {
         );
     }
 
+    @PostMapping("/logout")
+    @Operation(summary = "로그아웃", description = "로그아웃 API")
+    public RsData<Void> logout(
+        HttpServletResponse httpServletResponse
+    ) {
+        ResponseCookie cookie = authService.createLogoutCookie();
+        httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
+        return RsData.success(
+            "로그아웃되었습니다.",
+            null
+        );
+    }
+
 
     // ========== 헬퍼 메서드 ==========
 
@@ -75,6 +89,6 @@ public class AuthControllerV1 {
         ResponseCookie cookie = authService.generateRefreshTokenCookie(tokenDto);
         httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
-        return AuthResDto.of(authResultDto, tokenDto.accessToken());
+        return AuthResDto.of(authResultDto);
     }
 }

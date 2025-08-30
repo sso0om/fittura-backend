@@ -8,12 +8,12 @@ public record AuthResDto(
     String nickname,
     String accessToken
 ) {
-    public static AuthResDto of(AuthResultDto resultDto, String accessToken) {
+    public static AuthResDto of(AuthResultDto resultDto) {
         return new AuthResDto(
             resultDto.id(),
             resultDto.email(),
             resultDto.nickname(),
-            accessToken
+            resultDto.tokenDto().accessToken()
         );
     }
 
