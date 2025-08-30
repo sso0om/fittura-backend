@@ -75,6 +75,19 @@ public class AuthService {
             .build();
     }
 
+    public ResponseCookie createLogOutCookie() {
+        AppProperties.Cookie cookieProps = appProperties.cookie();
+
+        return ResponseCookie.from(cookieProps.refreshTokenName(), "")
+            .httpOnly(cookieProps.httpOnly())
+            .secure(cookieProps.secure())
+            .domain(cookieProps.domain())
+            .path(cookieProps.path())
+            .maxAge(0)
+            .sameSite(cookieProps.sameSite())
+            .build();
+    }
+
     private void validatePassword(SignInReqDto req, Member member) {
         if (!passwordEncoder.matches(req.password(), member.getPassword())) {
             throw new ServiceException(AuthError.INVALID_CREDENTIALS);
