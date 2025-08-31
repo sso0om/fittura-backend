@@ -14,10 +14,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -53,6 +50,21 @@ public class AuthControllerV1 {
 
         return RsData.success(
             "로그인되었습니다.",
+            resDto
+        );
+    }
+
+    @PostMapping("/reissue")
+    @Operation(summary = "토큰 재발급", description = "토큰 재발급 API")
+    public RsData<AuthResDto> reissueTokens(
+        @CookieValue(name = "${app.cookie.refresh-token-name}") String refreshToken,
+        HttpServletResponse httpServletResponse
+    ) {
+        AuthResultDto resultDto = authService.reissueTokens(refreshToken);
+        AuthResDto resDto = processAuthResult(resultDto, httpServletResponse);
+
+        return RsData.success(
+            "토큰이 재발급되었습니다.",
             resDto
         );
     }

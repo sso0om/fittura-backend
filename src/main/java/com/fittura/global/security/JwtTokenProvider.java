@@ -18,6 +18,7 @@ import javax.crypto.SecretKey;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -25,6 +26,9 @@ import java.util.stream.Collectors;
 public class JwtTokenProvider {
 
     private static final String ROLES_CLAIM_KEY = "roles";
+    private static final String TOKEN_TYPE_CLAIM_KEY = "token_type";
+    private static final String TOKEN_TYPE_ACCESS = "ACCESS";
+    private static final String TOKEN_TYPE_REFRESH= "REFRESH";
 
     private final SecretKey key;
     private final long accessTokenValidityInMilliseconds;
@@ -53,6 +57,7 @@ public class JwtTokenProvider {
         return Jwts.builder()
             .subject(memberId)
             .claim(ROLES_CLAIM_KEY, roles)
+            .claim(TOKEN_TYPE_CLAIM_KEY, TOKEN_TYPE_ACCESS)
             .issuedAt(new Date())
             .expiration(new Date(System.currentTimeMillis() + accessTokenValidityInMilliseconds))
             .signWith(key)
@@ -61,7 +66,9 @@ public class JwtTokenProvider {
 
     public String generateRefreshToken(String memberId) {
         return Jwts.builder()
+            .id(UUID.randomUUID().toString())
             .subject(memberId)
+            .claim(TOKEN_TYPE_CLAIM_KEY, TOKEN_TYPE_REFRESH)
             .issuedAt(new Date())
             .expiration(new Date(System.currentTimeMillis() + refreshTokenValidityInMilliseconds))
             .signWith(key)
@@ -128,5 +135,10 @@ public class JwtTokenProvider {
             log.warn("JWT 토큰이 잘못되었습니다. {}", e.getMessage());
             return TokenStatus.INVALID;
         }
+    }
+
+    public boolean isRefreshToken(String token) {
+        Claims claims = getClaims(token);
+        return TOKEN_TYPE_REFRESH.equals(claims.get(TOKEN_TYPE_CLAIM_KEY));
     }
 }
