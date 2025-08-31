@@ -26,6 +26,9 @@ import java.util.stream.Collectors;
 public class JwtTokenProvider {
 
     private static final String ROLES_CLAIM_KEY = "roles";
+    private static final String TOKEN_TYPE_CLAIM_KEY = "token_type";
+    private static final String TOKEN_TYPE_ACCESS = "ACCESS";
+    private static final String TOKEN_TYPE_REFRESH= "REFRESH";
 
     private final SecretKey key;
     private final long accessTokenValidityInMilliseconds;
@@ -54,6 +57,7 @@ public class JwtTokenProvider {
         return Jwts.builder()
             .subject(memberId)
             .claim(ROLES_CLAIM_KEY, roles)
+            .claim(TOKEN_TYPE_CLAIM_KEY, TOKEN_TYPE_ACCESS)
             .issuedAt(new Date())
             .expiration(new Date(System.currentTimeMillis() + accessTokenValidityInMilliseconds))
             .signWith(key)
@@ -64,6 +68,7 @@ public class JwtTokenProvider {
         return Jwts.builder()
             .id(UUID.randomUUID().toString())
             .subject(memberId)
+            .claim(TOKEN_TYPE_CLAIM_KEY, TOKEN_TYPE_REFRESH)
             .issuedAt(new Date())
             .expiration(new Date(System.currentTimeMillis() + refreshTokenValidityInMilliseconds))
             .signWith(key)
@@ -134,6 +139,6 @@ public class JwtTokenProvider {
 
     public boolean isRefreshToken(String token) {
         Claims claims = getClaims(token);
-        return claims.get(ROLES_CLAIM_KEY) == null;
+        return TOKEN_TYPE_REFRESH.equals(claims.get(TOKEN_TYPE_CLAIM_KEY));
     }
 }
