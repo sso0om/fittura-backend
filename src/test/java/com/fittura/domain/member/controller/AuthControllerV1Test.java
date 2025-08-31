@@ -77,7 +77,6 @@ class AuthControllerV1Test {
 
         Member member = memberRepository.findByEmail("test@email.com")
             .orElseThrow(() -> new AssertionError("회원가입 후 이메일로 회원을 조회하지 못했습니다."));
-        String tokenName = appProperties.cookie().refreshTokenName();
 
         // verify
         resultActions
@@ -86,22 +85,15 @@ class AuthControllerV1Test {
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.status").value(201))
             .andExpect(jsonPath("$.code").value("S201-01"))
-            .andExpect(jsonPath("$.message").value("회원가입이 완료되었습니다."))
-            .andExpect(jsonPath("$.data.id").value(member.getId()))
-            .andExpect(jsonPath("$.data.email").value(member.getEmail()))
-            .andExpect(jsonPath("$.data.nickname").value(member.getNickname()))
-            .andExpect(jsonPath("$.data.accessToken").exists())
-            .andExpect(cookie().exists(tokenName))
-            .andExpect(cookie().httpOnly(tokenName, appProperties.cookie().httpOnly()))
-            .andExpect(cookie().secure(tokenName, appProperties.cookie().secure()))
-            .andExpect(cookie().sameSite(tokenName, appProperties.cookie().sameSite()))
-            .andExpect(cookie().path(tokenName, appProperties.cookie().path()));
+            .andExpect(jsonPath("$.message").value("회원가입이 완료되었습니다."));
+
+        verifyAuthDataAndCookie(resultActions, member);
     }
 
     @ParameterizedTest(name = "[{index}] {1}")
     @DisplayName("회원가입 실패 - 중복 이메일/닉네임")
     @MethodSource("duplicateSignUpInfoProvider")
-    void signUpFailWithDuplicationEmail(String reqBody, String testName, String errorCode, String errorMessage) throws Exception {
+    void signUpFailWithDuplicationEmail(String reqBody, String testName, MemberError error) throws Exception {
         // given
         Member existingMember = Member.createUser(
             "test@email.com",
@@ -119,14 +111,8 @@ class AuthControllerV1Test {
             )
             .andDo(print());
 
-        // then
-        resultActions
-            .andExpect(handler().handlerType(AuthControllerV1.class))
-            .andExpect(handler().methodName("signUp"))
-            .andExpect(status().isConflict())
-            .andExpect(jsonPath("$.status").value(409))
-            .andExpect(jsonPath("$.code").value(errorCode))
-            .andExpect(jsonPath("$.message").value(errorMessage));
+        // verify & then
+        verifyAuthFailure(resultActions, "signUp", error);
     }
 
     @Test
@@ -165,16 +151,9 @@ class AuthControllerV1Test {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.status").value(200))
             .andExpect(jsonPath("$.code").value("S200-01"))
-            .andExpect(jsonPath("$.message").value("로그인되었습니다."))
-            .andExpect(jsonPath("$.data.id").value(member.getId()))
-            .andExpect(jsonPath("$.data.email").value(member.getEmail()))
-            .andExpect(jsonPath("$.data.nickname").value(member.getNickname()))
-            .andExpect(jsonPath("$.data.accessToken").exists())
-            .andExpect(cookie().exists(tokenName))
-            .andExpect(cookie().httpOnly(tokenName, appProperties.cookie().httpOnly()))
-            .andExpect(cookie().secure(tokenName, appProperties.cookie().secure()))
-            .andExpect(cookie().sameSite(tokenName, appProperties.cookie().sameSite()))
-            .andExpect(cookie().path(tokenName, appProperties.cookie().path()));
+            .andExpect(jsonPath("$.message").value("로그인되었습니다."));
+
+        verifyAuthDataAndCookie(resultActions, member);
     }
 
     @Test
@@ -205,13 +184,7 @@ class AuthControllerV1Test {
             .andDo(print());
 
         // verify
-        resultActions
-            .andExpect(handler().handlerType(AuthControllerV1.class))
-            .andExpect(handler().methodName("signIn"))
-            .andExpect(status().isUnauthorized())
-            .andExpect(jsonPath("$.status").value(401))
-            .andExpect(jsonPath("$.code").value("A401-01"))
-            .andExpect(jsonPath("$.message").value(MemberError.INVALID_CREDENTIALS.getMessage()));
+        verifyAuthFailure(resultActions, "signIn", MemberError.INVALID_CREDENTIALS);
     }
 
     @Test
@@ -242,13 +215,7 @@ class AuthControllerV1Test {
             .andDo(print());
 
         // verify
-        resultActions
-            .andExpect(handler().handlerType(AuthControllerV1.class))
-            .andExpect(handler().methodName("signIn"))
-            .andExpect(status().isUnauthorized())
-            .andExpect(jsonPath("$.status").value(401))
-            .andExpect(jsonPath("$.code").value("A401-01"))
-            .andExpect(jsonPath("$.message").value(MemberError.INVALID_CREDENTIALS.getMessage()));
+        verifyAuthFailure(resultActions, "signIn", MemberError.INVALID_CREDENTIALS);
     }
 
     @Test
@@ -282,16 +249,9 @@ class AuthControllerV1Test {
             .andExpect(jsonPath("$.status").value(200))
             .andExpect(jsonPath("$.code").value("S200-01"))
             .andExpect(jsonPath("$.message").value("토큰이 재발급되었습니다."))
-            .andExpect(jsonPath("$.data.id").value(member.getId()))
-            .andExpect(jsonPath("$.data.email").value(member.getEmail()))
-            .andExpect(jsonPath("$.data.nickname").value(member.getNickname()))
-            .andExpect(jsonPath("$.data.accessToken").exists())
-            .andExpect(cookie().exists(tokenName))
-            .andExpect(cookie().value(tokenName, not(equalTo(refreshToken)))) // 새 토큰이 발급되었는지 확인
-            .andExpect(cookie().httpOnly(tokenName, appProperties.cookie().httpOnly()))
-            .andExpect(cookie().secure(tokenName, appProperties.cookie().secure()))
-            .andExpect(cookie().sameSite(tokenName, appProperties.cookie().sameSite()))
-            .andExpect(cookie().path(tokenName, appProperties.cookie().path()));
+            .andExpect(cookie().value(tokenName, not(equalTo(refreshToken)))); // 새 토큰이 발급되었는지 확인
+
+        verifyAuthDataAndCookie(resultActions, member);
     }
 
     @Test
@@ -331,17 +291,43 @@ class AuthControllerV1Test {
                  {"email":"test@email.com","name":"유저","nickname":"다른 유저","password":"password123!"}
                  """,
                 "중복 이메일",
-                "A409-01",
-                "이미 사용중인 이메일입니다."
+                MemberError.DUPLICATED_EMAIL
             ),
             Arguments.of(
                 """
                  {"email":"otherTest@email.com","name":"유저","nickname":"테스트 유저","password":"password123!"}
                  """,
                 "중복 닉네임",
-                "A409-02",
-                "이미 사용중인 닉네임입니다."
+                MemberError.DUPLICATED_NICKNAME
             )
         );
+    }
+
+
+    // ========== 헬퍼 메서드 ==========
+
+    private void verifyAuthDataAndCookie(ResultActions resultActions, Member member) throws Exception {
+        String tokenName = appProperties.cookie().refreshTokenName();
+
+        resultActions
+            .andExpect(jsonPath("$.data.id").value(member.getId()))
+            .andExpect(jsonPath("$.data.email").value(member.getEmail()))
+            .andExpect(jsonPath("$.data.nickname").value(member.getNickname()))
+            .andExpect(jsonPath("$.data.accessToken").exists())
+            .andExpect(cookie().exists(tokenName))
+            .andExpect(cookie().httpOnly(tokenName, appProperties.cookie().httpOnly()))
+            .andExpect(cookie().secure(tokenName, appProperties.cookie().secure()))
+            .andExpect(cookie().sameSite(tokenName, appProperties.cookie().sameSite()))
+            .andExpect(cookie().path(tokenName, appProperties.cookie().path()));
+    }
+
+    private static void verifyAuthFailure(ResultActions resultActions, String methodName, MemberError error) throws Exception {
+        resultActions
+            .andExpect(handler().handlerType(AuthControllerV1.class))
+            .andExpect(handler().methodName(methodName))
+            .andExpect(status().is(error.getStatus()))
+            .andExpect(jsonPath("$.status").value(error.getStatus()))
+            .andExpect(jsonPath("$.code").value(error.getCode()))
+            .andExpect(jsonPath("$.message").value(error.getMessage()));
     }
 }
