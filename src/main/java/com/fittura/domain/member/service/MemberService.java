@@ -1,7 +1,7 @@
 package com.fittura.domain.member.service;
 
 import com.fittura.domain.member.entity.Member;
-import com.fittura.domain.member.error.MemberError;
+import com.fittura.domain.member.error.MemberErrorCode;
 import com.fittura.domain.member.repository.MemberRepository;
 import com.fittura.global.error.CommonErrorCode;
 import com.fittura.global.exception.ServiceException;
@@ -21,13 +21,13 @@ public class MemberService {
     @Transactional(readOnly = true)
     public Member findById(long id) {
         return memberRepository.findById(id)
-            .orElseThrow(() -> new ServiceException(MemberError.NOT_FOUND_MEMBER));
+            .orElseThrow(() -> new ServiceException(MemberErrorCode.NOT_FOUND_MEMBER));
     }
 
     @Transactional(readOnly = true)
     public Member findByEmail(String email) {
         return memberRepository.findByEmail(email)
-            .orElseThrow(() -> new ServiceException(MemberError.INVALID_CREDENTIALS));
+            .orElseThrow(() -> new ServiceException(MemberErrorCode.INVALID_CREDENTIALS));
     }
 
     @Transactional
@@ -52,13 +52,13 @@ public class MemberService {
 
     public void validateDuplicatedEmail(String email) {
         if (memberRepository.existsByEmail(email)) {
-            throw new ServiceException(MemberError.DUPLICATED_EMAIL);
+            throw new ServiceException(MemberErrorCode.DUPLICATED_EMAIL);
         }
     }
 
     public void validateDuplicatedNickname(String nickname) {
         if (memberRepository.existsByNickname(nickname)) {
-            throw new ServiceException(MemberError.DUPLICATED_NICKNAME);
+            throw new ServiceException(MemberErrorCode.DUPLICATED_NICKNAME);
         }
     }
 }

@@ -2,7 +2,7 @@ package com.fittura.domain.member.service;
 
 import com.fittura.domain.member.dto.TokenDto;
 import com.fittura.domain.member.entity.Member;
-import com.fittura.domain.member.error.MemberError;
+import com.fittura.domain.member.error.MemberErrorCode;
 import com.fittura.global.exception.ServiceException;
 import com.fittura.global.security.JwtTokenProvider;
 import com.fittura.global.security.TokenStatus;
@@ -35,7 +35,7 @@ public class TokenService {
         try {
             return Long.parseLong(subject);
         } catch (NumberFormatException e) {
-            throw new ServiceException(MemberError.INVALID_REFRESH_TOKEN);
+            throw new ServiceException(MemberErrorCode.INVALID_REFRESH_TOKEN);
         }
     }
 
@@ -56,11 +56,14 @@ public class TokenService {
 
     private void validateRefreshToken(String refreshToken) {
         TokenStatus tokenStatus = jwtTokenProvider.validateToken(refreshToken);
+        if (tokenStatus.equals(TokenStatus.EXPIRED)) {
+            throw new ServiceException(MemberErrorCode.EXPIRED_REFRESH_TOKEN);
+        }
         if (tokenStatus != TokenStatus.VALID) {
-            throw new ServiceException(MemberError.INVALID_REFRESH_TOKEN);
+            throw new ServiceException(MemberErrorCode.INVALID_REFRESH_TOKEN);
         }
         if (!jwtTokenProvider.isRefreshToken(refreshToken)) {
-            throw new ServiceException(MemberError.INVALID_REFRESH_TOKEN);
+            throw new ServiceException(MemberErrorCode.INVALID_REFRESH_TOKEN);
         }
     }
 }

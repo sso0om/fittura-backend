@@ -1,9 +1,11 @@
 package com.fittura.domain.member.controller;
 
 import com.fittura.domain.member.entity.Member;
-import com.fittura.domain.member.error.MemberError;
+import com.fittura.domain.member.error.MemberErrorCode;
 import com.fittura.domain.member.repository.MemberRepository;
 import com.fittura.global.config.AppProperties;
+import com.fittura.global.error.CommonErrorCode;
+import com.fittura.global.error.ErrorCode;
 import com.fittura.global.security.JwtTokenProvider;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.DisplayName;
@@ -21,6 +23,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static org.hamcrest.Matchers.equalTo;
@@ -54,6 +57,9 @@ class AuthControllerV1Test {
     private static final String SIGN_IN_URL = "/api/v1/auth/signin";
     private static final String REISSUE_URL = "/api/v1/auth/reissue";
     private static final String LOGOUT_URL = "/api/v1/auth/logout";
+
+
+    // ========== 회원가입 ==========
 
     @Test
     @DisplayName("회원가입 성공")
@@ -94,7 +100,7 @@ class AuthControllerV1Test {
     @ParameterizedTest(name = "[{index}] {1}")
     @DisplayName("회원가입 실패 - 중복 이메일/닉네임")
     @MethodSource("duplicateSignUpInfoProvider")
-    void signUpFailWithDuplication(String reqBody, String testName, MemberError error) throws Exception {
+    void signUpFail_duplication(String reqBody, String testName, MemberErrorCode error) throws Exception {
         // given
         Member existingMember = Member.createUser(
             "test@email.com",
@@ -115,6 +121,9 @@ class AuthControllerV1Test {
         // verify & then
         verifyAuthFailure(resultActions, "signUp", error);
     }
+
+
+    // ========== 로그인 ==========
 
     @Test
     @DisplayName("로그인 성공")
@@ -157,7 +166,7 @@ class AuthControllerV1Test {
 
     @Test
     @DisplayName("로그인 실패 - 존재하지 않는 이메일")
-    void signInFailWithNotExistingEmail() throws Exception {
+    void signInFail_notExistingEmail() throws Exception {
         // given
         Member member = Member.createUser(
             "test@email.com",
@@ -183,12 +192,12 @@ class AuthControllerV1Test {
             .andDo(print());
 
         // verify
-        verifyAuthFailure(resultActions, "signIn", MemberError.INVALID_CREDENTIALS);
+        verifyAuthFailure(resultActions, "signIn", MemberErrorCode.INVALID_CREDENTIALS);
     }
 
     @Test
     @DisplayName("로그인 실패 - 잘못된 비밀번호")
-    void signInFailWithWrongPassword() throws Exception {
+    void signInFail_wrongPassword() throws Exception {
         // given
         Member member = Member.createUser(
             "test@email.com",
@@ -214,8 +223,11 @@ class AuthControllerV1Test {
             .andDo(print());
 
         // verify
-        verifyAuthFailure(resultActions, "signIn", MemberError.INVALID_CREDENTIALS);
+        verifyAuthFailure(resultActions, "signIn", MemberErrorCode.INVALID_CREDENTIALS);
     }
+
+
+    // ========== 토큰 재발급 ==========
 
     @Test
     @DisplayName("토큰 재발급 성공")
@@ -254,6 +266,86 @@ class AuthControllerV1Test {
     }
 
     @Test
+    @DisplayName("토큰 재발급 실패 - 쿠키 누락")
+    void reissueFail_missingCookie() throws Exception {
+        // when & then
+        ResultActions resultActions = mockMvc
+            .perform(post(REISSUE_URL))
+            .andDo(print());
+
+        // verify - Spring의 @CookieValue가 쿠키 누락시 400 에러 발생
+        verifyAuthFailure(resultActions, "reissueTokens", CommonErrorCode.INTERNAL_SERVER_ERROR);
+    }
+
+    @Test
+    @DisplayName("토큰 재발급 실패 - 유효하지 않은 리프레시 토큰")
+    void reissueFail_invalidRefreshToken() throws Exception {
+        // given
+        String invalidToken = jwtTokenProvider.generateRefreshToken("invalid.refresh.token");
+        String tokenName = appProperties.cookie().refreshTokenName();
+        Cookie refreshTokenCookie = new Cookie(tokenName, invalidToken);
+
+        // when & then
+        ResultActions resultActions = mockMvc
+            .perform(post(REISSUE_URL)
+                .cookie(refreshTokenCookie)
+            )
+            .andDo(print());
+
+        // verify
+        verifyAuthFailure(resultActions, "reissueTokens", MemberErrorCode.INVALID_REFRESH_TOKEN);
+    }
+
+    @Test
+    @DisplayName("토큰 재발급 실패 - 존재하지 않는 회원의 토큰")
+    void reissueFail_notExistingMember() throws Exception {
+        // given
+        String invalidToken = jwtTokenProvider.generateRefreshToken("-1");
+        String tokenName = appProperties.cookie().refreshTokenName();
+        Cookie refreshTokenCookie = new Cookie(tokenName, invalidToken);
+
+        // when & then
+        ResultActions resultActions = mockMvc
+            .perform(post(REISSUE_URL)
+                .cookie(refreshTokenCookie)
+            )
+            .andDo(print());
+
+        // verify
+        verifyAuthFailure(resultActions, "reissueTokens", MemberErrorCode.NOT_FOUND_MEMBER);
+    }
+
+    @Test
+    @DisplayName("토큰 재발급 실패 - 엑세스 토큰으로 재발급 시도")
+    void reissueFail_usingAccessToken() throws Exception {
+        // given
+        Member member = Member.createUser(
+            "test@email.com",
+            "유저",
+            "테스트 유저",
+            passwordEncoder.encode("password123!")
+        );
+        memberRepository.save(member);
+
+        String accessToken = jwtTokenProvider.generateAccessToken(member.getId().toString(), Set.of("ROLE_USER"));
+        String tokenName = appProperties.cookie().refreshTokenName();
+        Cookie refreshTokenCookie = new Cookie(tokenName, accessToken);
+
+        // when & then
+        ResultActions resultActions = mockMvc
+            .perform(post(REISSUE_URL)
+                .cookie(refreshTokenCookie)
+            )
+            .andDo(print());
+
+        // verify
+        verifyAuthFailure(resultActions, "reissueTokens", MemberErrorCode.INVALID_REFRESH_TOKEN);
+    }
+
+
+    // ========== 로그아웃 ==========
+
+    @Test
     @DisplayName("로그아웃 성공")
     void logoutSuccess() throws Exception {
         // given
@@ -290,14 +382,14 @@ class AuthControllerV1Test {
                  {"email":"test@email.com","name":"유저","nickname":"다른 유저","password":"password123!"}
                  """,
                 "중복 이메일",
-                MemberError.DUPLICATED_EMAIL
+                MemberErrorCode.DUPLICATED_EMAIL
             ),
             Arguments.of(
                 """
                  {"email":"otherTest@email.com","name":"유저","nickname":"테스트 유저","password":"password123!"}
                  """,
                 "중복 닉네임",
-                MemberError.DUPLICATED_NICKNAME
+                MemberErrorCode.DUPLICATED_NICKNAME
             )
         );
     }
@@ -322,7 +414,7 @@ class AuthControllerV1Test {
             .andExpect(cookie().maxAge(tokenName, maxAge));
     }
 
-    private static void verifyAuthFailure(ResultActions resultActions, String methodName, MemberError error) throws Exception {
+    private static void verifyAuthFailure(ResultActions resultActions, String methodName, ErrorCode error) throws Exception {
         resultActions
             .andExpect(handler().handlerType(AuthControllerV1.class))
             .andExpect(handler().methodName(methodName))

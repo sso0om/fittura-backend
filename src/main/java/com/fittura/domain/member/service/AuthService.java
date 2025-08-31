@@ -5,7 +5,7 @@ import com.fittura.domain.member.dto.TokenDto;
 import com.fittura.domain.member.dto.request.SignInReqDto;
 import com.fittura.domain.member.dto.request.SignUpReqDto;
 import com.fittura.domain.member.entity.Member;
-import com.fittura.domain.member.error.MemberError;
+import com.fittura.domain.member.error.MemberErrorCode;
 import com.fittura.global.config.AppProperties;
 import com.fittura.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
@@ -76,7 +76,7 @@ public class AuthService {
 
     public ResponseCookie generateRefreshTokenCookie(TokenDto tokenDto) {
         long refreshTokenExpiresInMillis = tokenService.getRefreshTokenExpiresInMillis();
-        
+
         return baseRefreshCookieBuilder(tokenDto.refreshToken())
             .maxAge(Duration.ofMillis(refreshTokenExpiresInMillis))
             .build();
@@ -93,7 +93,7 @@ public class AuthService {
 
     private void validatePassword(SignInReqDto req, Member member) {
         if (!passwordEncoder.matches(req.password(), member.getPassword())) {
-            throw new ServiceException(MemberError.INVALID_CREDENTIALS);
+            throw new ServiceException(MemberErrorCode.INVALID_CREDENTIALS);
         }
     }
 
