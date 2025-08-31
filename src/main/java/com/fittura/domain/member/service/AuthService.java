@@ -64,8 +64,8 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public AuthResultDto reissueTokens(String refreshToken) {
-        String subject = tokenService.findSubjectByRefreshToken(refreshToken);
-        Member member = memberService.findById(Long.parseLong(subject));
+        Long memberId = tokenService.findMemberIdByRefreshToken(refreshToken);
+        Member member = memberService.findById(memberId);
 
         TokenDto tokenDto = tokenService.issueTokens(member);
         return AuthResultDto.of(member, tokenDto);
@@ -75,8 +75,10 @@ public class AuthService {
     // ========== 리프래시 토큰 쿠키 관련 메서드 ==========
 
     public ResponseCookie generateRefreshTokenCookie(TokenDto tokenDto) {
+        long refreshTokenExpiresInMillis = tokenService.getRefreshTokenExpiresInMillis();
+        
         return baseRefreshCookieBuilder(tokenDto.refreshToken())
-            .maxAge(Duration.ofMillis(tokenDto.refreshTokenExpiresInMillis()))
+            .maxAge(Duration.ofMillis(refreshTokenExpiresInMillis))
             .build();
     }
 

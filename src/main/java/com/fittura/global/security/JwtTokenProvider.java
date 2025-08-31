@@ -131,4 +131,9 @@ public class JwtTokenProvider {
             return TokenStatus.INVALID;
         }
     }
+
+    public boolean isRefreshToken(String token) {
+        Claims claims = getClaims(token);
+        return claims.get(ROLES_CLAIM_KEY) == null;
+    }
 }

@@ -20,20 +20,27 @@ public class TokenService {
 
     public TokenDto issueTokens(Member savedMember) {
         String memberId = savedMember.getId().toString();
+
         String accessToken = generateAccessToken(savedMember, memberId);
-
         String refreshToken = jwtTokenProvider.generateRefreshToken(memberId);
-        long refreshTokenExpiresInMillis = jwtTokenProvider.getRefreshTokenValidityInMilliseconds();
 
-        return new TokenDto(accessToken, refreshToken, refreshTokenExpiresInMillis);
+        return new TokenDto(accessToken, refreshToken);
     }
 
-    public String findSubjectByRefreshToken(String refreshToken) {
-        TokenStatus tokenStatus = jwtTokenProvider.validateToken(refreshToken);
-        if (tokenStatus != TokenStatus.VALID) {
+    public Long findMemberIdByRefreshToken(String refreshToken) {
+        validateRefreshToken(refreshToken);
+
+        String subject = jwtTokenProvider.getSubject(refreshToken);
+
+        try {
+            return Long.parseLong(subject);
+        } catch (NumberFormatException e) {
             throw new ServiceException(MemberError.INVALID_REFRESH_TOKEN);
         }
-        return jwtTokenProvider.getSubject(refreshToken);
+    }
+
+    public long getRefreshTokenExpiresInMillis() {
+        return jwtTokenProvider.getRefreshTokenValidityInMilliseconds();
     }
 
 
@@ -45,5 +52,15 @@ public class TokenService {
             .map(Enum::name)
             .collect(Collectors.toUnmodifiableSet());
         return jwtTokenProvider.generateAccessToken(memberId, roles);
+    }
+
+    private void validateRefreshToken(String refreshToken) {
+        TokenStatus tokenStatus = jwtTokenProvider.validateToken(refreshToken);
+        if (tokenStatus != TokenStatus.VALID) {
+            throw new ServiceException(MemberError.INVALID_REFRESH_TOKEN);
+        }
+        if (!jwtTokenProvider.isRefreshToken(refreshToken)) {
+            throw new ServiceException(MemberError.INVALID_REFRESH_TOKEN);
+        }
     }
 }

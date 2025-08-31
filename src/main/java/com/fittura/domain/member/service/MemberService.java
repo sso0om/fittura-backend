@@ -18,11 +18,13 @@ public class MemberService {
 
     private final MemberRepository memberRepository;
 
+    @Transactional(readOnly = true)
     public Member findById(long id) {
         return memberRepository.findById(id)
             .orElseThrow(() -> new ServiceException(MemberError.NOT_FOUND_MEMBER));
     }
 
+    @Transactional(readOnly = true)
     public Member findByEmail(String email) {
         return memberRepository.findByEmail(email)
             .orElseThrow(() -> new ServiceException(MemberError.INVALID_CREDENTIALS));

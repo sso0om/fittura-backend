@@ -42,6 +42,9 @@ class AuthControllerV1Test {
     private AppProperties appProperties;
 
     @Autowired
+    private JwtTokenProvider jwtTokenProvider;
+
+    @Autowired
     private MemberRepository memberRepository;
 
     @Autowired
@@ -51,8 +54,6 @@ class AuthControllerV1Test {
     private static final String SIGN_IN_URL = "/api/v1/auth/signin";
     private static final String REISSUE_URL = "/api/v1/auth/reissue";
     private static final String LOGOUT_URL = "/api/v1/auth/logout";
-    @Autowired
-    private JwtTokenProvider jwtTokenProvider;
 
     @Test
     @DisplayName("회원가입 성공")
@@ -93,7 +94,7 @@ class AuthControllerV1Test {
     @ParameterizedTest(name = "[{index}] {1}")
     @DisplayName("회원가입 실패 - 중복 이메일/닉네임")
     @MethodSource("duplicateSignUpInfoProvider")
-    void signUpFailWithDuplicationEmail(String reqBody, String testName, MemberError error) throws Exception {
+    void signUpFailWithDuplication(String reqBody, String testName, MemberError error) throws Exception {
         // given
         Member existingMember = Member.createUser(
             "test@email.com",
@@ -141,8 +142,6 @@ class AuthControllerV1Test {
                 .content(reqBody)
             )
             .andDo(print());
-
-        String tokenName = appProperties.cookie().refreshTokenName();
 
         // verify
         resultActions
@@ -308,6 +307,7 @@ class AuthControllerV1Test {
 
     private void verifyAuthDataAndCookie(ResultActions resultActions, Member member) throws Exception {
         String tokenName = appProperties.cookie().refreshTokenName();
+        int maxAge = (int) (jwtTokenProvider.getRefreshTokenValidityInMilliseconds() / 1000);
 
         resultActions
             .andExpect(jsonPath("$.data.id").value(member.getId()))
@@ -318,7 +318,8 @@ class AuthControllerV1Test {
             .andExpect(cookie().httpOnly(tokenName, appProperties.cookie().httpOnly()))
             .andExpect(cookie().secure(tokenName, appProperties.cookie().secure()))
             .andExpect(cookie().sameSite(tokenName, appProperties.cookie().sameSite()))
-            .andExpect(cookie().path(tokenName, appProperties.cookie().path()));
+            .andExpect(cookie().path(tokenName, appProperties.cookie().path()))
+            .andExpect(cookie().maxAge(tokenName, maxAge));
     }
 
     private static void verifyAuthFailure(ResultActions resultActions, String methodName, MemberError error) throws Exception {
