@@ -414,7 +414,7 @@ class AuthControllerV1Test {
         resultActions
             .andExpect(handler().handlerType(AuthControllerV1.class))
             .andExpect(handler().methodName(methodName))
-            .andExpect(status().is(error.getStatus()))
+            .andExpect(status().is(error.getStatus().value()))
             .andExpect(jsonPath("$.code").value(error.getCode()))
             .andExpect(jsonPath("$.message").value(error.getMessage()));
     }
