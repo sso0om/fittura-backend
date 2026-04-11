@@ -90,7 +90,6 @@ class AuthControllerV1Test {
             .andExpect(handler().handlerType(AuthControllerV1.class))
             .andExpect(handler().methodName("signUp"))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.status").value(201))
             .andExpect(jsonPath("$.code").value("S201-01"))
             .andExpect(jsonPath("$.message").value("회원가입이 완료되었습니다."));
 
@@ -157,7 +156,6 @@ class AuthControllerV1Test {
             .andExpect(handler().handlerType(AuthControllerV1.class))
             .andExpect(handler().methodName("signIn"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.status").value(200))
             .andExpect(jsonPath("$.code").value("S200-01"))
             .andExpect(jsonPath("$.message").value("로그인되었습니다."));
 
@@ -257,7 +255,6 @@ class AuthControllerV1Test {
             .andExpect(handler().handlerType(AuthControllerV1.class))
             .andExpect(handler().methodName("reissueTokens"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.status").value(200))
             .andExpect(jsonPath("$.code").value("S200-01"))
             .andExpect(jsonPath("$.message").value("토큰이 재발급되었습니다."))
             .andExpect(cookie().value(tokenName, not(equalTo(refreshToken)))); // 새 토큰이 발급되었는지 확인
@@ -360,7 +357,6 @@ class AuthControllerV1Test {
             .andExpect(handler().handlerType(AuthControllerV1.class))
             .andExpect(handler().methodName("logout"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.status").value(200))
             .andExpect(jsonPath("$.code").value("S200-01"))
             .andExpect(jsonPath("$.message").value("로그아웃되었습니다."))
             .andExpect(cookie().exists(tokenName))
@@ -419,7 +415,6 @@ class AuthControllerV1Test {
             .andExpect(handler().handlerType(AuthControllerV1.class))
             .andExpect(handler().methodName(methodName))
             .andExpect(status().is(error.getStatus()))
-            .andExpect(jsonPath("$.status").value(error.getStatus()))
             .andExpect(jsonPath("$.code").value(error.getCode()))
             .andExpect(jsonPath("$.message").value(error.getMessage()));
     }

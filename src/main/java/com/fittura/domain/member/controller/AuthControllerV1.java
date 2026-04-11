@@ -13,7 +13,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -26,61 +28,57 @@ public class AuthControllerV1 {
 
     @PostMapping("/signup")
     @Operation(summary = "회원가입", description = "회원가입 API")
-    public RsData<AuthResDto> signUp(
+    public ResponseEntity<RsData<AuthResDto>> signUp(
         @RequestBody @Valid SignUpReqDto signUpReqDto,
         HttpServletResponse httpServletResponse
     ) {
         AuthResultDto resultDto = authService.signUp(signUpReqDto);
         AuthResDto resDto = processAuthResult(resultDto, httpServletResponse);
 
-        return RsData.createSuccess(
-            "회원가입이 완료되었습니다.",
-            resDto
-        );
+        return ResponseEntity
+            .status(HttpStatus.CREATED)
+            .body(RsData.createSuccess("회원가입이 완료되었습니다.", resDto));
     }
 
     @PostMapping("/signin")
     @Operation(summary = "로그인", description = "로그인 API")
-    public RsData<AuthResDto> signIn(
+    public ResponseEntity<RsData<AuthResDto>> signIn(
         @RequestBody @Valid SignInReqDto signInReqDto,
         HttpServletResponse httpServletResponse
     ) {
         AuthResultDto resultDto = authService.signIn(signInReqDto);
         AuthResDto resDto = processAuthResult(resultDto, httpServletResponse);
 
-        return RsData.success(
-            "로그인되었습니다.",
-            resDto
-        );
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(RsData.success("로그인되었습니다.", resDto));
     }
 
     @PostMapping("/reissue")
     @Operation(summary = "토큰 재발급", description = "토큰 재발급 API")
-    public RsData<AuthResDto> reissueTokens(
+    public ResponseEntity<RsData<AuthResDto>> reissueTokens(
         @CookieValue(name = "${app.cookie.refresh-token-name}") String refreshToken,
         HttpServletResponse httpServletResponse
     ) {
         AuthResultDto resultDto = authService.reissueTokens(refreshToken);
         AuthResDto resDto = processAuthResult(resultDto, httpServletResponse);
 
-        return RsData.success(
-            "토큰이 재발급되었습니다.",
-            resDto
-        );
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(RsData.success("토큰이 재발급되었습니다.", resDto));
     }
 
     @PostMapping("/logout")
     @Operation(summary = "로그아웃", description = "로그아웃 API")
-    public RsData<Void> logout(
+    public ResponseEntity<RsData<Void>> logout(
         HttpServletResponse httpServletResponse
     ) {
         ResponseCookie cookie = authService.createLogoutCookie();
         httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
-        return RsData.success(
-            "로그아웃되었습니다.",
-            null
-        );
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(RsData.success("로그아웃되었습니다.", null));
     }
 
 

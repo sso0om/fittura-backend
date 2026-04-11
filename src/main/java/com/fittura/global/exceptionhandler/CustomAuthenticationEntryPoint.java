@@ -2,8 +2,8 @@ package com.fittura.global.exceptionhandler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fittura.global.error.CommonErrorCode;
+import com.fittura.global.error.ErrorCode;
 import com.fittura.global.rsdata.RsData;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -22,9 +22,16 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
     private final ObjectMapper objectMapper;
 
     @Override
-    public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
-        RsData<Void> rsData = RsData.error(CommonErrorCode.UNAUTHORIZED);
-        response.setStatus(rsData.status());
+    public void commence(
+        HttpServletRequest request,
+        HttpServletResponse response,
+        AuthenticationException authException
+    ) throws IOException {
+
+        ErrorCode errorCode = CommonErrorCode.UNAUTHORIZED;
+        RsData<Void> rsData = RsData.error(errorCode);
+
+        response.setStatus(errorCode.getStatus());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
         response.getWriter().write(objectMapper.writeValueAsString(rsData));
