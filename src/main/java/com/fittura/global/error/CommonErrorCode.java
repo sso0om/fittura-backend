@@ -14,6 +14,7 @@ public enum CommonErrorCode implements ErrorCode {
     BAD_REQUEST(HttpStatus.BAD_REQUEST, "C400-01", "잘못된 요청입니다."),
     VALIDATION_ERROR(HttpStatus.BAD_REQUEST, "C400-02", "유효성 검사에 실패했습니다."),
     INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "C400-03", "유효하지 않은 입력 값입니다."),
+    MISSING_REFRESH_TOKEN_COOKIE(HttpStatus.BAD_REQUEST, "C400-04", "리프레시 토큰 쿠키가 없습니다."),
 
     // security 401, 403
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "C401-1", "인증이 필요합니다."),

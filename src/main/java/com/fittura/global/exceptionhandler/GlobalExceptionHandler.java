@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestCookieException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -88,6 +89,17 @@ public class GlobalExceptionHandler {
                         CommonErrorCode.BAD_REQUEST
                 ),
                 BAD_REQUEST
+        );
+    }
+
+    // 리프레시 토큰 쿠키 누락
+    @ExceptionHandler(MissingRequestCookieException.class)
+    public ResponseEntity<RsData<Void>> handle(MissingRequestCookieException e) {
+        log.warn("Missing request cookie: {}", e.getCookieName());
+
+        return new ResponseEntity<>(
+            RsData.error(CommonErrorCode.MISSING_REFRESH_TOKEN_COOKIE),
+            BAD_REQUEST
         );
     }
 

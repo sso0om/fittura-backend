@@ -271,7 +271,7 @@ class AuthControllerV1Test {
             .andDo(print());
 
         // verify - Spring의 @CookieValue가 쿠키 누락시 400 에러 발생
-        verifyAuthFailure(resultActions, "reissueTokens", CommonErrorCode.INTERNAL_SERVER_ERROR);
+        verifyAuthFailure(resultActions, "reissueTokens", CommonErrorCode.MISSING_REFRESH_TOKEN_COOKIE);
     }
 
     @Test
