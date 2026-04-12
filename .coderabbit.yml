@@ -1,18 +1,16 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
 language: "ko-KR"
 
 reviews:
   profile: "assertive"
   high_level_summary: true
-
-exclude:
-  - '**/package-lock.json'
-  - '**/*.log'
-  - 'docs/**/*'
-  - "**/*.md"
-
-exclude_file_types:
-  - '.jpg'
-  - '.jpeg'
-  - '.png'
-  - '.svg'
-  - '.gif'
+  path_filters:
+    - '**/package-lock.json'
+    - '**/*.log'
+    - 'docs/**/*'
+    - "**/*.md"
+    - "**/*.jpg"
+    - "**/*.jpeg"
+    - "**/*.png"
+    - "**/*.svg"
+    - "**/*.gif"
