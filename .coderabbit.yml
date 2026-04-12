@@ -4,7 +4,7 @@ language: "ko-KR"
 reviews:
   profile: "assertive"
   high_level_summary: true
-  ignore:
+  path_filters:
     - '**/package-lock.json'
     - '**/*.log'
     - 'docs/**/*'
