@@ -10,7 +10,8 @@ import org.springframework.http.HttpStatus;
 public enum CategoryErrorCode implements ErrorCode {
 
     // 404
-    NOT_FOUND_CATEGORY(HttpStatus.NOT_FOUND,  "A404-01", "존재하지 않는 카테고리입니다.");
+    NOT_FOUND_CATEGORY(HttpStatus.NOT_FOUND,  "C404-01", "존재하지 않는 카테고리입니다."),
+    NOT_FOUND_PARENT_CATEGORY(HttpStatus.NOT_FOUND,  "C404-02", "존재하지 않는 상위 카테고리입니다.");
 
     private final HttpStatus status;
     private final String code;

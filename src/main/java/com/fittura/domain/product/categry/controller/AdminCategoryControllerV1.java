@@ -1,7 +1,7 @@
 package com.fittura.domain.product.categry.controller;
 
-import com.fittura.domain.product.categry.dto.response.CategoryDto;
 import com.fittura.domain.product.categry.dto.request.CategoryCreateReqDto;
+import com.fittura.domain.product.categry.dto.response.CategoryResDto;
 import com.fittura.domain.product.categry.service.CategoryService;
 import com.fittura.global.rsdata.RsData;
 import io.swagger.v3.oas.annotations.Operation;
@@ -10,10 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/admin/v1/categories")
@@ -23,12 +20,24 @@ public class AdminCategoryControllerV1 {
 
     private final CategoryService categoryService;
 
+    @GetMapping("/{id}")
+    @Operation(summary = "카테고리 조회", description = "카테고리 단건 조회 API")
+    public ResponseEntity<RsData<CategoryResDto>> getCategory(
+        @PathVariable Long id
+    ) {
+        CategoryResDto resDto = categoryService.getCategoryById(id);
+
+        return ResponseEntity
+            .ok()
+            .body(RsData.success(resDto));
+    }
+
     @PostMapping
     @Operation(summary = "카테고리 생성", description = "카테고리 생성 API")
-    public ResponseEntity<RsData<CategoryDto>> createCategory(
+    public ResponseEntity<RsData<CategoryResDto>> createCategory(
         @RequestBody @Valid CategoryCreateReqDto reqDto
     ) {
-        CategoryDto resDto = categoryService.createCategory(reqDto);
+        CategoryResDto resDto = categoryService.createCategory(reqDto);
 
         return ResponseEntity
             .status(HttpStatus.CREATED)
