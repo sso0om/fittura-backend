@@ -33,7 +33,39 @@ class AdminCategoryControllerV1Test {
     private static final String CATEGORY_URL = "/api/admin/v1/categories";
 
 
+    // ========== 카테고리 전체 조회 ==========
+
+    @Test
+    @DisplayName("카테고리 전체 조회 성공")
+    void getAllCategoriesSuccess() throws Exception {
+        Category root1 = categoryRepository.save(CategoryFixture.rootActive());
+        Category root2 = categoryRepository.save(CategoryFixture.root("최상위 카테고리2", 1));
+        Category child1 = categoryRepository.save(CategoryFixture.child("자식 카테고리1", 0, root1));
+        Category child2 = categoryRepository.save(CategoryFixture.child("자식 카테고리2", 1, root1));
+        Category child3 = categoryRepository.save(CategoryFixture.child("자식 카테고리2-1", 0, child2));
+
+        // given
+        ResultActions resultActions = mockMvc
+            .perform(get(CATEGORY_URL))
+            .andDo(print());
+
+        resultActions
+            .andExpect(handler().handlerType(AdminCategoryControllerV1.class))
+            .andExpect(handler().methodName("getAllCategories"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value("S200-01"))
+            .andExpect(jsonPath("$.data.length()").value(2)) // 루트 개수
+            .andExpect(jsonPath("$.data[0].id").value(root1.getId()))
+            .andExpect(jsonPath("$.data[0].children.length()").value(2))
+            .andExpect(jsonPath("$.data[0].children[1].children.length()").value(1)) // 손자 확인
+            .andExpect(jsonPath("$.data[1].id").value(root2.getId()))
+            .andExpect(jsonPath("$.data[1].children.length()").value(0))
+        ;
+    }
+
+
     // ========== 카테고리 단건 조회 ==========
+
     @Test
     @DisplayName("카테고리 조회 성공")
     void getCategorySuccess() throws Exception {
@@ -52,6 +84,7 @@ class AdminCategoryControllerV1Test {
             .andExpect(jsonPath("$.data.id").value(category.getId()))
             .andExpect(jsonPath("$.data.name").value(category.getName()))
             .andExpect(jsonPath("$.data.parentId").isEmpty())
+            .andExpect(jsonPath("$.data.depth").value(category.getDepth()))
             .andExpect(jsonPath("$.data.sortOrder").value(category.getSortOrder()));
     }
 
@@ -107,6 +140,7 @@ class AdminCategoryControllerV1Test {
             .andExpect(jsonPath("$.data.id").value(category.getId()))
             .andExpect(jsonPath("$.data.name").value(category.getName()))
             .andExpect(jsonPath("$.data.parentId").isEmpty())
+            .andExpect(jsonPath("$.data.depth").value(category.getDepth()))
             .andExpect(jsonPath("$.data.sortOrder").value(category.getSortOrder()));
     }
 
@@ -149,6 +183,7 @@ class AdminCategoryControllerV1Test {
             .andExpect(jsonPath("$.data.id").value(category.getId()))
             .andExpect(jsonPath("$.data.name").value(category.getName()))
             .andExpect(jsonPath("$.data.parentId").value(parent.getId()))
+            .andExpect(jsonPath("$.data.depth").value(category.getDepth()))
             .andExpect(jsonPath("$.data.sortOrder").value(category.getSortOrder()));
     }
 

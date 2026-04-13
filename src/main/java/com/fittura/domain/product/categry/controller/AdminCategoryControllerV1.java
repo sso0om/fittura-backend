@@ -2,6 +2,7 @@ package com.fittura.domain.product.categry.controller;
 
 import com.fittura.domain.product.categry.dto.request.CategoryCreateReqDto;
 import com.fittura.domain.product.categry.dto.response.CategoryResDto;
+import com.fittura.domain.product.categry.dto.response.CategoryTreeResDto;
 import com.fittura.domain.product.categry.service.CategoryService;
 import com.fittura.global.rsdata.RsData;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,6 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/admin/v1/categories")
 @RequiredArgsConstructor
@@ -20,16 +23,21 @@ public class AdminCategoryControllerV1 {
 
     private final CategoryService categoryService;
 
+    @GetMapping
+    @Operation(summary = "카테고리 전체 조회", description = "모든 카테고리 조회(트리) API ")
+    public ResponseEntity<RsData<List<CategoryTreeResDto>>> getAllCategories() {
+        List<CategoryTreeResDto> resDtos = categoryService.getAllCategories();
+        return ResponseEntity.ok(RsData.success(resDtos));
+    }
+
     @GetMapping("/{id}")
-    @Operation(summary = "카테고리 조회", description = "카테고리 단건 조회 API")
+    @Operation(summary = "카테고리 단건 조회", description = "카테고리 단건 조회 API")
     public ResponseEntity<RsData<CategoryResDto>> getCategory(
         @PathVariable Long id
     ) {
         CategoryResDto resDto = categoryService.getCategoryById(id);
 
-        return ResponseEntity
-            .ok()
-            .body(RsData.success(resDto));
+        return ResponseEntity.ok(RsData.success(resDto));
     }
 
     @PostMapping

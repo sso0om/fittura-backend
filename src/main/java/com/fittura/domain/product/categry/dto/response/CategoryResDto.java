@@ -6,6 +6,7 @@ public record CategoryResDto(
     Long id,
     String name,
     Long parentId,
+    int depth,
     int sortOrder
 ) {
     public static CategoryResDto from(Category category) {
@@ -13,6 +14,7 @@ public record CategoryResDto(
             category.getId(),
             category.getName(),
             category.getParent() == null ? null : category.getParent().getId(),
+            category.getDepth(),
             category.getSortOrder()
         );
     }
