@@ -1,5 +1,6 @@
 package com.fittura.domain.product.categry.dto.response;
 
+import com.fittura.domain.product.categry.constant.CategoryStatus;
 import com.fittura.domain.product.categry.entity.Category;
 
 public record CategoryResDto(
@@ -7,7 +8,8 @@ public record CategoryResDto(
     String name,
     Long parentId,
     int depth,
-    int sortOrder
+    int sortOrder,
+    CategoryStatus status
 ) {
     public static CategoryResDto from(Category category) {
         return new CategoryResDto(
@@ -15,7 +17,8 @@ public record CategoryResDto(
             category.getName(),
             category.getParent() == null ? null : category.getParent().getId(),
             category.getDepth(),
-            category.getSortOrder()
+            category.getSortOrder(),
+            category.getStatus()
         );
     }
 }

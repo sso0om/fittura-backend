@@ -1,6 +1,7 @@
 package com.fittura.domain.product.categry.controller;
 
 import com.fittura.domain.product.categry.dto.request.CategoryCreateReqDto;
+import com.fittura.domain.product.categry.dto.request.CategoryUpdateReqDto;
 import com.fittura.domain.product.categry.dto.response.CategoryResDto;
 import com.fittura.domain.product.categry.dto.response.CategoryTreeResDto;
 import com.fittura.domain.product.categry.service.CategoryService;
@@ -27,7 +28,9 @@ public class AdminCategoryControllerV1 {
     @Operation(summary = "카테고리 전체 조회", description = "모든 카테고리 조회(트리) API ")
     public ResponseEntity<RsData<List<CategoryTreeResDto>>> getAllCategories() {
         List<CategoryTreeResDto> resDtos = categoryService.getAllCategories();
-        return ResponseEntity.ok(RsData.success(resDtos));
+
+        return ResponseEntity
+            .ok(RsData.success(resDtos));
     }
 
     @GetMapping("/{id}")
@@ -37,7 +40,8 @@ public class AdminCategoryControllerV1 {
     ) {
         CategoryResDto resDto = categoryService.getCategoryById(id);
 
-        return ResponseEntity.ok(RsData.success(resDto));
+        return ResponseEntity
+            .ok(RsData.success(resDto));
     }
 
     @PostMapping
@@ -50,5 +54,17 @@ public class AdminCategoryControllerV1 {
         return ResponseEntity
             .status(HttpStatus.CREATED)
             .body(RsData.createSuccess("카테고리가 생성되었습니다.", resDto));
+    }
+
+    @PutMapping("/{id}")
+    @Operation(summary = "카테고리 단건 수정", description = "카테고리 단건 수정 API")
+    public ResponseEntity<RsData<Void>> updateCategory(
+        @PathVariable Long id,
+        @RequestBody @Valid CategoryUpdateReqDto reqDto
+    ) {
+        categoryService.updateCategory(id, reqDto);
+
+        return ResponseEntity
+            .ok(RsData.success("카테고리가 수정되었습니다.", null));
     }
 }
