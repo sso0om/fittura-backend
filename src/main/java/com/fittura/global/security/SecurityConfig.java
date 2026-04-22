@@ -42,7 +42,7 @@ public class SecurityConfig {
                     .requestMatchers("/favicon.ico").permitAll()
                     .requestMatchers("/h2-console/**").permitAll()
                     .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
-                    .requestMatchers("/api/*/adm/**").hasRole("ADMIN")
+                    .requestMatchers("/api/admin/**").hasRole("ADMIN")
                     .requestMatchers("/api/*/auth/**").permitAll() // TODO: 로그인 기능 구현 후 .anyRequest().authenticated()
                     .anyRequest().permitAll()
             )
