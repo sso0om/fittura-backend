@@ -67,4 +67,15 @@ public class AdminCategoryControllerV1 {
         return ResponseEntity
             .ok(RsData.success("카테고리가 수정되었습니다.", null));
     }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "카테고리 삭제", description = "카테고리 삭제(비활성화) API")
+    public ResponseEntity<RsData<Void>> deleteCategory(
+        @PathVariable Long id
+    ) {
+        categoryService.deleteCategory(id);
+
+        return ResponseEntity
+            .ok(RsData.success("카테고리를 삭제하였습니다.", null));
+    }
 }

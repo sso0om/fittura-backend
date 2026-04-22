@@ -73,6 +73,13 @@ public class CategoryService {
         }
     }
 
+    @Transactional
+    public void deleteCategory(Long id) {
+        Category category = getCategory(id);
+
+        category.disable();
+    }
+
 
     // ===== 헬퍼 메서드 ====
 

@@ -7,7 +7,6 @@ import com.fittura.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +36,6 @@ public class Category extends BaseEntity {
     @Column(nullable = false)
     private int sortOrder;
 
-    @Setter
     @Enumerated(EnumType.STRING)
     private CategoryStatus status;
 
@@ -65,6 +63,14 @@ public class Category extends BaseEntity {
         this.name = name;
         this.sortOrder = sortOrder;
         this.status = status;
+    }
+
+    public void activate() {
+        this.status = CategoryStatus.ACTIVE;
+    }
+
+    public void disable() {
+        this.status = CategoryStatus.DISABLED;
     }
 
 

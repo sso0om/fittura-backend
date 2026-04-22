@@ -14,7 +14,7 @@ public class CategoryFixture {
 
     public static Category root(String name, int sortOrder, CategoryStatus status) {
         Category category = Category.createRoot(name, sortOrder);
-        category.setStatus(status);
+        category.activate();
 
         return category;
     }
@@ -25,7 +25,7 @@ public class CategoryFixture {
 
     public static Category child(String name, int sortOrder, Category parent, CategoryStatus status) {
         Category category = Category.createChild(name, sortOrder, parent);
-        category.setStatus(status);
+        category.activate();
 
         return category;
     }

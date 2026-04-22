@@ -220,6 +220,7 @@ class AdminCategoryControllerV1Test {
 
 
     // ========== 카테고리 단건 수정 ==========
+
     @Test
     @DisplayName("카테고리 수정 성공 - 기본 정보 수정")
     void updateCategoryInfoSuccess() throws Exception {
@@ -242,7 +243,7 @@ class AdminCategoryControllerV1Test {
             )
             .andDo(print());
 
-        // verify
+        // verify response
         resultActions
             .andExpect(handler().handlerType(AdminCategoryControllerV1.class))
             .andExpect(handler().methodName("updateCategory"))
@@ -250,6 +251,7 @@ class AdminCategoryControllerV1Test {
             .andExpect(jsonPath("$.code").value("S200-01"))
             .andExpect(jsonPath("$.message").value("카테고리가 수정되었습니다."));
 
+        // verify DB
         Category after = getCategoryById(category.getId());
 
         assertThat(after.getName()).isEqualTo("카테고리 변경");
@@ -284,7 +286,7 @@ class AdminCategoryControllerV1Test {
             )
             .andDo(print());
 
-        // verify
+        // verify response
         resultActions
             .andExpect(handler().handlerType(AdminCategoryControllerV1.class))
             .andExpect(handler().methodName("updateCategory"))
@@ -292,6 +294,7 @@ class AdminCategoryControllerV1Test {
             .andExpect(jsonPath("$.code").value("S200-01"))
             .andExpect(jsonPath("$.message").value("카테고리가 수정되었습니다."));
 
+        // verify DB
         Category after = getCategoryById(category.getId());
 
         assertThat(after.getName()).isEqualTo("자식 변경");
@@ -325,7 +328,7 @@ class AdminCategoryControllerV1Test {
             )
             .andDo(print());
 
-        // verify
+        // verify response
         resultActions
             .andExpect(handler().handlerType(AdminCategoryControllerV1.class))
             .andExpect(handler().methodName("updateCategory"))
@@ -333,6 +336,7 @@ class AdminCategoryControllerV1Test {
             .andExpect(jsonPath("$.code").value("S200-01"))
             .andExpect(jsonPath("$.message").value("카테고리가 수정되었습니다."));
 
+        // verify DB
         Category after = getCategoryById(category.getId());
 
         assertThat(after.getName()).isEqualTo("최상위 카테고리");
@@ -438,6 +442,31 @@ class AdminCategoryControllerV1Test {
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.code").value(CategoryErrorCode.NOT_SELF_PARENT.getCode()))
             .andExpect(jsonPath("$.message").value(CategoryErrorCode.NOT_SELF_PARENT.getMessage()));
+    }
+
+
+    // ========== 카테고리 삭제 ==========
+
+    @Test
+    @DisplayName("카테고리 삭제 성공")
+    void deleteCategorySuccess() throws Exception {
+        Category category = categoryRepository.save(CategoryFixture.rootActive());
+
+        ResultActions resultActions = mockMvc
+            .perform(delete(CATEGORY_URL + "/" + category.getId()))
+            .andDo(print());
+
+        // verify response
+        resultActions
+            .andExpect(handler().handlerType(AdminCategoryControllerV1.class))
+            .andExpect(handler().methodName("deleteCategory"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value("S200-01"));
+
+        // verify DB
+        Category after = getCategoryById(category.getId());
+
+        assertThat(after.getStatus()).isEqualTo(CategoryStatus.DISABLED);
     }
 
 
