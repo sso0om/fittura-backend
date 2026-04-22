@@ -5,12 +5,14 @@ import com.fittura.domain.product.categry.entity.Category;
 import com.fittura.domain.product.categry.error.CategoryErrorCode;
 import com.fittura.domain.product.categry.repository.CategoryRepository;
 import com.fittura.domain.product.categry.support.CategoryFixture;
+import com.fittura.global.error.CommonErrorCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -21,6 +23,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+@WithMockUser(roles = "ADMIN")
 @ActiveProfiles("test")
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -189,6 +192,33 @@ class AdminCategoryControllerV1Test {
             .andExpect(jsonPath("$.data.sortOrder").value(category.getSortOrder()));
     }
 
+    @WithMockUser(roles = "USER")
+    @Test
+    @DisplayName("카테고리 생성 실패 - 관리자 아닌 경우")
+    void createCategoryForbidden() throws Exception {
+        // given
+        String reqBody = """
+            {
+                "name" : "카테고리1",
+                "sortOrder" : 1
+            }
+            """;
+
+        // when & then
+        ResultActions resultActions = mockMvc
+            .perform(post(CATEGORY_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody)
+            )
+            .andDo(print());
+
+        // verify
+        resultActions
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.code").value(CommonErrorCode.FORBIDDEN.getCode()))
+            .andExpect(jsonPath("$.message").value(CommonErrorCode.FORBIDDEN.getMessage()));
+    }
+
     @Test
     @DisplayName("자식 카테고리 생성 실패 - 부모가 없는 경우")
     void createChildCategoryFail() throws Exception {
@@ -351,6 +381,36 @@ class AdminCategoryControllerV1Test {
         assertThat(afterChild.getDepth()).isEqualTo(after.getDepth() + 1);
     }
 
+    @WithMockUser(roles = "USER")
+    @Test
+    @DisplayName("카테고리 수정 실패 - 관리자 아닌 경우")
+    void updateCategoryForbidden() throws Exception {
+        Category category = categoryRepository.save(CategoryFixture.rootActive());
+
+        // given
+        String reqBody = """
+            {
+                "name" : "카테고리 변경",
+                "sortOrder" : 2,
+                "status" : "ACTIVE"
+            }
+        """;
+
+        // when & then
+        ResultActions resultActions = mockMvc
+            .perform(put(CATEGORY_URL + "/" + category.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody)
+            )
+            .andDo(print());
+
+        // verify response
+        resultActions
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.code").value(CommonErrorCode.FORBIDDEN.getCode()))
+            .andExpect(jsonPath("$.message").value(CommonErrorCode.FORBIDDEN.getMessage()));
+    }
+
     @Test
     @DisplayName("카테고리 수정 실패 - 존재하지 않은 카테고리 수정")
     void updateCategoryNotFound() throws Exception {
@@ -467,6 +527,23 @@ class AdminCategoryControllerV1Test {
         Category after = getCategoryById(category.getId());
 
         assertThat(after.getStatus()).isEqualTo(CategoryStatus.DISABLED);
+    }
+
+    @WithMockUser(roles = "USER")
+    @Test
+    @DisplayName("카테고리 삭제 실패 - 관리자 아닌 경우")
+    void deleteCategoryForbidden() throws Exception {
+        Category category = categoryRepository.save(CategoryFixture.rootActive());
+
+        ResultActions resultActions = mockMvc
+            .perform(delete(CATEGORY_URL + "/" + category.getId()))
+            .andDo(print());
+
+        // verify response
+        resultActions
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.code").value(CommonErrorCode.FORBIDDEN.getCode()))
+            .andExpect(jsonPath("$.message").value(CommonErrorCode.FORBIDDEN.getMessage()));
     }
 
 
