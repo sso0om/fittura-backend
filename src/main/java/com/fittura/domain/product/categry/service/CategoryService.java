@@ -1,5 +1,6 @@
 package com.fittura.domain.product.categry.service;
 
+import com.fittura.domain.product.categry.constant.CategoryStatus;
 import com.fittura.domain.product.categry.dto.request.CategoryCreateReqDto;
 import com.fittura.domain.product.categry.dto.request.CategoryUpdateReqDto;
 import com.fittura.domain.product.categry.dto.response.CategoryResDto;
@@ -62,7 +63,7 @@ public class CategoryService {
     public void updateCategory(Long id, CategoryUpdateReqDto reqDto) {
         Category category = getCategory(id);
 
-        category.update(reqDto.name(), reqDto.sortOrder(), reqDto.status());
+        category.update(reqDto.name(), reqDto.sortOrder());
 
         Category newParent = reqDto.parentId() == null
             ? null
@@ -74,10 +75,30 @@ public class CategoryService {
     }
 
     @Transactional
+    public CategoryResDto activeCategory(Long id) {
+        Category category = getCategory(id);
+        category.activate();
+
+        return CategoryResDto.from(category);
+    }
+
+    @Transactional
+    public CategoryResDto disableCategory(Long id) {
+        Category category = getCategory(id);
+        category.disable();
+
+        return CategoryResDto.from(category);
+    }
+
+    @Transactional
     public void deleteCategory(Long id) {
         Category category = getCategory(id);
 
-        category.disable();
+        List<Long> descendantIds = categoryRepository.findDescendantIds(category.getId());
+
+        if(!descendantIds.isEmpty()) {
+            categoryRepository.bulkUpdateStatus(descendantIds, CategoryStatus.ARCHIVED);
+        }
     }
 
 

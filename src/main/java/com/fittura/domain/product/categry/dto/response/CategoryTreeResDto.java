@@ -1,5 +1,6 @@
 package com.fittura.domain.product.categry.dto.response;
 
+import com.fittura.domain.product.categry.constant.CategoryStatus;
 import com.fittura.domain.product.categry.entity.Category;
 
 import java.util.Comparator;
@@ -12,6 +13,7 @@ public record CategoryTreeResDto(
     Long parentId,
     int depth,
     int sortOrder,
+    CategoryStatus status,
     List<CategoryTreeResDto> children
 ) {
     public static CategoryTreeResDto from(
@@ -24,6 +26,7 @@ public record CategoryTreeResDto(
             category.getParent() == null ? null : category.getParent().getId(),
             category.getDepth(),
             category.getSortOrder(),
+            category.getStatus(),
             fromChildren(category.getId(), childrenMap)
         );
     }

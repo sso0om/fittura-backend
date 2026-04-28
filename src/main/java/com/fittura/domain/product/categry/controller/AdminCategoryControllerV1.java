@@ -70,8 +70,30 @@ public class AdminCategoryControllerV1 {
             .ok(RsData.success("카테고리가 수정되었습니다.", null));
     }
 
+    @PatchMapping("/{id}/activate")
+    @Operation(summary = "카테고리 활성화", description = "카테고리 활성화 API")
+    public ResponseEntity<RsData<CategoryResDto>> activateCategory(
+        @PathVariable Long id
+    ) {
+        CategoryResDto resDto = categoryService.activeCategory(id);
+
+        return ResponseEntity
+            .ok(RsData.createSuccess("카테고리가 활성화되었습니다.", resDto));
+    }
+
+    @PatchMapping("/{id}/disable")
+    @Operation(summary = "카테고리 비활성화", description = "카테고리 비활성화 API")
+    public ResponseEntity<RsData<CategoryResDto>> disableCategory(
+        @PathVariable Long id
+    ) {
+        CategoryResDto resDto = categoryService.disableCategory(id);
+
+        return ResponseEntity
+            .ok(RsData.createSuccess("카테고리가 비활성화되었습니다.", resDto));
+    }
+
     @DeleteMapping("/{id}")
-    @Operation(summary = "카테고리 삭제", description = "카테고리 삭제(비활성화) API")
+    @Operation(summary = "카테고리 삭제", description = "카테고리 삭제(archived) API")
     public ResponseEntity<RsData<Void>> deleteCategory(
         @PathVariable Long id
     ) {

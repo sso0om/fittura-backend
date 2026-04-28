@@ -39,6 +39,9 @@ public class Category extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private CategoryStatus status;
 
+
+    // ===== 생성 =====
+
     private Category(String name, int sortOrder) {
         this.name = name;
         this.sortOrder = sortOrder;
@@ -54,34 +57,28 @@ public class Category extends BaseEntity {
     public static Category createChild(String name, int sortOrder, Category parent) {
         Objects.requireNonNull(parent, "parent must not be null");
 
+        if (parent.isArchived()) {
+            throw new ServiceException(CategoryErrorCode.NOT_ARCHIVED_PARENT);
+        }
+
         Category category = new Category(name, sortOrder);
         parent.addChild(category);
         return category;
     }
 
-    public void update(String name, int sortOrder, CategoryStatus status) {
+
+    // ===== 수정 =====
+
+    public void update(String name, int sortOrder) {
         this.name = name;
         this.sortOrder = sortOrder;
-        this.status = status;
     }
 
-    public void activate() {
-        this.status = CategoryStatus.ACTIVE;
-    }
-
-    public void disable() {
-        this.status = CategoryStatus.DISABLED;
-    }
-
-
-    // ===== 연관관계 편의 메서드 =====
-
-    public void addChild(Category child) {
-        children.add(child);
-        child.setParent(this);
-        child.setDepth(this.depth + 1);
-    }
-
+    /**
+     * 부모 변경
+     * - 순환 참조 검증
+     * - depth 재계산 (자식 포함)
+     */
     public void changeParent(Category newParent) {
         validateParent(newParent);
 
@@ -90,6 +87,47 @@ public class Category extends BaseEntity {
 
         int newDepth = newParent == null ? 0 : newParent.getDepth() + 1;
         updateDepthRecursively(newDepth);
+    }
+
+    /**
+     * 활성화
+     * - 부모가 DISABLED/ARCHIVED 상태면 활성화 불가
+     */
+    public void activate() {
+        if (parent != null && !parent.isActive()) {
+            throw new ServiceException(CategoryErrorCode.PARENT_NOT_ACTIVE);
+        }
+
+        this.status = CategoryStatus.ACTIVE;
+    }
+
+    /**
+     * 비활성화
+     * - 자식에게 전파하지 않음
+     * - 조회 시 부모 상태를 함께 확인하는 방식
+     */
+    public void disable() {
+        this.status = CategoryStatus.DISABLED;
+    }
+
+
+    // ===== 상태 확인 =====
+
+    public boolean isActive() {
+        return this.status == CategoryStatus.ACTIVE;
+    }
+
+    public boolean isArchived() {
+        return this.status == CategoryStatus.ARCHIVED;
+    }
+
+
+    // ===== 연관관계 편의 메서드 =====
+
+    private void addChild(Category child) {
+        children.add(child);
+        child.setParent(this);
+        child.setDepth(this.depth + 1);
     }
 
     private void detachFromParent() {
@@ -109,11 +147,27 @@ public class Category extends BaseEntity {
     private void updateDepthRecursively(int newDepth) {
         this.depth = newDepth;
 
-        if (!this.children.isEmpty()) {
-            for (Category child : this.children) {
-                child.updateDepthRecursively(newDepth + 1);
-            }
+        for (Category child : this.children) {
+            child.updateDepthRecursively(newDepth + 1);
         }
+    }
+
+    /**
+     * 대상 카테고리가 현재 카테고리의 하위(자손)인지 검사
+     * - 부모 변경 시 순환 참조 방지용
+     *
+     * @param newParent 신규 부모로 지정하려는 카테고리
+     * @return newParent가 현재 카테고리의 자손이면 true
+     */
+    private boolean isDescendant(Category newParent) {
+        Category current = newParent;
+
+        while (current != null) {
+            if (this.equals(current)) return true;
+            current = current.getParent();
+        }
+
+        return false;
     }
 
 
@@ -140,23 +194,9 @@ public class Category extends BaseEntity {
         if (isDescendant(newParent)) {
             throw new ServiceException(CategoryErrorCode.NOT_DESCENDANT_PARENT);
         }
-    }
 
-    /**
-     * 대상 카테고리가 현재 카테고리의 하위(자손)인지 검사
-     * - 부모 변경 시 순환 참조 방지용
-     *
-     * @param newParent 신규 부모로 지정하려는 카테고리
-     * @return newParent가 현재 카테고리의 자손이면 true
-     */
-    private boolean isDescendant(Category newParent) {
-        Category current = newParent;
-
-        while (current != null) {
-            if (this.equals(current)) return true;
-            current = current.getParent();
+        if (newParent.isArchived()) {
+            throw new ServiceException(CategoryErrorCode.NOT_ARCHIVED_PARENT);
         }
-
-        return false;
     }
 }
