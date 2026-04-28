@@ -2,6 +2,7 @@ package com.fittura.domain.product.categry.support;
 
 import com.fittura.domain.product.categry.constant.CategoryStatus;
 import com.fittura.domain.product.categry.entity.Category;
+import org.springframework.test.util.ReflectionTestUtils;
 
 public class CategoryFixture {
 
@@ -14,8 +15,14 @@ public class CategoryFixture {
 
     public static Category root(String name, int sortOrder, CategoryStatus status) {
         Category category = Category.createRoot(name, sortOrder);
-        category.activate();
+        applyStatus(category, status);
 
+        return category;
+    }
+
+    public static Category rootActiveWithId(Long id) {
+        Category category = rootActive();
+        ReflectionTestUtils.setField(category, "id", id);
         return category;
     }
 
@@ -25,7 +32,7 @@ public class CategoryFixture {
 
     public static Category child(String name, int sortOrder, Category parent, CategoryStatus status) {
         Category category = Category.createChild(name, sortOrder, parent);
-        category.activate();
+        applyStatus(category, status);
 
         return category;
     }
@@ -35,5 +42,19 @@ public class CategoryFixture {
 
     public static Category rootActive() {
         return root("최상위 카테고리", 0, CategoryStatus.ACTIVE);
+    }
+
+    public static Category childActive(Category parent) {
+        return child("하위 카테고리", 0, parent, CategoryStatus.ACTIVE);
+    }
+
+
+    // ===== 헬퍼 메서드 =====
+    private static void applyStatus(Category category, CategoryStatus status) {
+        switch (status) {
+            case ACTIVE -> category.activate();
+            case DISABLED -> category.disable();
+            default -> throw new IllegalArgumentException("Unhandled status: " + status);
+        }
     }
 }

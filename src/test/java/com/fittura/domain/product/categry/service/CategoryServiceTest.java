@@ -16,10 +16,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
@@ -88,7 +90,11 @@ class CategoryServiceTest {
         assertThat(result.depth()).isEqualTo(0);
         assertThat(result.sortOrder()).isEqualTo(1);
 
-        verify(categoryRepository).save(org.mockito.ArgumentMatchers.any(Category.class));
+        verify(categoryRepository).save(argThat(category ->
+            category.getName().equals("루트") &&
+                category.getDepth() == 0 &&
+                category.getParent() == null
+        ));
     }
 
     @Test
@@ -110,7 +116,7 @@ class CategoryServiceTest {
         assertThat(result.sortOrder()).isEqualTo(2);
 
         verify(categoryRepository).findById(1L);
-        verify(categoryRepository).save(org.mockito.ArgumentMatchers.any(Category.class));
+        verify(categoryRepository).save(any(Category.class));
     }
 
     @Test
@@ -136,8 +142,7 @@ class CategoryServiceTest {
     void updateCategoryInfoSuccess() {
         // given
         Category category = CategoryFixture.root("기존", 1);
-        CategoryUpdateReqDto reqDto = new CategoryUpdateReqDto("변경", null, 2, CategoryStatus.ACTIVE);
-
+        CategoryUpdateReqDto reqDto = new CategoryUpdateReqDto("변경", null, 2);
         given(categoryRepository.findById(1L)).willReturn(Optional.of(category));
 
         // when
@@ -148,7 +153,7 @@ class CategoryServiceTest {
         assertThat(category.getParent()).isNull();
         assertThat(category.getDepth()).isEqualTo(0);
         assertThat(category.getSortOrder()).isEqualTo(2);
-        assertThat(category.getStatus()).isEqualTo(CategoryStatus.ACTIVE);
+        assertThat(category.getStatus()).isEqualTo(CategoryStatus.DISABLED);
 
         verify(categoryRepository).findById(1L);
     }
@@ -160,8 +165,7 @@ class CategoryServiceTest {
         Category root1 = CategoryFixture.root("루트1", 1);
         Category root2 = CategoryFixture.root("루트2", 2);
         Category category = CategoryFixture.child("자식", 1, root1);
-
-        CategoryUpdateReqDto reqDto = new CategoryUpdateReqDto("자식변경", 2L, 3, CategoryStatus.ACTIVE);
+        CategoryUpdateReqDto reqDto = new CategoryUpdateReqDto("자식변경", 2L, 3);
 
         given(categoryRepository.findById(1L)).willReturn(Optional.of(category));
         given(categoryRepository.findById(2L)).willReturn(Optional.of(root2));
@@ -174,7 +178,7 @@ class CategoryServiceTest {
         assertThat(category.getParent()).isEqualTo(root2);
         assertThat(category.getDepth()).isEqualTo(root2.getDepth() + 1);
         assertThat(category.getSortOrder()).isEqualTo(3);
-        assertThat(category.getStatus()).isEqualTo(CategoryStatus.ACTIVE);
+        assertThat(category.getStatus()).isEqualTo(CategoryStatus.DISABLED);
 
         verify(categoryRepository).findById(1L);
         verify(categoryRepository).findById(2L);
@@ -184,8 +188,8 @@ class CategoryServiceTest {
     @DisplayName("카테고리 수정 실패 - 존재하지 않는 카테고리")
     void updateCategoryFailWhenCategoryNotFound() {
         // given
-        CategoryUpdateReqDto reqDto = new CategoryUpdateReqDto("변경", null, 2, CategoryStatus.ACTIVE);
         given(categoryRepository.findById(1L)).willReturn(Optional.empty());
+        CategoryUpdateReqDto reqDto = new CategoryUpdateReqDto("변경", null, 2);
 
         // when & then
         assertThatThrownBy(() -> categoryService.updateCategory(1L, reqDto))
@@ -200,7 +204,7 @@ class CategoryServiceTest {
     void updateCategoryFailWhenParentNotFound() {
         // given
         Category category = CategoryFixture.root("기존", 1);
-        CategoryUpdateReqDto reqDto = new CategoryUpdateReqDto("변경", 2L, 2, CategoryStatus.ACTIVE);
+        CategoryUpdateReqDto reqDto = new CategoryUpdateReqDto("변경", 2L, 2);
 
         given(categoryRepository.findById(1L)).willReturn(Optional.of(category));
         given(categoryRepository.findById(2L)).willReturn(Optional.empty());
@@ -215,16 +219,35 @@ class CategoryServiceTest {
     }
 
 
-    // ========== 카테고리 삭제 ==========
+    // ========== 카테고리 상태 변경 ==========
     @Test
-    @DisplayName("카테고리 삭제 성공")
-    void deleteCategorySuccess() {
+    @DisplayName("카테고리 활성화 성공")
+    void activeCategorySuccess() {
+        // given
+        Category category = CategoryFixture.root("상위 카테고리", 1);
+        Category child = CategoryFixture.child("하위", 1, category);
+        category.getChildren().add(child);
+        given(categoryRepository.findById(1L)).willReturn(Optional.of(category));
+
+        // when
+        categoryService.activeCategory(1L);
+
+        // then
+        assertThat(category.getStatus()).isEqualTo(CategoryStatus.ACTIVE);
+        assertThat(category.getChildren().getFirst().getStatus()).isEqualTo(CategoryStatus.DISABLED);
+
+        verify(categoryRepository).findById(1L);
+    }
+
+    @Test
+    @DisplayName("카테고리 비활성화 성공")
+    void disableCategorySuccess() {
         // given
         Category category = CategoryFixture.rootActive();
         given(categoryRepository.findById(1L)).willReturn(Optional.of(category));
 
         // when
-        categoryService.deleteCategory(1L);
+        categoryService.disableCategory(1L);
 
         // then
         assertThat(category.getStatus()).isEqualTo(CategoryStatus.DISABLED);
@@ -233,16 +256,25 @@ class CategoryServiceTest {
     }
 
     @Test
-    @DisplayName("카테고리 삭제 실패 - 존재하지 않는 카테고리")
-    void deleteCategoryFailWhenCategoryNotFound() {
+    @DisplayName("카테고리 삭제 성공")
+    void deleteCategorySuccess() {
         // given
-        given(categoryRepository.findById(1L)).willReturn(Optional.empty());
+        Category category = CategoryFixture.rootActiveWithId(1L);
 
-        // when & then
-        assertThatThrownBy(() -> categoryService.deleteCategory(1L))
-            .isInstanceOf(ServiceException.class)
-            .hasMessage(CategoryErrorCode.NOT_FOUND_CATEGORY.getMessage());
+        given(categoryRepository.findById(1L)).willReturn(Optional.of(category));
+        given(categoryRepository.findDescendantIds(1L))
+            .willReturn(List.of(1L, 2L, 3L));
 
+        // when
+        categoryService.deleteCategory(1L);
+
+        // then
         verify(categoryRepository).findById(1L);
+        verify(categoryRepository).findDescendantIds(1L);
+        verify(categoryRepository)
+            .bulkUpdateStatus(
+                argThat(ids -> ids.containsAll(List.of(1L, 2L, 3L))),
+                eq(CategoryStatus.ARCHIVED)
+            );
     }
 }

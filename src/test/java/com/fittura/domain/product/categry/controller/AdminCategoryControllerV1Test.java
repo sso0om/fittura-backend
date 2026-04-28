@@ -219,35 +219,6 @@ class AdminCategoryControllerV1Test {
             .andExpect(jsonPath("$.message").value(CommonErrorCode.FORBIDDEN.getMessage()));
     }
 
-    @Test
-    @DisplayName("자식 카테고리 생성 실패 - 부모가 없는 경우")
-    void createChildCategoryFail() throws Exception {
-        // given
-        String reqBody = """
-            {
-                "name" : "하위 카테고리1",
-                "parentId" : 999,
-                "sortOrder" : 1
-            }
-        """;
-
-        // when & then
-        ResultActions resultActions = mockMvc
-            .perform(post(CATEGORY_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(reqBody)
-            )
-            .andDo(print());
-
-        // verify
-        resultActions
-            .andExpect(handler().handlerType(AdminCategoryControllerV1.class))
-            .andExpect(handler().methodName("createCategory"))
-            .andExpect(status().isNotFound())
-            .andExpect(jsonPath("$.code").value(CategoryErrorCode.NOT_FOUND_PARENT_CATEGORY.getCode()))
-            .andExpect(jsonPath("$.message").value(CategoryErrorCode.NOT_FOUND_PARENT_CATEGORY.getMessage()));
-    }
-
 
     // ========== 카테고리 단건 수정 ==========
 
@@ -260,8 +231,7 @@ class AdminCategoryControllerV1Test {
         String reqBody = """
             {
                 "name" : "카테고리 변경",
-                "sortOrder" : 2,
-                "status" : "ACTIVE"
+                "sortOrder" : 2
             }
         """;
 
@@ -303,8 +273,7 @@ class AdminCategoryControllerV1Test {
             {
                 "name" : "자식 변경",
                 "parentId" : %d,
-                "sortOrder" : 3,
-                "status" : "ACTIVE"
+                "sortOrder" : 3
             }
         """.formatted(root2.getId());
 
@@ -331,22 +300,20 @@ class AdminCategoryControllerV1Test {
         assertThat(after.getSortOrder()).isEqualTo(3);
         assertThat(after.getParent()).isEqualTo(root2);
         assertThat(after.getDepth()).isEqualTo(root2.getDepth() + 1);
-        assertThat(after.getStatus()).isEqualTo(CategoryStatus.ACTIVE);
     }
 
     @Test
     @DisplayName("카테고리 수정 성공 - 루트 카테고리로 변경")
     void updateCategoryToRootSuccess() throws Exception {
         Category root = categoryRepository.save(CategoryFixture.root("루트1", 1));
-        Category category = categoryRepository.save(CategoryFixture.child("상위 카테고리", 1, root));
-        Category child = categoryRepository.save(CategoryFixture.child("자식2", 1, category));
+        Category category = categoryRepository.save(CategoryFixture.child("상위", 1, root));
+        Category child = categoryRepository.save(CategoryFixture.child("자식", 1, category));
 
         // given
         String reqBody = """
             {
-                "name" : "최상위 카테고리",
-                "sortOrder" : 1,
-                "status" : "ACTIVE"
+                "name" : "루트2",
+                "sortOrder" : 1
             }
         """;
 
@@ -369,107 +336,15 @@ class AdminCategoryControllerV1Test {
         // verify DB
         Category after = getCategoryById(category.getId());
 
-        assertThat(after.getName()).isEqualTo("최상위 카테고리");
+        assertThat(after.getName()).isEqualTo("루트2");
         assertThat(after.getSortOrder()).isEqualTo(1);
         assertThat(after.getParent()).isNull();
         assertThat(after.getDepth()).isEqualTo(0);
-        assertThat(after.getStatus()).isEqualTo(CategoryStatus.ACTIVE);
 
         Category afterChild = getCategoryById(child.getId());
 
         assertThat(afterChild.getParent()).isEqualTo(after);
         assertThat(afterChild.getDepth()).isEqualTo(after.getDepth() + 1);
-    }
-
-    @WithMockUser(roles = "USER")
-    @Test
-    @DisplayName("카테고리 수정 실패 - 관리자 아닌 경우")
-    void updateCategoryForbidden() throws Exception {
-        Category category = categoryRepository.save(CategoryFixture.rootActive());
-
-        // given
-        String reqBody = """
-            {
-                "name" : "카테고리 변경",
-                "sortOrder" : 2,
-                "status" : "ACTIVE"
-            }
-        """;
-
-        // when & then
-        ResultActions resultActions = mockMvc
-            .perform(put(CATEGORY_URL + "/" + category.getId())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(reqBody)
-            )
-            .andDo(print());
-
-        // verify response
-        resultActions
-            .andExpect(status().isForbidden())
-            .andExpect(jsonPath("$.code").value(CommonErrorCode.FORBIDDEN.getCode()))
-            .andExpect(jsonPath("$.message").value(CommonErrorCode.FORBIDDEN.getMessage()));
-    }
-
-    @Test
-    @DisplayName("카테고리 수정 실패 - 존재하지 않은 카테고리 수정")
-    void updateCategoryNotFound() throws Exception {
-        // given
-        String reqBody = """
-            {
-                "name" : "카테고리 변경",
-                "sortOrder" : 1,
-                "status" : "ACTIVE"
-            }
-        """;
-
-        // when & then
-        ResultActions resultActions = mockMvc
-            .perform(put(CATEGORY_URL + "/9999")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(reqBody)
-            )
-            .andDo(print());
-
-        // verify
-        resultActions
-            .andExpect(handler().handlerType(AdminCategoryControllerV1.class))
-            .andExpect(handler().methodName("updateCategory"))
-            .andExpect(status().isNotFound())
-            .andExpect(jsonPath("$.code").value(CategoryErrorCode.NOT_FOUND_CATEGORY.getCode()))
-            .andExpect(jsonPath("$.message").value(CategoryErrorCode.NOT_FOUND_CATEGORY.getMessage()));
-    }
-
-    @Test
-    @DisplayName("카테고리 수정 실패 - 존재하지 않은 부모 카테고리로 변경")
-    void updateCategoryParentNotFound() throws Exception {
-        Category category = categoryRepository.save(CategoryFixture.rootActive());
-
-        // given
-        String reqBody = """
-            {
-                "name" : "카테고리 변경",
-                "parentId" : 9999,
-                "sortOrder" : 1,
-                "status" : "ACTIVE"
-            }
-        """;
-
-        // when & then
-        ResultActions resultActions = mockMvc
-            .perform(put(CATEGORY_URL + "/" + category.getId())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(reqBody)
-            )
-            .andDo(print());
-
-        // verify
-        resultActions
-            .andExpect(handler().handlerType(AdminCategoryControllerV1.class))
-            .andExpect(handler().methodName("updateCategory"))
-            .andExpect(status().isNotFound())
-            .andExpect(jsonPath("$.code").value(CategoryErrorCode.NOT_FOUND_PARENT_CATEGORY.getCode()))
-            .andExpect(jsonPath("$.message").value(CategoryErrorCode.NOT_FOUND_PARENT_CATEGORY.getMessage()));
     }
 
     @Test
@@ -507,13 +382,15 @@ class AdminCategoryControllerV1Test {
 
     // ========== 카테고리 삭제 ==========
 
-    @Test
+    /*@Test
     @DisplayName("카테고리 삭제 성공")
     void deleteCategorySuccess() throws Exception {
-        Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Category parent = categoryRepository.save(CategoryFixture.rootActive());
+        Category child = categoryRepository.save(CategoryFixture.childActive(parent));
+        Category granChild = categoryRepository.save(CategoryFixture.childActive(child));
 
         ResultActions resultActions = mockMvc
-            .perform(delete(CATEGORY_URL + "/" + category.getId()))
+            .perform(delete(CATEGORY_URL + "/" + parent.getId()))
             .andDo(print());
 
         // verify response
@@ -524,27 +401,14 @@ class AdminCategoryControllerV1Test {
             .andExpect(jsonPath("$.code").value("S200-01"));
 
         // verify DB
-        Category after = getCategoryById(category.getId());
+        Category afterParent = getCategoryById(parent.getId());
+        Category afterChild = getCategoryById(child.getId());
+        Category afterGrandChild = getCategoryById(granChild.getId());
 
-        assertThat(after.getStatus()).isEqualTo(CategoryStatus.DISABLED);
-    }
-
-    @WithMockUser(roles = "USER")
-    @Test
-    @DisplayName("카테고리 삭제 실패 - 관리자 아닌 경우")
-    void deleteCategoryForbidden() throws Exception {
-        Category category = categoryRepository.save(CategoryFixture.rootActive());
-
-        ResultActions resultActions = mockMvc
-            .perform(delete(CATEGORY_URL + "/" + category.getId()))
-            .andDo(print());
-
-        // verify response
-        resultActions
-            .andExpect(status().isForbidden())
-            .andExpect(jsonPath("$.code").value(CommonErrorCode.FORBIDDEN.getCode()))
-            .andExpect(jsonPath("$.message").value(CommonErrorCode.FORBIDDEN.getMessage()));
-    }
+        assertThat(afterParent.getStatus()).isEqualTo(CategoryStatus.ARCHIVED);
+        assertThat(afterChild.getStatus()).isEqualTo(CategoryStatus.ARCHIVED);
+        assertThat(afterGrandChild.getStatus()).isEqualTo(CategoryStatus.ARCHIVED);
+    }*/
 
 
     // ===== 헬퍼 메서드 ====

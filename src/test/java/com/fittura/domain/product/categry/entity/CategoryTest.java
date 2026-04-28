@@ -2,16 +2,18 @@ package com.fittura.domain.product.categry.entity;
 
 import com.fittura.domain.product.categry.constant.CategoryStatus;
 import com.fittura.domain.product.categry.error.CategoryErrorCode;
+import com.fittura.domain.product.categry.support.CategoryFixture;
 import com.fittura.global.exception.ServiceException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CategoryTest {
 
-    // ========== 루트 카테고리 생성 ==========
+    // ========== 카테고리 생성 ==========
 
     @Test
     @DisplayName("루트 카테고리 생성 성공")
@@ -27,9 +29,6 @@ class CategoryTest {
         assertThat(category.getSortOrder()).isEqualTo(1);
         assertThat(category.getStatus()).isEqualTo(CategoryStatus.DISABLED);
     }
-
-
-    // ========== 자식 카테고리 생성 ==========
 
     @Test
     @DisplayName("자식 카테고리 생성 성공")
@@ -50,6 +49,19 @@ class CategoryTest {
         assertThat(parent.getChildren()).contains(child);
     }
 
+    @Test
+    @DisplayName("자식 카테고리 생성 성공")
+    void createChildFailArchivedParent() {
+        // given
+        Category parent = CategoryFixture.rootActiveWithId(1L);
+        ReflectionTestUtils.setField(parent, "status", CategoryStatus.ARCHIVED);
+
+        // when & then
+        assertThatThrownBy(() -> Category.createChild("자식", 2, parent))
+            .isInstanceOf(ServiceException.class)
+            .hasMessage(CategoryErrorCode.NOT_ARCHIVED_PARENT.getMessage());
+    }
+
 
     // ========== 카테고리 수정 ==========
 
@@ -60,61 +72,11 @@ class CategoryTest {
         Category category = Category.createRoot("기존", 1);
 
         // when
-        category.update("변경", 2, CategoryStatus.ACTIVE);
+        category.update("변경", 2);
 
         // then
         assertThat(category.getName()).isEqualTo("변경");
         assertThat(category.getSortOrder()).isEqualTo(2);
-        assertThat(category.getStatus()).isEqualTo(CategoryStatus.ACTIVE);
-    }
-
-
-    // ========== 카테고리 활성화 / 비활성화 ==========
-
-    @Test
-    @DisplayName("카테고리 활성화 성공")
-    void activateSuccess() {
-        // given
-        Category category = Category.createRoot("루트", 1);
-
-        // when
-        category.activate();
-
-        // then
-        assertThat(category.getStatus()).isEqualTo(CategoryStatus.ACTIVE);
-    }
-
-    @Test
-    @DisplayName("카테고리 비활성화 성공")
-    void disableSuccess() {
-        // given
-        Category category = Category.createRoot("루트", 1);
-        category.activate();
-
-        // when
-        category.disable();
-
-        // then
-        assertThat(category.getStatus()).isEqualTo(CategoryStatus.DISABLED);
-    }
-
-
-    // ========== 자식 카테고리 추가 ==========
-
-    @Test
-    @DisplayName("자식 카테고리 추가 성공")
-    void addChildSuccess() {
-        // given
-        Category parent = Category.createRoot("부모", 1);
-        Category child = Category.createRoot("자식", 2);
-
-        // when
-        parent.addChild(child);
-
-        // then
-        assertThat(parent.getChildren()).contains(child);
-        assertThat(child.getParent()).isEqualTo(parent);
-        assertThat(child.getDepth()).isEqualTo(parent.getDepth() + 1);
     }
 
 
@@ -160,17 +122,16 @@ class CategoryTest {
     void changeParentUpdateDepthRecursively() {
         // given
         Category root1 = Category.createRoot("루트1", 1);
-        Category root2 = Category.createRoot("루트2", 2);
 
-        Category parent = Category.createChild("중간", 1, root1);
+        Category parent = Category.createRoot("중간", 2);
         Category child = Category.createChild("자식", 1, parent);
         Category grandChild = Category.createChild("손자", 1, child);
 
         // when
-        parent.changeParent(root2);
+        parent.changeParent(root1);
 
         // then
-        assertThat(parent.getParent()).isEqualTo(root2);
+        assertThat(parent.getParent()).isEqualTo(root1);
         assertThat(parent.getDepth()).isEqualTo(1);
         assertThat(child.getDepth()).isEqualTo(2);
         assertThat(grandChild.getDepth()).isEqualTo(3);
@@ -204,5 +165,56 @@ class CategoryTest {
         assertThatThrownBy(() -> root.changeParent(grandChild))
             .isInstanceOf(ServiceException.class)
             .hasMessage(CategoryErrorCode.NOT_DESCENDANT_PARENT.getMessage());
+    }
+
+
+    // ========== 카테고리 활성화 / 비활성화 ==========
+
+    @Test
+    @DisplayName("카테고리 활성화 성공")
+    void activateSuccess() {
+        // given
+        Category category = Category.createRoot("루트", 1);
+
+        // when
+        category.activate();
+
+        // then
+        assertThat(category.getStatus()).isEqualTo(CategoryStatus.ACTIVE);
+    }
+
+    @Test
+    @DisplayName("카테고리 활성화 실패 - 부모가 활성화 상태가 아님")
+    void activateFailNotActiveParent() {
+        // given
+        Category root1 = Category.createRoot("루트1", 1);
+        Category child1 = CategoryFixture.child("자식1", 1, root1);
+
+        Category root2 = Category.createRoot("루트2", 2);
+        Category child2 = CategoryFixture.child("자식2", 1, root2);
+        ReflectionTestUtils.setField(root2, "status", CategoryStatus.ARCHIVED);
+
+        // when & then
+        assertThatThrownBy(child1::activate)
+            .isInstanceOf(ServiceException.class)
+            .hasMessage(CategoryErrorCode.PARENT_NOT_ACTIVE.getMessage());
+
+        assertThatThrownBy(child2::activate)
+            .isInstanceOf(ServiceException.class)
+            .hasMessage(CategoryErrorCode.PARENT_NOT_ACTIVE.getMessage());
+    }
+
+    @Test
+    @DisplayName("카테고리 비활성화 성공")
+    void disableSuccess() {
+        // given
+        Category category = Category.createRoot("루트", 1);
+        category.activate();
+
+        // when
+        category.disable();
+
+        // then
+        assertThat(category.getStatus()).isEqualTo(CategoryStatus.DISABLED);
     }
 }
