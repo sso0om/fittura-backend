@@ -382,7 +382,7 @@ class AdminCategoryControllerV1Test {
 
     // ========== 카테고리 삭제 ==========
 
-    /*@Test
+    @Test
     @DisplayName("카테고리 삭제 성공")
     void deleteCategorySuccess() throws Exception {
         Category parent = categoryRepository.save(CategoryFixture.rootActive());
@@ -408,7 +408,7 @@ class AdminCategoryControllerV1Test {
         assertThat(afterParent.getStatus()).isEqualTo(CategoryStatus.ARCHIVED);
         assertThat(afterChild.getStatus()).isEqualTo(CategoryStatus.ARCHIVED);
         assertThat(afterGrandChild.getStatus()).isEqualTo(CategoryStatus.ARCHIVED);
-    }*/
+    }
 
 
     // ===== 헬퍼 메서드 ====

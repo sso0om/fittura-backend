@@ -25,7 +25,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
         """, nativeQuery = true)
     List<Long> findDescendantIds(@Param("parentId") Long parentId);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("UPDATE Category c SET c.status = :status WHERE c.id IN :ids")
     void bulkUpdateStatus(@Param("ids") List<Long> ids, @Param("status") CategoryStatus status);
 }
