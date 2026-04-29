@@ -28,15 +28,14 @@ public class CategoryService {
     public List<CategoryTreeResDto> getAllCategories() {
         List<Category> categories = categoryRepository.findAll();
 
-        Map<Long, List<Category>> childrenMap = categories.stream()
-            .filter(c -> c.getParent() != null)
-            .collect(Collectors.groupingBy(c -> c.getParent().getId()));
+        return buildCategoryTree(categories);
+    }
 
-        return categories.stream()
-            .filter(c -> c.getParent() == null)
-            .sorted(Comparator.comparing(Category::getSortOrder))
-            .map(root -> CategoryTreeResDto.from(root, childrenMap))
-            .toList();
+    @Transactional(readOnly = true)
+    public List<CategoryTreeResDto> getActiveCategories() {
+        List<Category> categories = categoryRepository.findAllVisible(CategoryStatus.ACTIVE);
+
+        return buildCategoryTree(categories);
     }
 
     @Transactional(readOnly = true)
@@ -112,5 +111,17 @@ public class CategoryService {
     private Category getParentCategory(Long parentId) {
         return categoryRepository.findById(parentId)
             .orElseThrow(() -> new ServiceException(CategoryErrorCode.NOT_FOUND_PARENT_CATEGORY));
+    }
+
+    private static List<CategoryTreeResDto> buildCategoryTree(List<Category> categories) {
+        Map<Long, List<Category>> childrenMap = categories.stream()
+            .filter(c -> c.getParent() != null)
+            .collect(Collectors.groupingBy(c -> c.getParent().getId()));
+
+        return categories.stream()
+            .filter(c -> c.getParent() == null)
+            .sorted(Comparator.comparing(Category::getSortOrder))
+            .map(root -> CategoryTreeResDto.from(root, childrenMap))
+            .toList();
     }
 }

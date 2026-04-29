@@ -14,6 +14,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,13 +36,14 @@ class AdminCategoryControllerV1Test {
     @Autowired
     private CategoryRepository categoryRepository;
 
-    private static final String CATEGORY_URL = "/api/admin/v1/categories";
+    private static final String CATEGORY_ADMIN_URL = "/api/admin/v1/categories";
+    private static final String CATEGORY_USER_URL = "/api/v1/categories";
 
 
-    // ========== 카테고리 전체 조회 ==========
+    // ========== 카테고리 다건 조회 ==========
 
     @Test
-    @DisplayName("카테고리 전체 조회 성공")
+    @DisplayName("카테고리 전체 조회 성공 - 관리자")
     void getAllCategoriesSuccess() throws Exception {
         Category root1 = categoryRepository.save(CategoryFixture.rootActive());
         Category root2 = categoryRepository.save(CategoryFixture.root("최상위 카테고리2", 1));
@@ -51,7 +53,7 @@ class AdminCategoryControllerV1Test {
 
         // given
         ResultActions resultActions = mockMvc
-            .perform(get(CATEGORY_URL))
+            .perform(get(CATEGORY_ADMIN_URL))
             .andDo(print());
 
         resultActions
@@ -64,8 +66,32 @@ class AdminCategoryControllerV1Test {
             .andExpect(jsonPath("$.data[0].children.length()").value(2))
             .andExpect(jsonPath("$.data[0].children[1].children.length()").value(1)) // 손자 확인
             .andExpect(jsonPath("$.data[1].id").value(root2.getId()))
-            .andExpect(jsonPath("$.data[1].children.length()").value(0))
-        ;
+            .andExpect(jsonPath("$.data[1].children.length()").value(0));
+    }
+
+    @Test
+    @DisplayName("활성화된 카테고리 전체 조회 성공 - 사용자")
+    void getActiveCategoriesSuccess() throws Exception {
+        Category root1 = categoryRepository.save(CategoryFixture.rootActive());
+        Category root2 = categoryRepository.save(CategoryFixture.root("최상위 카테고리2", 1));
+        Category child1 = categoryRepository.save(CategoryFixture.child("자식 카테고리1", 0, root1, CategoryStatus.ACTIVE));
+        Category child2 = categoryRepository.save(CategoryFixture.child("자식 카테고리2", 1, root1));
+        Category child3 = categoryRepository.save(CategoryFixture.child("자식 카테고리2-1", 0, child2));
+        ReflectionTestUtils.setField(child3, "status", CategoryStatus.ACTIVE);
+
+        // given
+        ResultActions resultActions = mockMvc
+            .perform(get(CATEGORY_USER_URL))
+            .andDo(print());
+
+        resultActions
+            .andExpect(handler().handlerType(CategoryControllerV1.class))
+            .andExpect(handler().methodName("getActiveCategories"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value("S200-01"))
+            .andExpect(jsonPath("$.data.length()").value(1)) // 루트 개수
+            .andExpect(jsonPath("$.data[0].id").value(root1.getId()))
+            .andExpect(jsonPath("$.data[0].children.length()").value(1));
     }
 
 
@@ -78,7 +104,7 @@ class AdminCategoryControllerV1Test {
 
         // given
         ResultActions resultActions = mockMvc
-            .perform(get(CATEGORY_URL + "/" + category.getId()))
+            .perform(get(CATEGORY_ADMIN_URL + "/" + category.getId()))
             .andDo(print());
 
         resultActions
@@ -98,7 +124,7 @@ class AdminCategoryControllerV1Test {
     void getCategory() throws Exception {
         // given
         ResultActions resultActions = mockMvc
-            .perform(get(CATEGORY_URL + "/999"))
+            .perform(get(CATEGORY_ADMIN_URL + "/999"))
             .andDo(print());
 
         resultActions
@@ -125,7 +151,7 @@ class AdminCategoryControllerV1Test {
 
         // when & then
         ResultActions resultActions = mockMvc
-            .perform(post(CATEGORY_URL)
+            .perform(post(CATEGORY_ADMIN_URL)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(reqBody)
             )
@@ -165,7 +191,7 @@ class AdminCategoryControllerV1Test {
 
         // when & then
         ResultActions resultActions = mockMvc
-            .perform(post(CATEGORY_URL)
+            .perform(post(CATEGORY_ADMIN_URL)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(reqBody)
             )
@@ -206,7 +232,7 @@ class AdminCategoryControllerV1Test {
 
         // when & then
         ResultActions resultActions = mockMvc
-            .perform(post(CATEGORY_URL)
+            .perform(post(CATEGORY_ADMIN_URL)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(reqBody)
             )
@@ -237,7 +263,7 @@ class AdminCategoryControllerV1Test {
 
         // when & then
         ResultActions resultActions = mockMvc
-            .perform(put(CATEGORY_URL + "/" + category.getId())
+            .perform(put(CATEGORY_ADMIN_URL + "/" + category.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(reqBody)
             )
@@ -279,7 +305,7 @@ class AdminCategoryControllerV1Test {
 
         // when & then
         ResultActions resultActions = mockMvc
-            .perform(put(CATEGORY_URL + "/" + category.getId())
+            .perform(put(CATEGORY_ADMIN_URL + "/" + category.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(reqBody)
             )
@@ -319,7 +345,7 @@ class AdminCategoryControllerV1Test {
 
         // when & then
         ResultActions resultActions = mockMvc
-            .perform(put(CATEGORY_URL + "/" + category.getId())
+            .perform(put(CATEGORY_ADMIN_URL + "/" + category.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(reqBody)
             )
@@ -364,7 +390,7 @@ class AdminCategoryControllerV1Test {
 
         // when & then
         ResultActions resultActions = mockMvc
-            .perform(put(CATEGORY_URL + "/" + category.getId())
+            .perform(put(CATEGORY_ADMIN_URL + "/" + category.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(reqBody)
             )
@@ -390,7 +416,7 @@ class AdminCategoryControllerV1Test {
         Category granChild = categoryRepository.save(CategoryFixture.childActive(child));
 
         ResultActions resultActions = mockMvc
-            .perform(delete(CATEGORY_URL + "/" + parent.getId()))
+            .perform(delete(CATEGORY_ADMIN_URL + "/" + parent.getId()))
             .andDo(print());
 
         // verify response

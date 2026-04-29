@@ -14,6 +14,15 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
 
     Optional<Category> findFirstByOrderByIdDesc();
 
+    @Query("""
+        SELECT c FROM Category c
+        LEFT JOIN c.parent p
+        WHERE c.status = :status
+        AND (p IS NULL OR p.status = :status)
+        """)
+    // ACTIVE인 루트이거나 부모와 자신 모두 ACTIVE인 카테고리만 조회
+    List<Category> findAllVisible(@Param("status") CategoryStatus status);
+
     @Query(value = """
         WITH RECURSIVE descendants AS (
             SELECT id FROM categories WHERE id = :parentId
