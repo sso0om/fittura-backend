@@ -48,10 +48,13 @@ dependencies {
 
     // Dev tools
     developmentOnly("org.springframework.boot:spring-boot-devtools")
+    developmentOnly("me.paulschwarz:spring-dotenv:4.0.0")
 
     // DB Drivers
-    runtimeOnly("com.h2database:h2")
     runtimeOnly("com.mysql:mysql-connector-j")
+    testImplementation("org.springframework.boot:spring-boot-testcontainers")
+    testImplementation("org.testcontainers:junit-jupiter")
+    testImplementation("org.testcontainers:mysql")
 
     // Test
     testImplementation("org.springframework.boot:spring-boot-starter-test")
