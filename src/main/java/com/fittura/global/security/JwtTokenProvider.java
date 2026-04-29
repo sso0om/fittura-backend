@@ -3,6 +3,7 @@ package com.fittura.global.security;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -17,6 +18,7 @@ import javax.crypto.SecretKey;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -24,9 +26,13 @@ import java.util.stream.Collectors;
 public class JwtTokenProvider {
 
     private static final String ROLES_CLAIM_KEY = "roles";
+    private static final String TOKEN_TYPE_CLAIM_KEY = "token_type";
+    private static final String TOKEN_TYPE_ACCESS = "ACCESS";
+    private static final String TOKEN_TYPE_REFRESH= "REFRESH";
 
     private final SecretKey key;
     private final long accessTokenValidityInMilliseconds;
+    @Getter
     private final long refreshTokenValidityInMilliseconds;
     private final JwtParser jwtParser;
 
@@ -51,6 +57,7 @@ public class JwtTokenProvider {
         return Jwts.builder()
             .subject(memberId)
             .claim(ROLES_CLAIM_KEY, roles)
+            .claim(TOKEN_TYPE_CLAIM_KEY, TOKEN_TYPE_ACCESS)
             .issuedAt(new Date())
             .expiration(new Date(System.currentTimeMillis() + accessTokenValidityInMilliseconds))
             .signWith(key)
@@ -59,7 +66,9 @@ public class JwtTokenProvider {
 
     public String generateRefreshToken(String memberId) {
         return Jwts.builder()
+            .id(UUID.randomUUID().toString())
             .subject(memberId)
+            .claim(TOKEN_TYPE_CLAIM_KEY, TOKEN_TYPE_REFRESH)
             .issuedAt(new Date())
             .expiration(new Date(System.currentTimeMillis() + refreshTokenValidityInMilliseconds))
             .signWith(key)
@@ -79,28 +88,6 @@ public class JwtTokenProvider {
         } catch (ExpiredJwtException e) {
             // 토큰이 만료된 경우, 예외 객체에서 Claims를 추출하여 반환
             return e.getClaims();
-        }
-    }
-
-    public TokenStatus validateToken(String token) {
-        if (token == null || token.isBlank()) {
-            return TokenStatus.INVALID;
-        }
-
-        try {
-            jwtParser.parseSignedClaims(token); // 서명 검증, 토큰 검증 + 파싱
-            return TokenStatus.VALID;
-        } catch (SecurityException | MalformedJwtException e) {
-            log.warn("잘못된 JWT 서명입니다. {}", e.getMessage());
-            return TokenStatus.INVALID;
-        } catch (ExpiredJwtException e) { // 만료된 JWT 토큰
-            return TokenStatus.EXPIRED;
-        } catch (UnsupportedJwtException e) {
-            log.warn("지원되지 않는 JWT 토큰입니다. {}", e.getMessage());
-            return TokenStatus.UNSUPPORTED;
-        } catch (JwtException | IllegalArgumentException e) {
-            log.warn("JWT 토큰이 잘못되었습니다. {}", e.getMessage());
-            return TokenStatus.INVALID;
         }
     }
 
@@ -126,5 +113,32 @@ public class JwtTokenProvider {
         UserDetails principal = new User(claims.getSubject(), "", authorities);
 
         return new UsernamePasswordAuthenticationToken(principal, null, authorities);
+    }
+
+    public TokenStatus validateToken(String token) {
+        if (token == null || token.isBlank()) {
+            return TokenStatus.INVALID;
+        }
+
+        try {
+            jwtParser.parseSignedClaims(token); // 서명 검증, 토큰 검증 + 파싱
+            return TokenStatus.VALID;
+        } catch (SecurityException | MalformedJwtException e) {
+            log.warn("잘못된 JWT 서명입니다. {}", e.getMessage());
+            return TokenStatus.INVALID;
+        } catch (ExpiredJwtException e) { // 만료된 JWT 토큰
+            return TokenStatus.EXPIRED;
+        } catch (UnsupportedJwtException e) {
+            log.warn("지원되지 않는 JWT 토큰입니다. {}", e.getMessage());
+            return TokenStatus.UNSUPPORTED;
+        } catch (JwtException | IllegalArgumentException e) {
+            log.warn("JWT 토큰이 잘못되었습니다. {}", e.getMessage());
+            return TokenStatus.INVALID;
+        }
+    }
+
+    public boolean isRefreshToken(String token) {
+        Claims claims = getClaims(token);
+        return TOKEN_TYPE_REFRESH.equals(claims.get(TOKEN_TYPE_CLAIM_KEY));
     }
 }
