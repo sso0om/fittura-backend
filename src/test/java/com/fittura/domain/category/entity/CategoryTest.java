@@ -50,7 +50,7 @@ class CategoryTest {
     }
 
     @Test
-    @DisplayName("자식 카테고리 생성 성공")
+    @DisplayName("자식 카테고리 생성 실패 - ARCHIVED 카테고리를 부모로 설정")
     void createChildFailArchivedParent() {
         // given
         Category parent = CategoryFixture.rootActiveWithId(1L);
