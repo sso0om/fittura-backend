@@ -1,10 +1,10 @@
-package com.fittura.domain.product.categry.controller;
+package com.fittura.domain.category.controller;
 
-import com.fittura.domain.product.categry.dto.request.CategoryCreateReqDto;
-import com.fittura.domain.product.categry.dto.request.CategoryUpdateReqDto;
-import com.fittura.domain.product.categry.dto.response.CategoryResDto;
-import com.fittura.domain.product.categry.dto.response.CategoryTreeResDto;
-import com.fittura.domain.product.categry.service.CategoryService;
+import com.fittura.domain.category.dto.request.CategoryCreateReqDto;
+import com.fittura.domain.category.dto.request.CategoryUpdateReqDto;
+import com.fittura.domain.category.dto.response.CategoryResDto;
+import com.fittura.domain.category.dto.response.CategoryTreeResDto;
+import com.fittura.domain.category.service.CategoryService;
 import com.fittura.global.rsdata.RsData;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

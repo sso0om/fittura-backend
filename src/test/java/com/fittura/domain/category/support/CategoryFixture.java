@@ -1,7 +1,7 @@
-package com.fittura.domain.product.categry.support;
+package com.fittura.domain.category.support;
 
-import com.fittura.domain.product.categry.constant.CategoryStatus;
-import com.fittura.domain.product.categry.entity.Category;
+import com.fittura.domain.category.constant.CategoryStatus;
+import com.fittura.domain.category.entity.Category;
 import org.springframework.test.util.ReflectionTestUtils;
 
 public class CategoryFixture {

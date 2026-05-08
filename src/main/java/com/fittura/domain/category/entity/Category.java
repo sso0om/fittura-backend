@@ -1,7 +1,7 @@
-package com.fittura.domain.product.categry.entity;
+package com.fittura.domain.category.entity;
 
-import com.fittura.domain.product.categry.constant.CategoryStatus;
-import com.fittura.domain.product.categry.error.CategoryErrorCode;
+import com.fittura.domain.category.constant.CategoryStatus;
+import com.fittura.domain.category.error.CategoryErrorCode;
 import com.fittura.global.exception.ServiceException;
 import com.fittura.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;

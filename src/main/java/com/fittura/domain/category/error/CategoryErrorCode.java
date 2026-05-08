@@ -1,4 +1,4 @@
-package com.fittura.domain.product.categry.error;
+package com.fittura.domain.category.error;
 
 import com.fittura.global.error.ErrorCode;
 import lombok.Getter;

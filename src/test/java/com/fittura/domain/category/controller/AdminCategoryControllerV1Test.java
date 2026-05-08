@@ -1,10 +1,10 @@
-package com.fittura.domain.product.categry.controller;
+package com.fittura.domain.category.controller;
 
-import com.fittura.domain.product.categry.constant.CategoryStatus;
-import com.fittura.domain.product.categry.entity.Category;
-import com.fittura.domain.product.categry.error.CategoryErrorCode;
-import com.fittura.domain.product.categry.repository.CategoryRepository;
-import com.fittura.domain.product.categry.support.CategoryFixture;
+import com.fittura.domain.category.constant.CategoryStatus;
+import com.fittura.domain.category.entity.Category;
+import com.fittura.domain.category.error.CategoryErrorCode;
+import com.fittura.domain.category.repository.CategoryRepository;
+import com.fittura.domain.category.support.CategoryFixture;
 import com.fittura.global.error.CommonErrorCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

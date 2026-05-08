@@ -1,13 +1,13 @@
-package com.fittura.domain.product.categry.service;
+package com.fittura.domain.category.service;
 
-import com.fittura.domain.product.categry.constant.CategoryStatus;
-import com.fittura.domain.product.categry.dto.request.CategoryCreateReqDto;
-import com.fittura.domain.product.categry.dto.request.CategoryUpdateReqDto;
-import com.fittura.domain.product.categry.dto.response.CategoryResDto;
-import com.fittura.domain.product.categry.entity.Category;
-import com.fittura.domain.product.categry.error.CategoryErrorCode;
-import com.fittura.domain.product.categry.repository.CategoryRepository;
-import com.fittura.domain.product.categry.support.CategoryFixture;
+import com.fittura.domain.category.constant.CategoryStatus;
+import com.fittura.domain.category.dto.request.CategoryCreateReqDto;
+import com.fittura.domain.category.dto.request.CategoryUpdateReqDto;
+import com.fittura.domain.category.dto.response.CategoryResDto;
+import com.fittura.domain.category.entity.Category;
+import com.fittura.domain.category.error.CategoryErrorCode;
+import com.fittura.domain.category.repository.CategoryRepository;
+import com.fittura.domain.category.support.CategoryFixture;
 import com.fittura.global.exception.ServiceException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

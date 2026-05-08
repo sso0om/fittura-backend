@@ -1,7 +1,7 @@
-package com.fittura.domain.product.categry.repository;
+package com.fittura.domain.category.repository;
 
-import com.fittura.domain.product.categry.constant.CategoryStatus;
-import com.fittura.domain.product.categry.entity.Category;
+import com.fittura.domain.category.constant.CategoryStatus;
+import com.fittura.domain.category.entity.Category;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

@@ -1,7 +1,7 @@
-package com.fittura.domain.product.categry.dto.response;
+package com.fittura.domain.category.dto.response;
 
-import com.fittura.domain.product.categry.constant.CategoryStatus;
-import com.fittura.domain.product.categry.entity.Category;
+import com.fittura.domain.category.constant.CategoryStatus;
+import com.fittura.domain.category.entity.Category;
 
 public record CategoryResDto(
     Long id,

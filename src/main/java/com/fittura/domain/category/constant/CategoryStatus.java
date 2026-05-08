@@ -1,4 +1,4 @@
-package com.fittura.domain.product.categry.constant;
+package com.fittura.domain.category.constant;
 
 public enum CategoryStatus {
     ACTIVE,    // 활성화 (사용자에게 노출)
