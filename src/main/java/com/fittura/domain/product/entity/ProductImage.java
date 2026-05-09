@@ -20,7 +20,7 @@ public class ProductImage extends BaseEntity {
     @JoinColumn(name = "sku_id")
     private ProductSku sku;
 
-    @Column(nullable = false, length = 255)
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String imageUrl;
 
     @Enumerated(EnumType.STRING)
