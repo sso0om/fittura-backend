@@ -1,7 +1,7 @@
 package com.fittura.global.initdata;
 
-import com.fittura.domain.product.categry.entity.Category;
-import com.fittura.domain.product.categry.repository.CategoryRepository;
+import com.fittura.domain.category.entity.Category;
+import com.fittura.domain.category.repository.CategoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
