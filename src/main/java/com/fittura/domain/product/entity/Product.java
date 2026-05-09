@@ -13,6 +13,7 @@ import static lombok.AccessLevel.PROTECTED;
 @Table(name = "products")
 @NoArgsConstructor(access = PROTECTED)
 public class Product extends BaseEntity {
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
