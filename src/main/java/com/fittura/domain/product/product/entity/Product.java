@@ -1,8 +1,8 @@
-package com.fittura.domain.product.entity;
+package com.fittura.domain.product.product.entity;
 
 import com.fittura.domain.category.entity.Category;
-import com.fittura.domain.product.constant.ProductStatus;
-import com.fittura.domain.product.constant.ProductType;
+import com.fittura.domain.product.product.constant.ProductStatus;
+import com.fittura.domain.product.product.constant.ProductType;
 import com.fittura.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.NoArgsConstructor;

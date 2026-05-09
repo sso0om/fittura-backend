@@ -1,4 +1,4 @@
-package com.fittura.domain.product.constant;
+package com.fittura.domain.product.sku.constant;
 
 public enum SkuStatus {
     ACTIVE,

@@ -1,6 +1,7 @@
-package com.fittura.domain.product.entity;
+package com.fittura.domain.product.product.entity;
 
-import com.fittura.domain.product.constant.ImageType;
+import com.fittura.domain.product.product.constant.ImageType;
+import com.fittura.domain.product.sku.entity.ProductSku;
 import com.fittura.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.NoArgsConstructor;

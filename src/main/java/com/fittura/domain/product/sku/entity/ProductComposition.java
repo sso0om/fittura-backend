@@ -1,5 +1,6 @@
-package com.fittura.domain.product.entity;
+package com.fittura.domain.product.sku.entity;
 
+import com.fittura.domain.product.product.entity.Product;
 import com.fittura.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
