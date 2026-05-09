@@ -3,9 +3,13 @@ package com.fittura.domain.product.entity;
 import com.fittura.domain.product.constant.SkuStatus;
 import com.fittura.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
+import lombok.NoArgsConstructor;
+
+import static lombok.AccessLevel.PROTECTED;
 
 @Entity
 @Table(name = "product_skus")
+@NoArgsConstructor(access = PROTECTED)
 public class ProductSku extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
