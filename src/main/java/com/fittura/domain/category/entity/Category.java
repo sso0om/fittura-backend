@@ -37,6 +37,7 @@ public class Category extends BaseEntity {
     private int sortOrder;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
     private CategoryStatus status;
 
 
