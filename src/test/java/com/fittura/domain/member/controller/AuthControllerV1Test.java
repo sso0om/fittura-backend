@@ -3,6 +3,7 @@ package com.fittura.domain.member.controller;
 import com.fittura.domain.member.entity.Member;
 import com.fittura.domain.member.error.MemberErrorCode;
 import com.fittura.domain.member.repository.MemberRepository;
+import com.fittura.global.IntegrationTestBase;
 import com.fittura.global.config.AppProperties;
 import com.fittura.global.error.CommonErrorCode;
 import com.fittura.global.error.ErrorCode;
@@ -14,14 +15,10 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Set;
 import java.util.stream.Stream;
@@ -32,11 +29,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@ActiveProfiles("test")
-@SpringBootTest
-@AutoConfigureMockMvc
-@Transactional
-class AuthControllerV1Test {
+class AuthControllerV1Test extends IntegrationTestBase {
 
     @Autowired
     private MockMvc mockMvc;
