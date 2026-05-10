@@ -1,7 +1,4 @@
 spring:
-  datasource:
-    url: jdbc:tc:mysql:8.0:///fittura_test
-    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
   jpa:
     show-sql: true
     hibernate:
