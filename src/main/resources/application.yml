@@ -14,6 +14,10 @@ spring:
         highlight_sql: true
         use_sql_comments: true
         dialect: org.hibernate.dialect.MySQLDialect
+  flyway:
+    enabled: false
+    locations: classpath:db/migration
+    baseline-on-migrate: false
   jackson:
     serialization:
       fail-on-empty-beans: false
