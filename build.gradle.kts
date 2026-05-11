@@ -37,6 +37,10 @@ dependencies {
     // Common utils
     implementation("org.apache.commons:commons-lang3:3.18.0")
 
+    // Flyway
+    implementation("org.flywaydb:flyway-core")
+    implementation("org.flywaydb:flyway-mysql")
+
     // JWT
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
