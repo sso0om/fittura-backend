@@ -1,13 +1,15 @@
 package com.fittura.domain.product.sku.entity;
 
-import com.fittura.domain.product.sku.constant.SkuStatus;
 import com.fittura.domain.product.product.entity.Product;
+import com.fittura.domain.product.sku.constant.SkuStatus;
 import com.fittura.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import static lombok.AccessLevel.PROTECTED;
 
+@Getter
 @Entity
 @Table(name = "product_skus")
 @NoArgsConstructor(access = PROTECTED)
@@ -16,9 +18,6 @@ public class ProductSku extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
-
-    @Column(nullable = false, unique = true, length = 100)
-    private String skuCode;
 
     @Column(nullable = false)
     private Long price;
@@ -41,4 +40,25 @@ public class ProductSku extends BaseEntity {
 
     @Column(nullable = false)
     private Double weight = 0.0;
+
+    public static ProductSku create(
+        Product product,
+        Long price,
+        Integer stockQuantity,
+        String color,
+        String material,
+        Double weight
+    ) {
+        ProductSku productSku = new ProductSku();
+        productSku.product = product;
+        productSku.price = price;
+        productSku.stockQuantity = stockQuantity;
+        productSku.status = SkuStatus.ACTIVE;
+
+        productSku.color = color;
+        productSku.material = material;
+        productSku.weight = weight;
+
+        return productSku;
+    }
 }
