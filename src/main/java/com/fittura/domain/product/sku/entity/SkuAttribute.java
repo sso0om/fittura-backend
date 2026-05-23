@@ -30,4 +30,13 @@ public class SkuAttribute extends BaseEntity {
 
     @Column(nullable = false, length = 255)
     private String attributeValue;
+
+    public static SkuAttribute create(ProductSku sku, AttributeKey key, String value) {
+        SkuAttribute skuAttribute = new SkuAttribute();
+        skuAttribute.sku = sku;
+        skuAttribute.attributeKey = key;
+        skuAttribute.attributeValue = value;
+
+        return skuAttribute;
+    }
 }
