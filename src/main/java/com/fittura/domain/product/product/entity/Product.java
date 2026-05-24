@@ -37,6 +37,9 @@ public class Product extends BaseEntity {
     @Column(nullable = false)
     private Long basePrice = 0L;
 
+
+    // ===== 생성 =====
+
     public static Product create(Category category, String name, String description,
                                  ProductType productType, Long basePrice) {
         Product product = new Product();
@@ -48,5 +51,13 @@ public class Product extends BaseEntity {
         product.status = ProductStatus.DISABLED;
 
         return product;
+    }
+
+    public boolean isComplete() {
+        return productType == ProductType.COMPLETE;
+    }
+
+    public boolean isArchived() {
+        return status == ProductStatus.ARCHIVED;
     }
 }

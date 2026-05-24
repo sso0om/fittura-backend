@@ -7,6 +7,9 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static lombok.AccessLevel.PROTECTED;
 
 @Getter
@@ -41,6 +44,12 @@ public class ProductSku extends BaseEntity {
     @Column(nullable = false)
     private Double weight = 0.0;
 
+    @OneToMany(mappedBy = "sku", cascade = CascadeType.PERSIST)
+    private List<SkuAttribute> attributes = new ArrayList<>();
+
+
+    // ===== 생성 =====
+
     public static ProductSku create(
         Product product,
         Long price,
@@ -60,5 +69,13 @@ public class ProductSku extends BaseEntity {
         productSku.weight = weight;
 
         return productSku;
+    }
+
+    public void addAttribute(SkuAttribute skuAttribute) {
+        attributes.add(skuAttribute);
+    }
+
+    public boolean isArchived() {
+        return status == SkuStatus.ARCHIVED;
     }
 }

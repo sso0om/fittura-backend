@@ -15,6 +15,10 @@ public class ProductFixture {
         return Product.create(category, name, "상품 설명", productType, basePrice);
     }
 
+    public static Product complete(Category category, String name, Long basePrice) {
+        return Product.create(category, name, "상품 설명", ProductType.COMPLETE, basePrice);
+    }
+
     public static Product complete(String name, Long basePrice) {
         return product(name, ProductType.COMPLETE, basePrice);
     }

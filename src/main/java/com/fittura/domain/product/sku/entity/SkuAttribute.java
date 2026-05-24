@@ -37,6 +37,7 @@ public class SkuAttribute extends BaseEntity {
         skuAttribute.attributeKey = key;
         skuAttribute.attributeValue = value;
 
+        sku.addAttribute(skuAttribute);
         return skuAttribute;
     }
 }
