@@ -10,7 +10,15 @@ import java.util.Objects;
 import static lombok.AccessLevel.PROTECTED;
 
 @Entity
-@Table(name = "product_compositions")
+@Table(
+    name = "product_compositions",
+    uniqueConstraints = {
+        @UniqueConstraint(
+            name = "uk_product_composition_product_id_sku_id",
+            columnNames = {"parent_product_id", "child_sku_id"}
+        )
+    }
+)
 @NoArgsConstructor(access = PROTECTED)
 public class ProductComposition extends BaseEntity {
 
