@@ -3,7 +3,6 @@ package com.fittura.domain.product.sku.entity;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Min;
 import lombok.NoArgsConstructor;
 
 import java.util.Objects;
@@ -24,7 +23,6 @@ public class ProductComposition extends BaseEntity {
     private ProductSku childSku;
 
     @Column(nullable = false)
-    @Min(1)
     private Integer quantity = 1;
 
     @Column(nullable = false)
@@ -37,7 +35,10 @@ public class ProductComposition extends BaseEntity {
         Integer sortOrder
     ) {
         Objects.requireNonNull(parentProduct, "parent product must not be null");
-        Objects.requireNonNull(childSku, "child sku must not be null");
+        Objects.requireNonNull(childSku, "child  sku must not be null");
+        if (quantity < 1) {
+            throw new IllegalArgumentException("quantity must be greater than or equal to 1");
+        }
 
         ProductComposition productComposition = new ProductComposition();
         productComposition.parentProduct = parentProduct;

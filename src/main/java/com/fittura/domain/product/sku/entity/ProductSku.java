@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static lombok.AccessLevel.PROTECTED;
 
@@ -58,6 +59,8 @@ public class ProductSku extends BaseEntity {
         String material,
         Double weight
     ) {
+        Objects.requireNonNull(product, "product must not be null");
+
         ProductSku productSku = new ProductSku();
         productSku.product = product;
         productSku.price = price;

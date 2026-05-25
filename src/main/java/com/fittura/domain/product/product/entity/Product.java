@@ -8,6 +8,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.Objects;
+
 import static lombok.AccessLevel.PROTECTED;
 
 @Getter
@@ -40,8 +42,15 @@ public class Product extends BaseEntity {
 
     // ===== 생성 =====
 
-    public static Product create(Category category, String name, String description,
-                                 ProductType productType, Long basePrice) {
+    public static Product create(
+        Category category,
+        String name,
+        String description,
+        ProductType productType,
+        Long basePrice
+    ) {
+        Objects.requireNonNull(category, "category must not be null");
+
         Product product = new Product();
         product.name = name;
         product.description = description;

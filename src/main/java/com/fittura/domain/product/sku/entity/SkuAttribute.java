@@ -5,6 +5,8 @@ import com.fittura.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.NoArgsConstructor;
 
+import java.util.Objects;
+
 import static lombok.AccessLevel.PROTECTED;
 
 @Entity
@@ -32,6 +34,8 @@ public class SkuAttribute extends BaseEntity {
     private String attributeValue;
 
     public static SkuAttribute create(ProductSku sku, AttributeKey key, String value) {
+        Objects.requireNonNull(sku, "sku must not be null");
+
         SkuAttribute skuAttribute = new SkuAttribute();
         skuAttribute.sku = sku;
         skuAttribute.attributeKey = key;
