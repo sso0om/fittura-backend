@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Size;
 
 import java.util.List;
 
+@Schema(description = "SKU 생성 요청 DTO")
 public record SkuCreateReqDto(
 
     @Schema(example = "100000")
@@ -36,4 +37,8 @@ public record SkuCreateReqDto(
     @Valid
     List<SkuAttributeCreateReqDto> attributes
 
-) {}
+) {
+    public SkuCreateReqDto {
+        attributes = attributes != null ? attributes : List.of();
+    }
+}

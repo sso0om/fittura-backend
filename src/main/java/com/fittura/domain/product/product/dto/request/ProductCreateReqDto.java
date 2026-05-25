@@ -44,4 +44,8 @@ public record ProductCreateReqDto(
     @Valid
     List<CompositionCreateReqDto> compositions
 
-) {}
+) {
+    public ProductCreateReqDto {
+        compositions = compositions != null ? compositions : List.of();
+    }
+}
