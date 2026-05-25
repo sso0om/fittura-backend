@@ -52,7 +52,7 @@ public class SkuService {
     public void createCompositions(Product product, List<CompositionCreateReqDto> compositionDtos) {
         for (CompositionCreateReqDto compositionDto : compositionDtos) {
             ProductSku productSku = getProductSku(compositionDto.childSkuId());
-            validProductSkuForComposition(productSku);
+            validateProductSkuForComposition(productSku);
 
             ProductComposition composition = ProductComposition.create(
                 product,
@@ -67,7 +67,7 @@ public class SkuService {
 
     // ===== 유효성 검사 메서드 ====
 
-    private void validProductSkuForComposition(ProductSku productSku) {
+    private void validateProductSkuForComposition(ProductSku productSku) {
         if (productSku.isArchived()) {
             throw new ServiceException(ProductErrorCode.ARCHIVED_SKU);
         }

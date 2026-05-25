@@ -10,6 +10,7 @@ import com.fittura.domain.product.product.error.ProductErrorCode;
 import com.fittura.domain.product.product.repository.ProductRepository;
 import com.fittura.domain.product.product.support.ProductFixture;
 import com.fittura.domain.product.sku.entity.ProductSku;
+import com.fittura.domain.product.sku.repository.ProductCompositionRepository;
 import com.fittura.domain.product.sku.repository.ProductSkuRepository;
 import com.fittura.domain.product.sku.support.ProductSkuFixture;
 import com.fittura.global.IntegrationTestBase;
@@ -22,6 +23,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -41,6 +43,9 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
     @Autowired
     private ProductSkuRepository productSkuRepository;
 
+    @Autowired
+    private ProductCompositionRepository compositionRepository;
+
     private static final String PRODUCT_ADMIN_URL = "/api/admin/v1/products";
 
 
@@ -58,6 +63,10 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
         ProductSku childSku = productSkuRepository.save(
             ProductSku.create(componentProduct, 5000L, 100, "White", "Wood", 1.5)
         );
+
+        long productCountBefore = productRepository.count();
+        long skuCountBefore = productSkuRepository.count();
+        long compositionCountBefore = compositionRepository.count();
 
         String reqBody = """
             {
@@ -97,6 +106,10 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
             .andExpect(jsonPath("$.code").value("S201-01"))
             .andExpect(jsonPath("$.message").value("제품이 생성되었습니다."))
             .andExpect(jsonPath("$.data").isNumber());
+
+        assertThat(productRepository.count()).isEqualTo(productCountBefore + 1);
+        assertThat(productSkuRepository.count()).isEqualTo(skuCountBefore + 1);
+        assertThat(compositionRepository.count()).isEqualTo(compositionCountBefore + 1);
     }
 
     @Test
@@ -104,6 +117,10 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
     void createComponentSuccess() throws Exception {
         // given
         Category category = categoryRepository.save(CategoryFixture.rootActive());
+
+        long productCountBefore = productRepository.count();
+        long skuCountBefore = productSkuRepository.count();
+        long compositionCountBefore = compositionRepository.count();
 
         String reqBody = """
             {
@@ -139,6 +156,10 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
             .andExpect(jsonPath("$.code").value("S201-01"))
             .andExpect(jsonPath("$.message").value("제품이 생성되었습니다."))
             .andExpect(jsonPath("$.data").isNumber());
+
+        assertThat(productRepository.count()).isEqualTo(productCountBefore + 1);
+        assertThat(productSkuRepository.count()).isEqualTo(skuCountBefore + 1);
+        assertThat(compositionRepository.count()).isEqualTo(compositionCountBefore);
     }
 
     @WithMockUser(roles = "USER")

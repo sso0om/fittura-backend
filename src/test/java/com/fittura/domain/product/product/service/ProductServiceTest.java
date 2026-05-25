@@ -2,10 +2,12 @@ package com.fittura.domain.product.product.service;
 
 import com.fittura.domain.category.constant.CategoryStatus;
 import com.fittura.domain.category.entity.Category;
+import com.fittura.domain.category.error.CategoryErrorCode;
 import com.fittura.domain.category.repository.CategoryRepository;
 import com.fittura.domain.category.support.CategoryFixture;
 import com.fittura.domain.product.product.constant.ProductType;
 import com.fittura.domain.product.product.dto.request.ProductCreateReqDto;
+import com.fittura.domain.product.product.error.ProductErrorCode;
 import com.fittura.domain.product.product.repository.ProductRepository;
 import com.fittura.domain.product.sku.dto.request.CompositionCreateReqDto;
 import com.fittura.domain.product.sku.dto.request.SkuCreateReqDto;
@@ -53,7 +55,9 @@ class ProductServiceTest {
 
         // when & then
         assertThatThrownBy(() -> productService.createProduct(reqDto))
-            .isInstanceOf(ServiceException.class);
+            .isInstanceOf(ServiceException.class)
+            .extracting(e -> ((ServiceException) e).getErrorCode())
+            .isEqualTo(CategoryErrorCode.NOT_FOUND_CATEGORY);
     }
 
     @Test
@@ -73,7 +77,9 @@ class ProductServiceTest {
 
         // when & then
         assertThatThrownBy(() -> productService.createProduct(reqDto))
-            .isInstanceOf(ServiceException.class);
+            .isInstanceOf(ServiceException.class)
+            .extracting(e -> ((ServiceException) e).getErrorCode())
+            .isEqualTo(CategoryErrorCode.ARCHIVED_CATEGORY);
     }
 
     @Test
@@ -93,7 +99,9 @@ class ProductServiceTest {
 
         // when & then
         assertThatThrownBy(() -> productService.createProduct(reqDto))
-            .isInstanceOf(ServiceException.class);
+            .isInstanceOf(ServiceException.class)
+            .extracting(e -> ((ServiceException) e).getErrorCode())
+            .isEqualTo(CategoryErrorCode.NOT_LEAF_CATEGORY);
     }
 
     @Test
@@ -110,7 +118,9 @@ class ProductServiceTest {
 
         // when & then
         assertThatThrownBy(() -> productService.createProduct(reqDto))
-            .isInstanceOf(ServiceException.class);
+            .isInstanceOf(ServiceException.class)
+            .extracting(e -> ((ServiceException) e).getErrorCode())
+            .isEqualTo(ProductErrorCode.COMPLETE_HAVE_COMPOSITIONS);
     }
 
     @Test
@@ -127,7 +137,9 @@ class ProductServiceTest {
 
         // when & then
         assertThatThrownBy(() -> productService.createProduct(reqDto))
-            .isInstanceOf(ServiceException.class);
+            .isInstanceOf(ServiceException.class)
+            .extracting(e -> ((ServiceException) e).getErrorCode())
+            .isEqualTo(ProductErrorCode.COMPONENT_NOT_HAVE_COMPOSITION);
     }
 
 

@@ -1,6 +1,7 @@
 package com.fittura.domain.product.sku.service;
 
 import com.fittura.domain.product.product.entity.Product;
+import com.fittura.domain.product.product.error.ProductErrorCode;
 import com.fittura.domain.product.product.support.ProductFixture;
 import com.fittura.domain.product.sku.constant.SkuStatus;
 import com.fittura.domain.product.sku.dto.request.CompositionCreateReqDto;
@@ -48,7 +49,9 @@ class SkuServiceTest {
 
         // when & then
         assertThatThrownBy(() -> skuService.createCompositions(product, List.of(new CompositionCreateReqDto(99L, 4, 0))))
-            .isInstanceOf(ServiceException.class);
+            .isInstanceOf(ServiceException.class)
+            .extracting(e -> ((ServiceException) e).getErrorCode())
+            .isEqualTo(ProductErrorCode.NOT_FOUND_SKU);
     }
 
     @Test
@@ -63,7 +66,9 @@ class SkuServiceTest {
 
         // when & then
         assertThatThrownBy(() -> skuService.createCompositions(product, List.of(new CompositionCreateReqDto(1L, 4, 0))))
-            .isInstanceOf(ServiceException.class);
+            .isInstanceOf(ServiceException.class)
+            .extracting(e -> ((ServiceException) e).getErrorCode())
+            .isEqualTo(ProductErrorCode.ARCHIVED_SKU);
     }
 
     @Test
@@ -77,6 +82,8 @@ class SkuServiceTest {
 
         // when & then
         assertThatThrownBy(() -> skuService.createCompositions(completeProduct, List.of(new CompositionCreateReqDto(1L, 4, 0))))
-            .isInstanceOf(ServiceException.class);
+            .isInstanceOf(ServiceException.class)
+            .extracting(e -> ((ServiceException) e).getErrorCode())
+            .isEqualTo(ProductErrorCode.CHILD_SKU_ONLY_COMPONENT);
     }
 }
