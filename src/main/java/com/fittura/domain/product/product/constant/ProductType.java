@@ -1,4 +1,4 @@
-package com.fittura.domain.product.constant;
+package com.fittura.domain.product.product.constant;
 
 public enum ProductType {
     COMPLETE,  // 완성품 고정 구성

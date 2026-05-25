@@ -1,4 +1,4 @@
-package com.fittura.domain.product.constant;
+package com.fittura.domain.product.product.constant;
 
 public enum ProductStatus {
     ACTIVE,        // 노출 O, 구매 O

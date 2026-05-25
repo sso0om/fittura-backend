@@ -122,6 +122,10 @@ public class Category extends BaseEntity {
         return this.status == CategoryStatus.ARCHIVED;
     }
 
+    public boolean isLeaf() {
+        return this.children.isEmpty();
+    }
+
 
     // ===== 연관관계 편의 메서드 =====
 

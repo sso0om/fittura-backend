@@ -1,4 +1,4 @@
-package com.fittura.domain.product.constant;
+package com.fittura.domain.product.product.constant;
 
 public enum ImageType {
     MAIN,       // 상품 목록, 상세 페이지 대표 이미지
