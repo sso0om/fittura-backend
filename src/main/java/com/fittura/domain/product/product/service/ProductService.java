@@ -42,7 +42,7 @@ public class ProductService {
 
     private void validateCategory(Category category) {
         if (category.isArchived()) {
-            throw new ServiceException(CategoryErrorCode.NOT_FOUND_CATEGORY);
+            throw new ServiceException(CategoryErrorCode.ARCHIVED_CATEGORY);
         }
 
         if (!category.isLeaf()) {

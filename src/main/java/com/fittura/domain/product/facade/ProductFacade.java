@@ -12,8 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ProductFacade {
 
-    public final ProductService productService;
-    public final SkuService skuService;
+    private final ProductService productService;
+    private final SkuService skuService;
 
     @Transactional
     public Long createProduct(ProductCreateReqDto reqDto) {

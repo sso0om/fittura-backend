@@ -15,6 +15,7 @@ public enum CategoryErrorCode implements ErrorCode {
     NOT_ARCHIVED_PARENT(HttpStatus.BAD_REQUEST, "CT400-03", "ARCHIVED 카테고리로 이동할 수 없습니다."),
     PARENT_NOT_ACTIVE(HttpStatus.BAD_REQUEST, "CT400-04", "부모 카테고리가 활성 상태가 아니면 활성화할 수 없습니다."),
     NOT_LEAF_CATEGORY(HttpStatus.BAD_REQUEST, "CT400-05", "하위 카테고리에만 상품을 등록할 수 있습니다."),
+    ARCHIVED_CATEGORY(HttpStatus.BAD_REQUEST, "CT400-06", "ARCHIVED 카테고리는 사용불가 합니다."),
 
     // 404
     NOT_FOUND_CATEGORY(HttpStatus.NOT_FOUND,  "CT404-01", "존재하지 않는 카테고리입니다."),

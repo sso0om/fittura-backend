@@ -69,7 +69,7 @@ public class SkuService {
 
     private void validProductSkuForComposition(ProductSku productSku) {
         if (productSku.isArchived()) {
-            throw new ServiceException(ProductErrorCode.NOT_FOUND_SKU);
+            throw new ServiceException(ProductErrorCode.ARCHIVED_SKU);
         }
 
         if (productSku.getProduct().isComplete()) {

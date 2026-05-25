@@ -12,7 +12,7 @@ import jakarta.validation.constraints.Size;
 
 import java.util.List;
 
-@Schema(description = "완제품 생성 요청 DTO")
+@Schema(description = "상품 생성 요청 DTO")
 public record ProductCreateReqDto(
 
     @Schema(example = "1")
