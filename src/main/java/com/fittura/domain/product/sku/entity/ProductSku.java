@@ -71,10 +71,12 @@ public class ProductSku extends BaseEntity {
         productSku.material = material;
         productSku.weight = weight;
 
+        product.addProductSku(productSku);
+
         return productSku;
     }
 
-    public void addAttribute(SkuAttribute skuAttribute) {
+    void addAttribute(SkuAttribute skuAttribute) {
         attributes.add(skuAttribute);
     }
 

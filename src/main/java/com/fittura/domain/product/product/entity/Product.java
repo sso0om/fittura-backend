@@ -3,11 +3,14 @@ package com.fittura.domain.product.product.entity;
 import com.fittura.domain.category.entity.Category;
 import com.fittura.domain.product.product.constant.ProductStatus;
 import com.fittura.domain.product.product.constant.ProductType;
+import com.fittura.domain.product.sku.entity.ProductSku;
 import com.fittura.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import static lombok.AccessLevel.PROTECTED;
@@ -39,6 +42,8 @@ public class Product extends BaseEntity {
     @Column(nullable = false)
     private Long basePrice = 0L;
 
+    @OneToMany(mappedBy = "product")
+    private List<ProductSku> productSkus = new ArrayList<>();
 
     // ===== 생성 =====
 
@@ -60,6 +65,13 @@ public class Product extends BaseEntity {
         product.status = ProductStatus.DISABLED;
 
         return product;
+    }
+
+    /**
+     * ProductSku.create() 내부에서만 호출
+     */
+    public void addProductSku(ProductSku productSku) {
+        productSkus.add(productSku);
     }
 
     public boolean isComplete() {
