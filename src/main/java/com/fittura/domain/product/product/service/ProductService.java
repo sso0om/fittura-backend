@@ -5,6 +5,7 @@ import com.fittura.domain.category.error.CategoryErrorCode;
 import com.fittura.domain.category.repository.CategoryRepository;
 import com.fittura.domain.product.product.constant.ProductType;
 import com.fittura.domain.product.product.dto.request.ProductCreateReqDto;
+import com.fittura.domain.product.product.dto.response.ProductResDto;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.error.ProductErrorCode;
 import com.fittura.domain.product.product.repository.ProductRepository;
@@ -18,6 +19,12 @@ public class ProductService {
 
     private final CategoryRepository categoryRepository;
     private final ProductRepository productRepository;
+
+    public ProductResDto getProduct(Long id) {
+        Product product = getProductWithDetail(id);
+
+        return ProductResDto.from(product);
+    }
 
     public Product createProduct(ProductCreateReqDto reqDto) {
         Category category = getCategory(reqDto.categoryId());
@@ -65,5 +72,10 @@ public class ProductService {
     private Category getCategory(Long id) {
         return categoryRepository.findById(id)
             .orElseThrow(() -> new ServiceException(CategoryErrorCode.NOT_FOUND_CATEGORY));
+    }
+
+    private Product getProductWithDetail(Long id) {
+        return productRepository.findWithDetailById(id)
+            .orElseThrow(() -> new ServiceException(ProductErrorCode.NOT_FOUND_PRODUCT));
     }
 }
