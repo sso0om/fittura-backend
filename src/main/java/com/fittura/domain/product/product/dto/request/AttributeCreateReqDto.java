@@ -1,4 +1,4 @@
-package com.fittura.domain.product.sku.dto.request;
+package com.fittura.domain.product.product.dto.request;
 
 import com.fittura.domain.product.sku.constant.AttributeKey;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 @Schema(description = "SKU 요소 생성 요청 DTO")
-public record SkuAttributeCreateReqDto(
+public record AttributeCreateReqDto(
 
     @Schema(example = "SIZE")
     @NotNull

@@ -9,8 +9,8 @@ import lombok.RequiredArgsConstructor;
 import java.util.Optional;
 
 import static com.fittura.domain.product.product.entity.QProduct.product;
+import static com.fittura.domain.product.product.entity.QProductAttribute.productAttribute;
 import static com.fittura.domain.product.sku.entity.QProductSku.productSku;
-import static com.fittura.domain.product.sku.entity.QSkuAttribute.skuAttribute;
 
 @RequiredArgsConstructor
 public class ProductRepositoryImpl implements ProductRepositoryCustom {
@@ -22,7 +22,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
         Product result = queryFactory
             .selectFrom(product)
             .innerJoin(productSku).on(productSku.product.eq(product)).fetchJoin()
-            .innerJoin(skuAttribute).on(skuAttribute.sku.eq(productSku)).fetchJoin()
+            .leftJoin(productAttribute).on(productAttribute.product.eq(product)).fetchJoin()
             .where(
                 product.id.eq(id),
                 product.status.ne(ProductStatus.ARCHIVED),

@@ -4,14 +4,19 @@ import com.fittura.domain.category.entity.Category;
 import com.fittura.domain.category.error.CategoryErrorCode;
 import com.fittura.domain.category.repository.CategoryRepository;
 import com.fittura.domain.product.product.constant.ProductType;
+import com.fittura.domain.product.product.dto.request.AttributeCreateReqDto;
 import com.fittura.domain.product.product.dto.request.ProductCreateReqDto;
 import com.fittura.domain.product.product.dto.response.ProductResDto;
+import com.fittura.domain.product.product.entity.Dimension;
 import com.fittura.domain.product.product.entity.Product;
+import com.fittura.domain.product.product.entity.ProductAttribute;
 import com.fittura.domain.product.product.error.ProductErrorCode;
 import com.fittura.domain.product.product.repository.ProductRepository;
 import com.fittura.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -32,16 +37,36 @@ public class ProductService {
         validateCategory(category);
         validateProductType(reqDto);
 
+        Dimension dimension = Dimension.of(
+            reqDto.weight(),
+            reqDto.width(),
+            reqDto.height(),
+            reqDto.depth()
+        );
+
         Product product = Product.create(
             category,
             reqDto.name(),
             reqDto.description(),
             reqDto.productType(),
-            reqDto.basePrice()
+            reqDto.basePrice(),
+            dimension
         );
+
+        createAttributes(product, reqDto.attributes());
         productRepository.save(product);
 
         return product;
+    }
+
+    private void createAttributes(Product product, List<AttributeCreateReqDto> attributesDtos) {
+        for (AttributeCreateReqDto attributeDto : attributesDtos) {
+            ProductAttribute.create(
+                product,
+                attributeDto.attributeKey(),
+                attributeDto.attributeValue()
+            );
+        }
     }
 
 

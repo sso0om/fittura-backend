@@ -5,10 +5,7 @@ import com.fittura.domain.product.sku.dto.request.CompositionCreateReqDto;
 import com.fittura.domain.product.sku.dto.request.SkuCreateReqDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PositiveOrZero;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 
 import java.util.List;
 
@@ -36,16 +33,39 @@ public record ProductCreateReqDto(
     @PositiveOrZero
     Long basePrice,
 
+    @Schema(example = "40.5")
+    @NotNull
+    @Positive
+    Double weight,
+
+    @Schema(example = "150")
+    @NotNull
+    @Positive
+    Double width,
+
+    @Schema(example = "100")
+    @NotNull
+    @Positive
+    Double height,
+
+    @Schema(example = "50")
+    @NotNull
+    @Positive
+    Double depth,
+
     @Valid
     @NotNull
     @Size(min = 1)
     List<SkuCreateReqDto> skus,
 
     @Valid
-    List<CompositionCreateReqDto> compositions
+    List<AttributeCreateReqDto> attributes,
 
+    @Valid
+    List<CompositionCreateReqDto> compositions
 ) {
     public ProductCreateReqDto {
         compositions = compositions != null ? compositions : List.of();
+        attributes = attributes != null ? attributes : List.of();
     }
 }

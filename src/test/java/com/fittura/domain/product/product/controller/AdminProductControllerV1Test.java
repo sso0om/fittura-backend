@@ -5,6 +5,7 @@ import com.fittura.domain.category.error.CategoryErrorCode;
 import com.fittura.domain.category.repository.CategoryRepository;
 import com.fittura.domain.category.support.CategoryFixture;
 import com.fittura.domain.product.product.constant.ProductType;
+import com.fittura.domain.product.product.entity.Dimension;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.error.ProductErrorCode;
 import com.fittura.domain.product.product.repository.ProductRepository;
@@ -19,12 +20,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -49,6 +51,49 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
     private static final String PRODUCT_ADMIN_URL = "/api/admin/v1/products";
 
 
+    // ========== 상품 조회 ==========
+
+    @Test
+    @DisplayName("상품 상세 조회 성공")
+    void getProductSuccess() throws Exception {
+        // given
+        Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
+        Product product = productRepository.save(
+            Product.create(category, "A Desk", "책상입니다.", ProductType.COMPONENT, 50000L, dimension)
+        );
+        productSkuRepository.save(ProductSku.create(product, 45000L, 100, "White", "Wood"));
+
+        // when & then
+        mockMvc.perform(get(PRODUCT_ADMIN_URL + "/" + product.getId()))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.name").value("A Desk"))
+            .andExpect(jsonPath("$.data.skus").isArray())
+            .andExpect(jsonPath("$.data.skus[0].color").value("White"));
+    }
+
+    @Test
+    @DisplayName("상품 상세 조회 실패 - 상품 없음")
+    void getProductFail_notFound() throws Exception {
+        // when & then
+        mockMvc.perform(get(PRODUCT_ADMIN_URL + "/9999"))
+            .andDo(print())
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value(ProductErrorCode.NOT_FOUND_PRODUCT.getCode()));
+    }
+
+    @Test
+    @WithAnonymousUser
+    @DisplayName("상품 상세 조회 실패 - 인증 없음")
+    void getProductUnauthorized() throws Exception {
+        // when & then
+        mockMvc.perform(get(PRODUCT_ADMIN_URL + "/1"))
+            .andDo(print())
+            .andExpect(status().isUnauthorized());
+    }
+
+
     // ========== 상품 생성 ==========
 
     @Test
@@ -56,12 +101,13 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
     void createCompleteSuccess() throws Exception {
         // given
         Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
 
         Product componentProduct = productRepository.save(
-            Product.create(category, "Chair Leg", null, ProductType.COMPONENT, 5000L)
+            Product.create(category, "Chair Leg", null, ProductType.COMPONENT, 5000L, dimension)
         );
         ProductSku childSku = productSkuRepository.save(
-            ProductSku.create(componentProduct, 5000L, 100, "White", "Wood", 1.5)
+            ProductSku.create(componentProduct, 5000L, 100, "White", "Wood")
         );
 
         long productCountBefore = productRepository.count();
@@ -74,14 +120,17 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
                 "name": "A Desk",
                 "productType": "COMPLETE",
                 "basePrice": 100000,
+                "weight": 10.5,
+                "width": 10.0,
+                "height": 10.0,
+                "depth": 10.0,
                 "skus": [{
                     "price": 90000,
                     "stockQuantity": 50,
                     "color": "White",
-                    "material": "Wood",
-                    "weight": 10.5,
-                    "attributes": []
+                    "material": "Wood"
                 }],
+                "attributes": [],
                 "compositions": [{
                     "childSkuId": %d,
                     "quantity": 4,
@@ -128,14 +177,17 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
                 "name": "Chair Leg",
                 "productType": "COMPONENT",
                 "basePrice": 5000,
+                "weight": 2.0,
+                "width": 10.0,
+                "height": 10.0,
+                "depth": 10.0,
                 "skus": [{
                     "price": 4500,
                     "stockQuantity": 100,
                     "color": "White",
-                    "material": "Wood",
-                    "weight": 2.0,
-                    "attributes": []
+                    "material": "Wood"
                 }],
+                "attributes": [],
                 "compositions": []
             }
         """.formatted(category.getId());
@@ -169,11 +221,19 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
         // given
         String reqBody = """
             {
-                "categoryId": 1,
-                "name": "A Desk",
-                "productType": "COMPLETE",
-                "basePrice": 100000,
-                "skus": [{"price": 90000, "stockQuantity": 50, "weight": 10.5, "attributes": []}],
+                "categoryId": %d,
+                "name": "Chair Leg",
+                "productType": "COMPONENT",
+                "basePrice": 5000,
+                "weight": 2.0,
+                "width": 10.0,
+                "height": 10.0,
+                "depth": 10.0,
+                "skus": [{
+                    "price": 4500,
+                    "stockQuantity": 100
+                }],
+                "attributes": [],
                 "compositions": []
             }
         """;
@@ -199,7 +259,12 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
                 "name": "A Desk",
                 "productType": "COMPLETE",
                 "basePrice": 100000,
+                "weight": 2.0,
+                "width": 10.0,
+                "height": 10.0,
+                "depth": 10.0,
                 "skus": [],
+                "attributes": [],
                 "compositions": []
             }
         """;
@@ -226,12 +291,15 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
                 "name": "A Desk",
                 "productType": "COMPLETE",
                 "basePrice": 100000,
+                "weight": 10.5,
+                "width": 10.0,
+                "height": 10.0,
+                "depth": 10.0,
                 "skus": [{
                     "price": 90000,
-                    "stockQuantity": 50,
-                    "weight": 10.5,
-                    "attributes": []
+                    "stockQuantity": 50
                 }],
+                "attributes": [],
                 "compositions": []
             }
         """.formatted(category.getId());
@@ -257,12 +325,15 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
                 "name": "Chair Leg",
                 "productType": "COMPONENT",
                 "basePrice": 5000,
+                "weight": 2.0,
+                "width": 10.0,
+                "height": 10.0,
+                "depth": 10.0,
                 "skus": [{
                     "price": 4500,
-                    "stockQuantity": 100,
-                    "weight": 2.0,
-                    "attributes": []
+                    "stockQuantity": 100
                 }],
+                "attributes": [],
                 "compositions": []
             }
         """;
@@ -279,6 +350,81 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
     }
 
     @Test
+    @DisplayName("상품 생성 실패 - 리프 카테고리가 아닌 경우")
+    void createFail_notLeafCategory() throws Exception {
+        // given
+        Category root = categoryRepository.save(CategoryFixture.rootActive());
+        Category child = categoryRepository.save(CategoryFixture.childActive(root));
+
+        String reqBody = """
+        {
+            "categoryId": %d,
+            "name": "Chair Leg",
+            "productType": "COMPONENT",
+            "basePrice": 5000,
+            "weight": 2.0,
+            "width": 10.0,
+            "height": 10.0,
+            "depth": 10.0,
+            "skus": [{
+                "price": 4500,
+                "stockQuantity": 100
+            }],
+            "attributes": [],
+            "compositions": []
+        }
+    """.formatted(root.getId());
+
+        mockMvc.perform(post(PRODUCT_ADMIN_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody)
+            )
+            .andDo(print())
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value(CategoryErrorCode.NOT_LEAF_CATEGORY.getCode()))
+            .andExpect(jsonPath("$.message").value(CategoryErrorCode.NOT_LEAF_CATEGORY.getMessage()));
+    }
+
+    @Test
+    @DisplayName("상품 생성 실패 - 단품에 compositions 있는 경우")
+    void createFail_componentWithCompositions() throws Exception {
+        // given
+        Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Product componentProduct = productRepository.save(ProductFixture.component(category, "Chair Leg", 5000L));
+        ProductSku childSku = productSkuRepository.save(ProductSkuFixture.sku(componentProduct, 5000L, 100));
+
+        String reqBody = """
+        {
+            "categoryId": %d,
+            "name": "Chair Leg",
+            "productType": "COMPONENT",
+            "basePrice": 5000,
+            "weight": 2.0,
+            "width": 10.0,
+            "height": 10.0,
+            "depth": 10.0,
+            "skus": [{
+                "price": 4500,
+                "stockQuantity": 100
+            }],
+            "attributes": [],
+            "compositions": [
+                { "childSkuId": %d, "quantity": 1, "sortOrder": 0 }
+            ]
+        }
+    """.formatted(category.getId(), childSku.getId());
+
+        mockMvc.perform(post(PRODUCT_ADMIN_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody)
+            )
+            .andDo(print())
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value(ProductErrorCode.COMPONENT_NOT_HAVE_COMPOSITION.getCode()))
+            .andExpect(jsonPath("$.message").value(ProductErrorCode.COMPONENT_NOT_HAVE_COMPOSITION.getMessage()));
+    }
+
+    @Test
     @DisplayName("완제품 생성 실패 - 구성품으로 완제품 SKU 등록")
     void createCompleteFail_childSkuIsComplete() throws Exception {
         // given
@@ -292,12 +438,15 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
                 "name": "A Desk",
                 "productType": "COMPLETE",
                 "basePrice": 100000,
+                "weight": 2.0,
+                "width": 10.0,
+                "height": 10.0,
+                "depth": 10.0,
                 "skus": [{
                     "price": 4500,
-                    "stockQuantity": 100,
-                    "weight": 2.0,
-                    "attributes": []
+                    "stockQuantity": 100
                 }],
+                "attributes": [],
                 "compositions": [
                     { "childSkuId": %d, "quantity": 1, "sortOrder": 0 }
                 ]

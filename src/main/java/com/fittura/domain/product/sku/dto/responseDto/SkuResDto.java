@@ -10,9 +10,7 @@ public record SkuResDto(
     Integer reservedQuantity,
     SkuStatus status,
     String color,
-    String material,
-    Double weight
-    //List<SkuAttributeResDto> attributes
+    String material
 ) {
     public static SkuResDto from(ProductSku sku) {
         return new SkuResDto(
@@ -22,8 +20,7 @@ public record SkuResDto(
             sku.getReservedQuantity(),
             sku.getStatus(),
             sku.getColor(),
-            sku.getMaterial(),
-            sku.getWeight()
+            sku.getMaterial()
         );
     }
 }

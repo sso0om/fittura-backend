@@ -3,11 +3,9 @@ package com.fittura.domain.product.sku.service;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.error.ProductErrorCode;
 import com.fittura.domain.product.sku.dto.request.CompositionCreateReqDto;
-import com.fittura.domain.product.sku.dto.request.SkuAttributeCreateReqDto;
 import com.fittura.domain.product.sku.dto.request.SkuCreateReqDto;
 import com.fittura.domain.product.sku.entity.ProductComposition;
 import com.fittura.domain.product.sku.entity.ProductSku;
-import com.fittura.domain.product.sku.entity.SkuAttribute;
 import com.fittura.domain.product.sku.repository.ProductCompositionRepository;
 import com.fittura.domain.product.sku.repository.ProductSkuRepository;
 import com.fittura.global.exception.ServiceException;
@@ -25,27 +23,15 @@ public class SkuService {
 
     public void createSkus(Product product, List<SkuCreateReqDto> skuDtos) {
         for (SkuCreateReqDto skuDto : skuDtos) {
+
             ProductSku productSku = ProductSku.create(
                 product,
                 skuDto.price(),
                 skuDto.stockQuantity(),
                 skuDto.color(),
-                skuDto.material(),
-                skuDto.weight()
+                skuDto.material()
             );
-
-            createAttributes(productSku, skuDto.attributes());
             productSkuRepository.save(productSku);
-        }
-    }
-
-    private void createAttributes(ProductSku productSku, List<SkuAttributeCreateReqDto> attributesDtos) {
-        for (SkuAttributeCreateReqDto skuAttributeDto : attributesDtos) {
-            SkuAttribute.create(
-                productSku,
-                skuAttributeDto.attributeKey(),
-                skuAttributeDto.attributeValue()
-            );
         }
     }
 

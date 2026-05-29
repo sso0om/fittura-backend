@@ -17,6 +17,10 @@ public record ProductResDto(
     ProductType productType,
     ProductStatus status,
     Long basePrice,
+    Double weight,
+    Double width,
+    Double height,
+    Double depth,
     List<SkuResDto> skus
 ){
     public static ProductResDto from(Product product) {
@@ -27,6 +31,10 @@ public record ProductResDto(
             product.getProductType(),
             product.getStatus(),
             product.getBasePrice(),
+            product.getDimension().getWeight(),
+            product.getDimension().getWidth(),
+            product.getDimension().getHeight(),
+            product.getDimension().getDepth(),
             product.getProductSkus().stream()
                 .map(SkuResDto::from)
                 .toList()
