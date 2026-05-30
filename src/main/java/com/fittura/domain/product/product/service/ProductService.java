@@ -6,7 +6,7 @@ import com.fittura.domain.category.repository.CategoryRepository;
 import com.fittura.domain.product.product.constant.ProductType;
 import com.fittura.domain.product.product.dto.request.AttributeCreateReqDto;
 import com.fittura.domain.product.product.dto.request.ProductCreateReqDto;
-import com.fittura.domain.product.product.dto.response.ProductResDto;
+import com.fittura.domain.product.product.dto.response.ProductWithStockResDto;
 import com.fittura.domain.product.product.entity.Dimension;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.entity.ProductAttribute;
@@ -25,8 +25,8 @@ public class ProductService {
     private final CategoryRepository categoryRepository;
     private final ProductRepository productRepository;
 
-    public ProductResDto getProduct(Long id) {
-        return productRepository.findWithDetailById(id)
+    public ProductWithStockResDto getProductWithStock(Long id) {
+        return productRepository.findWithStockById(id)
             .orElseThrow(() -> new ServiceException(ProductErrorCode.NOT_FOUND_PRODUCT));
     }
 

@@ -3,14 +3,13 @@ package com.fittura.domain.product.product.dto.response;
 import com.fittura.domain.product.product.constant.ProductStatus;
 import com.fittura.domain.product.product.constant.ProductType;
 import com.fittura.domain.product.product.entity.Product;
-import com.fittura.domain.product.sku.dto.responseDto.SkuResDto;
+import com.fittura.domain.product.sku.dto.responseDto.SkuWithStockResDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
-
-@Schema(description = "제품 응답 DTO")
-public record ProductResDto(
+@Schema(description = "제품 응답 DTO (관리자용)")
+public record ProductWithStockResDto(
     Long id,
     String name,
     String description,
@@ -21,10 +20,10 @@ public record ProductResDto(
     Double width,
     Double height,
     Double depth,
-    List<SkuResDto> skus
+    List<SkuWithStockResDto> skus
 ){
     // Projection 전용 생성자
-    public ProductResDto(
+    public ProductWithStockResDto(
         Long id, String name, String description,
         ProductType productType, ProductStatus status,
         Long basePrice, Double weight, Double width,
@@ -35,8 +34,8 @@ public record ProductResDto(
     }
 
     // 엔티티 변환용
-    public static ProductResDto from(Product product) {
-        return new ProductResDto(
+    public static ProductWithStockResDto from(Product product) {
+        return new ProductWithStockResDto(
             product.getId(),
             product.getName(),
             product.getDescription(),
@@ -48,7 +47,7 @@ public record ProductResDto(
             product.getDimension().getHeight(),
             product.getDimension().getDepth(),
             product.getProductSkus().stream()
-                .map(SkuResDto::from)
+                .map(SkuWithStockResDto::from)
                 .toList()
         );
     }

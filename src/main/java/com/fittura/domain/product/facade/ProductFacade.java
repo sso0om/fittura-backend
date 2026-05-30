@@ -1,7 +1,7 @@
 package com.fittura.domain.product.facade;
 
 import com.fittura.domain.product.product.dto.request.ProductCreateReqDto;
-import com.fittura.domain.product.product.dto.response.ProductResDto;
+import com.fittura.domain.product.product.dto.response.ProductWithStockResDto;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.service.ProductService;
 import com.fittura.domain.product.sku.service.SkuService;
@@ -17,8 +17,8 @@ public class ProductFacade {
     private final SkuService skuService;
 
     @Transactional(readOnly = true)
-    public ProductResDto getProduct(Long id) {
-        return productService.getProduct(id);
+    public ProductWithStockResDto getProductWithStock(Long id) {
+        return productService.getProductWithStock(id);
     }
 
     @Transactional

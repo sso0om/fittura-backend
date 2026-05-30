@@ -2,7 +2,7 @@ package com.fittura.domain.product.product.controller;
 
 import com.fittura.domain.product.facade.ProductFacade;
 import com.fittura.domain.product.product.dto.request.ProductCreateReqDto;
-import com.fittura.domain.product.product.dto.response.ProductResDto;
+import com.fittura.domain.product.product.dto.response.ProductWithStockResDto;
 import com.fittura.global.rsdata.RsData;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,10 +24,10 @@ public class AdminProductControllerV1 {
 
     @GetMapping("/{id}")
     @Operation(summary = "제품 상세 조회", description = "제품 상세 조회 API")
-    public ResponseEntity<RsData<ProductResDto>> getProduct(
+    public ResponseEntity<RsData<ProductWithStockResDto>> getProduct(
         @PathVariable Long id
     ) {
-        ProductResDto resDto = productFacade.getProduct(id);
+        ProductWithStockResDto resDto = productFacade.getProductWithStock(id);
 
         return ResponseEntity
             .ok(RsData.success("제품이 조회되었습니다.", resDto));

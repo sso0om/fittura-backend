@@ -2,8 +2,10 @@ package com.fittura.domain.product.sku.dto.responseDto;
 
 import com.fittura.domain.product.sku.constant.SkuStatus;
 import com.fittura.domain.product.sku.entity.ProductSku;
+import io.swagger.v3.oas.annotations.media.Schema;
 
-public record SkuResDto(
+@Schema(description = "SKU 응답 DTO (관리자용)")
+public record SkuWithStockResDto(
     Long id,
     Long price,
     Integer stockQuantity,
@@ -12,8 +14,8 @@ public record SkuResDto(
     String color,
     String material
 ) {
-    public static SkuResDto from(ProductSku sku) {
-        return new SkuResDto(
+    public static SkuWithStockResDto from(ProductSku sku) {
+        return new SkuWithStockResDto(
             sku.getId(),
             sku.getPrice(),
             sku.getStockQuantity(),
