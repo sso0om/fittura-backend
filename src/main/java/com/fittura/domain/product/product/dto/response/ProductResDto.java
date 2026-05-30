@@ -23,6 +23,18 @@ public record ProductResDto(
     Double depth,
     List<SkuResDto> skus
 ){
+    // Projection 전용 생성자
+    public ProductResDto(
+        Long id, String name, String description,
+        ProductType productType, ProductStatus status,
+        Long basePrice, Double weight, Double width,
+        Double height, Double depth
+    ) {
+        this(id, name, description, productType, status,
+            basePrice, weight, width, height, depth, List.of());
+    }
+
+    // 엔티티 변환용
     public static ProductResDto from(Product product) {
         return new ProductResDto(
             product.getId(),

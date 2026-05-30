@@ -28,6 +28,9 @@ public class Dimension {
     private Double depth;
 
     public static Dimension of(Double weight, Double width, Double height, Double depth) {
+        if (weight == null || width == null || height == null || depth == null) {
+            throw new IllegalArgumentException("weight, width, height, depth must not be null");
+        }
         if (weight <= 0 || width <= 0 || height <= 0 || depth <= 0) {
             throw new IllegalArgumentException("weight, width, height, depth must be greater than 0");
         }

@@ -5,18 +5,18 @@ import com.fittura.domain.category.entity.Category;
 import com.fittura.domain.category.error.CategoryErrorCode;
 import com.fittura.domain.category.repository.CategoryRepository;
 import com.fittura.domain.category.support.CategoryFixture;
+import com.fittura.domain.product.product.constant.AttributeKey;
+import com.fittura.domain.product.product.constant.ProductStatus;
 import com.fittura.domain.product.product.constant.ProductType;
 import com.fittura.domain.product.product.dto.request.AttributeCreateReqDto;
 import com.fittura.domain.product.product.dto.request.ProductCreateReqDto;
 import com.fittura.domain.product.product.dto.response.ProductResDto;
-import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.error.ProductErrorCode;
 import com.fittura.domain.product.product.repository.ProductRepository;
-import com.fittura.domain.product.product.support.ProductFixture;
-import com.fittura.domain.product.product.constant.AttributeKey;
+import com.fittura.domain.product.sku.constant.SkuStatus;
 import com.fittura.domain.product.sku.dto.request.CompositionCreateReqDto;
 import com.fittura.domain.product.sku.dto.request.SkuCreateReqDto;
-import com.fittura.domain.product.sku.support.ProductSkuFixture;
+import com.fittura.domain.product.sku.dto.responseDto.SkuResDto;
 import com.fittura.global.exception.ServiceException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -51,11 +51,15 @@ class ProductServiceTest {
     @DisplayName("상품 조회 성공")
     void getProductSuccess() {
         // given
-        Category category = CategoryFixture.rootActive();
-        Product product = ProductFixture.complete(category, "A Desk", 100000L);
-        ProductSkuFixture.sku(product, 90000L, 50);
+        List<SkuResDto> skus = List.of(
+            new SkuResDto(1L, 90000L, 50, 0, SkuStatus.ACTIVE, null, null)
+        );
+        ProductResDto productResDto = new ProductResDto(
+            1L, "A Desk", null, ProductType.COMPLETE, ProductStatus.DISABLED,
+            100000L, 10.0, 100.0, 75.0, 50.0, skus
+        );
 
-        given(productRepository.findWithDetailById(1L)).willReturn(Optional.of(product));
+        given(productRepository.findWithDetailById(1L)).willReturn(Optional.of(productResDto));
 
         // when
         ProductResDto result = productService.getProduct(1L);

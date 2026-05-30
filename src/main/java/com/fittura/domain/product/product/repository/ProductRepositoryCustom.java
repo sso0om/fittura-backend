@@ -1,9 +1,9 @@
 package com.fittura.domain.product.product.repository;
 
-import com.fittura.domain.product.product.entity.Product;
+import com.fittura.domain.product.product.dto.response.ProductResDto;
 
 import java.util.Optional;
 
 public interface ProductRepositoryCustom {
-    Optional<Product> findWithDetailById(Long id);
+    Optional<ProductResDto> findWithDetailById(Long id);
 }

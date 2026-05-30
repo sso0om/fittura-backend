@@ -26,9 +26,8 @@ public class ProductService {
     private final ProductRepository productRepository;
 
     public ProductResDto getProduct(Long id) {
-        Product product = getProductWithDetail(id);
-
-        return ProductResDto.from(product);
+        return productRepository.findWithDetailById(id)
+            .orElseThrow(() -> new ServiceException(ProductErrorCode.NOT_FOUND_PRODUCT));
     }
 
     public Product createProduct(ProductCreateReqDto reqDto) {
@@ -97,10 +96,5 @@ public class ProductService {
     private Category getCategory(Long id) {
         return categoryRepository.findById(id)
             .orElseThrow(() -> new ServiceException(CategoryErrorCode.NOT_FOUND_CATEGORY));
-    }
-
-    private Product getProductWithDetail(Long id) {
-        return productRepository.findWithDetailById(id)
-            .orElseThrow(() -> new ServiceException(ProductErrorCode.NOT_FOUND_PRODUCT));
     }
 }
