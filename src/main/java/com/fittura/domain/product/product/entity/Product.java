@@ -93,6 +93,10 @@ public class Product extends BaseEntity {
         attributes.add(productAttribute);
     }
 
+    public void activate() {
+        this.status = ProductStatus.ACTIVE;
+    }
+
     public boolean isComplete() {
         return productType == ProductType.COMPLETE;
     }

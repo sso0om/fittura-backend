@@ -10,12 +10,14 @@ import com.fittura.domain.product.product.constant.ProductStatus;
 import com.fittura.domain.product.product.constant.ProductType;
 import com.fittura.domain.product.product.dto.request.AttributeCreateReqDto;
 import com.fittura.domain.product.product.dto.request.ProductCreateReqDto;
+import com.fittura.domain.product.product.dto.response.ProductResDto;
 import com.fittura.domain.product.product.dto.response.ProductWithStockResDto;
 import com.fittura.domain.product.product.error.ProductErrorCode;
 import com.fittura.domain.product.product.repository.ProductRepository;
 import com.fittura.domain.product.sku.constant.SkuStatus;
 import com.fittura.domain.product.sku.dto.request.CompositionCreateReqDto;
 import com.fittura.domain.product.sku.dto.request.SkuCreateReqDto;
+import com.fittura.domain.product.sku.dto.responseDto.SkuResDto;
 import com.fittura.domain.product.sku.dto.responseDto.SkuWithStockResDto;
 import com.fittura.global.exception.ServiceException;
 import org.junit.jupiter.api.DisplayName;
@@ -45,7 +47,45 @@ class ProductServiceTest {
     @InjectMocks
     private ProductService productService;
 
-    // ========== 상품 조회 ==========
+    // ========== 사용자 상품 조회 ==========
+
+    @Test
+    @DisplayName("사용자 상품 조회 성공")
+    void getProductSuccess() {
+        // given
+        List<SkuResDto> skus = List.of(
+            new SkuResDto(1L, 90000L, SkuStatus.ACTIVE, null, null)
+        );
+        ProductResDto productResDto = new ProductResDto(
+            1L, "A Desk", null, ProductType.COMPONENT, ProductStatus.ACTIVE,
+            50000L, 10.0, 100.0, 75.0, 50.0, skus
+        );
+
+        given(productRepository.findWithDetailById(1L)).willReturn(Optional.of(productResDto));
+
+        // when
+        ProductResDto result = productService.getProduct(1L);
+
+        // then
+        assertThat(result.name()).isEqualTo("A Desk");
+        assertThat(result.skus()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("사용자 상품 조회 실패 - 상품 없음")
+    void getProductFail_notFound() {
+        // given
+        given(productRepository.findWithDetailById(99L)).willReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> productService.getProduct(99L))
+            .isInstanceOf(ServiceException.class)
+            .extracting(e -> ((ServiceException) e).getErrorCode())
+            .isEqualTo(ProductErrorCode.NOT_FOUND_PRODUCT);
+    }
+
+
+    // ========== 관리자 상품 조회 ==========
 
     @Test
     @DisplayName("상품 조회 성공")

@@ -1,4 +1,4 @@
-package com.fittura.domain.product.sku.dto.responseDto;
+package com.fittura.domain.product.product.dto.response;
 
 import com.fittura.domain.product.product.constant.AttributeKey;
 

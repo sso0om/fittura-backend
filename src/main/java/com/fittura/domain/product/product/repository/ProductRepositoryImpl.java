@@ -1,8 +1,10 @@
 package com.fittura.domain.product.product.repository;
 
 import com.fittura.domain.product.product.constant.ProductStatus;
+import com.fittura.domain.product.product.dto.response.ProductResDto;
 import com.fittura.domain.product.product.dto.response.ProductWithStockResDto;
 import com.fittura.domain.product.sku.constant.SkuStatus;
+import com.fittura.domain.product.sku.dto.responseDto.SkuResDto;
 import com.fittura.domain.product.sku.dto.responseDto.SkuWithStockResDto;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -62,6 +64,61 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             .fetch();
 
         return Optional.of(new ProductWithStockResDto(
+            productRow.id(),
+            productRow.name(),
+            productRow.description(),
+            productRow.productType(),
+            productRow.status(),
+            productRow.basePrice(),
+            productRow.weight(),
+            productRow.width(),
+            productRow.height(),
+            productRow.depth(),
+            skus
+        ));
+    }
+
+    @Override
+    public Optional<ProductResDto> findWithDetailById(Long id) {
+
+        ProductResDto productRow = queryFactory
+            .select(Projections.constructor(ProductResDto.class,
+                product.id,
+                product.name,
+                product.description,
+                product.productType,
+                product.status,
+                product.basePrice,
+                product.dimension.weight,
+                product.dimension.width,
+                product.dimension.height,
+                product.dimension.depth
+            ))
+            .from(product)
+            .where(
+                product.id.eq(id),
+                product.status.in(ProductStatus.ACTIVE, ProductStatus.DISCONTINUED)
+            )
+            .fetchOne();
+
+        if (productRow == null) return Optional.empty();
+
+        List<SkuResDto> skus = queryFactory
+            .select(Projections.constructor(SkuResDto.class,
+                productSku.id,
+                productSku.price,
+                productSku.status,
+                productSku.color,
+                productSku.material
+            ))
+            .from(productSku)
+            .where(
+                productSku.product.id.eq(id),
+                productSku.status.ne(SkuStatus.ARCHIVED)
+            )
+            .fetch();
+
+        return Optional.of(new ProductResDto(
             productRow.id(),
             productRow.name(),
             productRow.description(),
