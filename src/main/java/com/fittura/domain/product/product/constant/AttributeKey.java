@@ -1,4 +1,4 @@
-package com.fittura.domain.product.sku.constant;
+package com.fittura.domain.product.product.constant;
 
 public enum AttributeKey {
     SIZE_LABEL

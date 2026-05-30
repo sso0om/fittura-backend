@@ -2,7 +2,7 @@ package com.fittura.domain.product.product.support;
 
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.entity.ProductAttribute;
-import com.fittura.domain.product.sku.constant.AttributeKey;
+import com.fittura.domain.product.product.constant.AttributeKey;
 
 public class ProductAttributeFixture {
 

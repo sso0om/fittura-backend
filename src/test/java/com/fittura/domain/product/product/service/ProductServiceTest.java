@@ -13,7 +13,7 @@ import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.error.ProductErrorCode;
 import com.fittura.domain.product.product.repository.ProductRepository;
 import com.fittura.domain.product.product.support.ProductFixture;
-import com.fittura.domain.product.sku.constant.AttributeKey;
+import com.fittura.domain.product.product.constant.AttributeKey;
 import com.fittura.domain.product.sku.dto.request.CompositionCreateReqDto;
 import com.fittura.domain.product.sku.dto.request.SkuCreateReqDto;
 import com.fittura.domain.product.sku.support.ProductSkuFixture;

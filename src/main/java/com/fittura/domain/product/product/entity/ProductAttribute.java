@@ -1,6 +1,6 @@
 package com.fittura.domain.product.product.entity;
 
-import com.fittura.domain.product.sku.constant.AttributeKey;
+import com.fittura.domain.product.product.constant.AttributeKey;
 import com.fittura.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.NoArgsConstructor;
