@@ -5,10 +5,13 @@ import com.fittura.domain.product.product.dto.response.ProductResDto;
 import com.fittura.domain.product.product.dto.response.ProductWithStockResDto;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.service.ProductService;
+import com.fittura.domain.product.product.dto.response.ProductAttributeResDto;
 import com.fittura.domain.product.sku.service.SkuService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -16,6 +19,8 @@ public class ProductFacade {
 
     private final ProductService productService;
     private final SkuService skuService;
+
+    // ========== 상품 ==========
 
     @Transactional(readOnly = true)
     public ProductResDto getProduct(Long id) {
@@ -37,5 +42,13 @@ public class ProductFacade {
         }
 
         return product.getId();
+    }
+
+
+    // ========== 속성 ==========
+
+    @Transactional(readOnly = true)
+    public List<ProductAttributeResDto> getProductAttributes(Long productId) {
+        return productService.getProductAttributes(productId);
     }
 }

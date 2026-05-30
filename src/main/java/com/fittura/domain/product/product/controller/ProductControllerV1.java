@@ -1,6 +1,7 @@
 package com.fittura.domain.product.product.controller;
 
 import com.fittura.domain.product.facade.ProductFacade;
+import com.fittura.domain.product.product.dto.response.ProductAttributeResDto;
 import com.fittura.domain.product.product.dto.response.ProductResDto;
 import com.fittura.global.rsdata.RsData;
 import io.swagger.v3.oas.annotations.Operation;
@@ -11,6 +12,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/products")
@@ -29,5 +32,16 @@ public class ProductControllerV1 {
 
         return ResponseEntity
             .ok(RsData.success("제품이 조회되었습니다.", resDto));
+    }
+
+    @GetMapping("/{id}/attributes")
+    @Operation(summary = "상품 고시 정보 조회", description = "상품 고시 정보 목록 조회 API")
+    public ResponseEntity<RsData<List<ProductAttributeResDto>>> getProductAttributes(
+        @PathVariable Long id
+    ) {
+        List<ProductAttributeResDto> resDto = productFacade.getProductAttributes(id);
+
+        return ResponseEntity
+            .ok(RsData.success("상품 고시 정보가 조회되었습니다.", resDto));
     }
 }

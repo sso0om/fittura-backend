@@ -3,10 +3,13 @@ package com.fittura.domain.product.product.controller;
 import com.fittura.domain.category.entity.Category;
 import com.fittura.domain.category.repository.CategoryRepository;
 import com.fittura.domain.category.support.CategoryFixture;
+import com.fittura.domain.product.product.constant.AttributeKey;
 import com.fittura.domain.product.product.constant.ProductType;
 import com.fittura.domain.product.product.entity.Dimension;
 import com.fittura.domain.product.product.entity.Product;
+import com.fittura.domain.product.product.entity.ProductAttribute;
 import com.fittura.domain.product.product.error.ProductErrorCode;
+import com.fittura.domain.product.product.repository.ProductAttributeRepository;
 import com.fittura.domain.product.product.repository.ProductRepository;
 import com.fittura.domain.product.sku.entity.ProductSku;
 import com.fittura.domain.product.sku.repository.ProductSkuRepository;
@@ -34,6 +37,9 @@ class ProductControllerV1Test extends IntegrationTestBase {
 
     @Autowired
     private ProductSkuRepository productSkuRepository;
+
+    @Autowired
+    private ProductAttributeRepository attributeRepository;
 
     private static final String PRODUCT_URL = "/api/v1/products";
 
@@ -84,5 +90,45 @@ class ProductControllerV1Test extends IntegrationTestBase {
         mockMvc.perform(get(PRODUCT_URL + "/" + product.getId()))
             .andDo(print())
             .andExpect(status().isNotFound());
+    }
+
+    // ========== 속성 조회 ==========
+
+    @Test
+    @DisplayName("상품 고시 정보 조회 성공")
+    void getProductAttributesSuccess() throws Exception {
+        // given
+        Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
+        Product product = Product.create(category, "A Desk", "책상입니다.", ProductType.COMPONENT, 50000L, dimension);
+        product.activate();
+        productRepository.save(product);
+        ProductAttribute.create(product, AttributeKey.SIZE_LABEL, "XL");
+        attributeRepository.save(product.getAttributes().get(0));
+
+        // when & then
+        mockMvc.perform(get(PRODUCT_URL + "/" + product.getId() + "/attributes"))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.length()").value(1))
+            .andExpect(jsonPath("$.data[0].attributeKey").value("SIZE_LABEL"))
+            .andExpect(jsonPath("$.data[0].attributeValue").value("XL"));
+    }
+
+    @Test
+    @DisplayName("상품 고시 정보 조회 성공 - 속성 없음")
+    void getProductAttributesSuccess_empty() throws Exception {
+        // given
+        Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
+        Product product = Product.create(category, "A Desk", "책상입니다.", ProductType.COMPONENT, 50000L, dimension);
+        product.activate();
+        productRepository.save(product);
+
+        // when & then
+        mockMvc.perform(get(PRODUCT_URL + "/" + product.getId() + "/attributes"))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.length()").value(0));
     }
 }

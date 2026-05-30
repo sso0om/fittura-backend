@@ -12,7 +12,9 @@ import com.fittura.domain.product.product.entity.Dimension;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.entity.ProductAttribute;
 import com.fittura.domain.product.product.error.ProductErrorCode;
+import com.fittura.domain.product.product.repository.ProductAttributeRepository;
 import com.fittura.domain.product.product.repository.ProductRepository;
+import com.fittura.domain.product.product.dto.response.ProductAttributeResDto;
 import com.fittura.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,9 @@ public class ProductService {
 
     private final CategoryRepository categoryRepository;
     private final ProductRepository productRepository;
+    private final ProductAttributeRepository attributeRepository;
+
+    // ========== 상품 ==========
 
     public ProductResDto getProduct(Long id) {
         return productRepository.findWithDetailById(id)
@@ -72,6 +77,15 @@ public class ProductService {
                 attributeDto.attributeValue()
             );
         }
+    }
+
+
+    // ========== 속성 ==========
+
+    public List<ProductAttributeResDto> getProductAttributes(Long productId) {
+        return attributeRepository.findByProductId(productId).stream()
+            .map(ProductAttributeResDto::from)
+            .toList();
     }
 
 

@@ -3,12 +3,14 @@ package com.fittura.domain.product.product.entity;
 import com.fittura.domain.product.product.constant.AttributeKey;
 import com.fittura.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.Objects;
 
 import static lombok.AccessLevel.PROTECTED;
 
+@Getter
 @Entity
 @Table(
     name = "product_attributes",
