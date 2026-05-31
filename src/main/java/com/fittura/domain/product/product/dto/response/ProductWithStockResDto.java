@@ -3,7 +3,7 @@ package com.fittura.domain.product.product.dto.response;
 import com.fittura.domain.product.product.constant.ProductStatus;
 import com.fittura.domain.product.product.constant.ProductType;
 import com.fittura.domain.product.product.entity.Product;
-import com.fittura.domain.product.sku.dto.responseDto.SkuWithStockResDto;
+import com.fittura.domain.product.sku.dto.response.SkuWithStockResDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
