@@ -10,8 +10,10 @@ import com.fittura.domain.product.product.constant.ProductStatus;
 import com.fittura.domain.product.product.constant.ProductType;
 import com.fittura.domain.product.product.dto.request.AttributeCreateReqDto;
 import com.fittura.domain.product.product.dto.request.ProductCreateReqDto;
-import com.fittura.domain.product.product.dto.response.ProductWithSkuResDto;
+import com.fittura.domain.product.product.dto.response.CompositionResDto;
+import com.fittura.domain.product.product.dto.response.ProductAttributeResDto;
 import com.fittura.domain.product.product.dto.response.ProductWithAllResDto;
+import com.fittura.domain.product.product.dto.response.ProductWithSkuResDto;
 import com.fittura.domain.product.product.error.ProductErrorCode;
 import com.fittura.domain.product.product.repository.ProductRepository;
 import com.fittura.domain.product.sku.constant.SkuStatus;
@@ -89,14 +91,20 @@ class ProductServiceTest {
 
     @Test
     @DisplayName("상품 조회 성공")
-    void getProductWithSkuWithStockSuccess() {
+    void getProductWithAllSuccess() {
         // given
         List<SkuWithStockResDto> skus = List.of(
             new SkuWithStockResDto(1L, 90000L, 50, 0, SkuStatus.ACTIVE, null, null)
         );
+        List<ProductAttributeResDto> attributes = List.of(
+            new ProductAttributeResDto(1L, AttributeKey.SIZE_LABEL, "XL")
+        );
+        List<CompositionResDto> compositions = List.of(
+            new CompositionResDto(1L, "의자 다리", 4, 0)
+        );
         ProductWithAllResDto productWithAllResDto = new ProductWithAllResDto(
             1L, "A Desk", null, ProductType.COMPLETE, ProductStatus.DISABLED,
-            100000L, 10.0, 100.0, 75.0, 50.0, skus
+            100000L, 10.0, 100.0, 75.0, 50.0, skus, attributes, compositions
         );
 
         given(productRepository.findWithAllById(1L)).willReturn(Optional.of(productWithAllResDto));
@@ -107,6 +115,8 @@ class ProductServiceTest {
         // then
         assertThat(result.name()).isEqualTo("A Desk");
         assertThat(result.skus()).hasSize(1);
+        assertThat(result.attributes()).hasSize(1);
+        assertThat(result.compositions()).hasSize(1);
     }
 
     @Test

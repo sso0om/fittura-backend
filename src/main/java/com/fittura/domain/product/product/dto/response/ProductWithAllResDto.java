@@ -2,7 +2,6 @@ package com.fittura.domain.product.product.dto.response;
 
 import com.fittura.domain.product.product.constant.ProductStatus;
 import com.fittura.domain.product.product.constant.ProductType;
-import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.sku.dto.response.SkuWithStockResDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -20,7 +19,9 @@ public record ProductWithAllResDto(
     Double width,
     Double height,
     Double depth,
-    List<SkuWithStockResDto> skus
+    List<SkuWithStockResDto> skus,
+    List<ProductAttributeResDto> attributes,
+    List<CompositionResDto> compositions
 ){
     // Projection 전용 생성자
     public ProductWithAllResDto(
@@ -30,25 +31,7 @@ public record ProductWithAllResDto(
         Double height, Double depth
     ) {
         this(id, name, description, productType, status,
-            basePrice, weight, width, height, depth, List.of());
-    }
-
-    // 엔티티 변환용
-    public static ProductWithAllResDto from(Product product) {
-        return new ProductWithAllResDto(
-            product.getId(),
-            product.getName(),
-            product.getDescription(),
-            product.getProductType(),
-            product.getStatus(),
-            product.getBasePrice(),
-            product.getDimension().getWeight(),
-            product.getDimension().getWidth(),
-            product.getDimension().getHeight(),
-            product.getDimension().getDepth(),
-            product.getProductSkus().stream()
-                .map(SkuWithStockResDto::from)
-                .toList()
-        );
+            basePrice, weight, width, height, depth,
+            List.of(), List.of(), List.of());
     }
 }

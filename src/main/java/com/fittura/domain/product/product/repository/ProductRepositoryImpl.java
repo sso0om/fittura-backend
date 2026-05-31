@@ -1,8 +1,10 @@
 package com.fittura.domain.product.product.repository;
 
 import com.fittura.domain.product.product.constant.ProductStatus;
-import com.fittura.domain.product.product.dto.response.ProductWithSkuResDto;
+import com.fittura.domain.product.product.dto.response.CompositionResDto;
+import com.fittura.domain.product.product.dto.response.ProductAttributeResDto;
 import com.fittura.domain.product.product.dto.response.ProductWithAllResDto;
+import com.fittura.domain.product.product.dto.response.ProductWithSkuResDto;
 import com.fittura.domain.product.sku.constant.SkuStatus;
 import com.fittura.domain.product.sku.dto.response.SkuResDto;
 import com.fittura.domain.product.sku.dto.response.SkuWithStockResDto;
@@ -14,6 +16,8 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.fittura.domain.product.product.entity.QProduct.product;
+import static com.fittura.domain.product.product.entity.QProductAttribute.productAttribute;
+import static com.fittura.domain.product.sku.entity.QProductComposition.productComposition;
 import static com.fittura.domain.product.sku.entity.QProductSku.productSku;
 
 @RequiredArgsConstructor
@@ -63,6 +67,30 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             )
             .fetch();
 
+        List<ProductAttributeResDto> attributes = queryFactory
+            .select(Projections.constructor(ProductAttributeResDto.class,
+                productAttribute.id,
+                productAttribute.attributeKey,
+                productAttribute.attributeValue
+            ))
+            .from(productAttribute)
+            .where(productAttribute.product.id.eq(id))
+            .fetch();
+
+        List<CompositionResDto> compositions = queryFactory
+            .select(Projections.constructor(CompositionResDto.class,
+                productComposition.childSku.id,
+                productComposition.childSku.product.name,
+                productComposition.quantity,
+                productComposition.sortOrder
+            ))
+            .from(productComposition)
+            .join(productComposition.childSku, productSku)
+            .join(productSku.product, product)
+            .where(productComposition.parentProduct.id.eq(id))
+            .orderBy(productComposition.sortOrder.asc())
+            .fetch();
+
         return Optional.of(new ProductWithAllResDto(
             productRow.id(),
             productRow.name(),
@@ -74,7 +102,9 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             productRow.width(),
             productRow.height(),
             productRow.depth(),
-            skus
+            skus,
+            attributes,
+            compositions
         ));
     }
 
