@@ -91,6 +91,12 @@ public class ProductService {
 
     // ===== 유효성 검사 메서드 ====
 
+    public void validateProductExists(Long productId) {
+        if (!productRepository.existsById(productId)) {
+            throw new ServiceException(ProductErrorCode.NOT_FOUND_PRODUCT);
+        }
+    }
+
     private void validateCategory(Category category) {
         if (category.isArchived()) {
             throw new ServiceException(CategoryErrorCode.ARCHIVED_CATEGORY);

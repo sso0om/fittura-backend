@@ -50,13 +50,16 @@ public class ProductFacade {
 
     @Transactional(readOnly = true)
     public List<ProductAttributeResDto> getProductAttributes(Long productId) {
+        productService.validateProductExists(productId);
         return productService.getProductAttributes(productId);
     }
 
 
     // ========== 구성 ==========
 
+    @Transactional(readOnly = true)
     public List<CompositionResDto> getProductCompositions(Long productId) {
+        productService.validateProductExists(productId);
         return skuService.getProductCompositions(productId);
     }
 }
