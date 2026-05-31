@@ -9,7 +9,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 
 @Schema(description = "제품 응답 DTO")
-public record ProductResDto(
+public record ProductWithSkuResDto(
     Long id,
     String name,
     String description,
@@ -23,7 +23,7 @@ public record ProductResDto(
     List<SkuResDto> skus
 ){
     // Projection 전용 생성자
-    public ProductResDto(
+    public ProductWithSkuResDto(
         Long id, String name, String description,
         ProductType productType, ProductStatus status,
         Long basePrice, Double weight, Double width,
@@ -34,8 +34,8 @@ public record ProductResDto(
     }
 
     // 엔티티 변환용
-    public static ProductResDto from(Product product) {
-        return new ProductResDto(
+    public static ProductWithSkuResDto from(Product product) {
+        return new ProductWithSkuResDto(
             product.getId(),
             product.getName(),
             product.getDescription(),

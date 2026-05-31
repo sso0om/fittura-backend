@@ -1,8 +1,8 @@
 package com.fittura.domain.product.product.repository;
 
 import com.fittura.domain.product.product.constant.ProductStatus;
-import com.fittura.domain.product.product.dto.response.ProductResDto;
-import com.fittura.domain.product.product.dto.response.ProductWithStockResDto;
+import com.fittura.domain.product.product.dto.response.ProductWithSkuResDto;
+import com.fittura.domain.product.product.dto.response.ProductWithAllResDto;
 import com.fittura.domain.product.sku.constant.SkuStatus;
 import com.fittura.domain.product.sku.dto.response.SkuResDto;
 import com.fittura.domain.product.sku.dto.response.SkuWithStockResDto;
@@ -22,10 +22,10 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Optional<ProductWithStockResDto> findWithStockById(Long id) {
+    public Optional<ProductWithAllResDto> findWithAllById(Long id) {
 
-        ProductWithStockResDto productRow = queryFactory
-            .select(Projections.constructor(ProductWithStockResDto.class,
+        ProductWithAllResDto productRow = queryFactory
+            .select(Projections.constructor(ProductWithAllResDto.class,
                 product.id,
                 product.name,
                 product.description,
@@ -63,7 +63,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             )
             .fetch();
 
-        return Optional.of(new ProductWithStockResDto(
+        return Optional.of(new ProductWithAllResDto(
             productRow.id(),
             productRow.name(),
             productRow.description(),
@@ -79,10 +79,10 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
     }
 
     @Override
-    public Optional<ProductResDto> findWithDetailById(Long id) {
+    public Optional<ProductWithSkuResDto> findWithSkuById(Long id) {
 
-        ProductResDto productRow = queryFactory
-            .select(Projections.constructor(ProductResDto.class,
+        ProductWithSkuResDto productRow = queryFactory
+            .select(Projections.constructor(ProductWithSkuResDto.class,
                 product.id,
                 product.name,
                 product.description,
@@ -118,7 +118,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             )
             .fetch();
 
-        return Optional.of(new ProductResDto(
+        return Optional.of(new ProductWithSkuResDto(
             productRow.id(),
             productRow.name(),
             productRow.description(),

@@ -6,15 +6,15 @@ import com.fittura.domain.category.repository.CategoryRepository;
 import com.fittura.domain.product.product.constant.ProductType;
 import com.fittura.domain.product.product.dto.request.AttributeCreateReqDto;
 import com.fittura.domain.product.product.dto.request.ProductCreateReqDto;
-import com.fittura.domain.product.product.dto.response.ProductResDto;
-import com.fittura.domain.product.product.dto.response.ProductWithStockResDto;
+import com.fittura.domain.product.product.dto.response.ProductAttributeResDto;
+import com.fittura.domain.product.product.dto.response.ProductWithSkuResDto;
+import com.fittura.domain.product.product.dto.response.ProductWithAllResDto;
 import com.fittura.domain.product.product.entity.Dimension;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.entity.ProductAttribute;
 import com.fittura.domain.product.product.error.ProductErrorCode;
 import com.fittura.domain.product.product.repository.ProductAttributeRepository;
 import com.fittura.domain.product.product.repository.ProductRepository;
-import com.fittura.domain.product.product.dto.response.ProductAttributeResDto;
 import com.fittura.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -31,13 +31,13 @@ public class ProductService {
 
     // ========== 상품 ==========
 
-    public ProductResDto getProduct(Long id) {
-        return productRepository.findWithDetailById(id)
+    public ProductWithAllResDto getProductWithAll(Long id) {
+        return productRepository.findWithAllById(id)
             .orElseThrow(() -> new ServiceException(ProductErrorCode.NOT_FOUND_PRODUCT));
     }
 
-    public ProductWithStockResDto getProductWithStock(Long id) {
-        return productRepository.findWithStockById(id)
+    public ProductWithSkuResDto getProductWithSku(Long id) {
+        return productRepository.findWithSkuById(id)
             .orElseThrow(() -> new ServiceException(ProductErrorCode.NOT_FOUND_PRODUCT));
     }
 

@@ -10,8 +10,8 @@ import com.fittura.domain.product.product.constant.ProductStatus;
 import com.fittura.domain.product.product.constant.ProductType;
 import com.fittura.domain.product.product.dto.request.AttributeCreateReqDto;
 import com.fittura.domain.product.product.dto.request.ProductCreateReqDto;
-import com.fittura.domain.product.product.dto.response.ProductResDto;
-import com.fittura.domain.product.product.dto.response.ProductWithStockResDto;
+import com.fittura.domain.product.product.dto.response.ProductWithSkuResDto;
+import com.fittura.domain.product.product.dto.response.ProductWithAllResDto;
 import com.fittura.domain.product.product.error.ProductErrorCode;
 import com.fittura.domain.product.product.repository.ProductRepository;
 import com.fittura.domain.product.sku.constant.SkuStatus;
@@ -51,20 +51,20 @@ class ProductServiceTest {
 
     @Test
     @DisplayName("사용자 상품 조회 성공")
-    void getProductSuccess() {
+    void getProductWithSkuSuccess() {
         // given
         List<SkuResDto> skus = List.of(
             new SkuResDto(1L, 90000L, SkuStatus.ACTIVE, null, null)
         );
-        ProductResDto productResDto = new ProductResDto(
+        ProductWithSkuResDto productWithSkuResDto = new ProductWithSkuResDto(
             1L, "A Desk", null, ProductType.COMPONENT, ProductStatus.ACTIVE,
             50000L, 10.0, 100.0, 75.0, 50.0, skus
         );
 
-        given(productRepository.findWithDetailById(1L)).willReturn(Optional.of(productResDto));
+        given(productRepository.findWithSkuById(1L)).willReturn(Optional.of(productWithSkuResDto));
 
         // when
-        ProductResDto result = productService.getProduct(1L);
+        ProductWithSkuResDto result = productService.getProductWithSku(1L);
 
         // then
         assertThat(result.name()).isEqualTo("A Desk");
@@ -73,12 +73,12 @@ class ProductServiceTest {
 
     @Test
     @DisplayName("사용자 상품 조회 실패 - 상품 없음")
-    void getProductFail_notFound() {
+    void getProductWithSkuFail_notFound() {
         // given
-        given(productRepository.findWithDetailById(99L)).willReturn(Optional.empty());
+        given(productRepository.findWithSkuById(99L)).willReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> productService.getProduct(99L))
+        assertThatThrownBy(() -> productService.getProductWithSku(99L))
             .isInstanceOf(ServiceException.class)
             .extracting(e -> ((ServiceException) e).getErrorCode())
             .isEqualTo(ProductErrorCode.NOT_FOUND_PRODUCT);
@@ -89,20 +89,20 @@ class ProductServiceTest {
 
     @Test
     @DisplayName("상품 조회 성공")
-    void getProductWithStockSuccess() {
+    void getProductWithSkuWithStockSuccess() {
         // given
         List<SkuWithStockResDto> skus = List.of(
             new SkuWithStockResDto(1L, 90000L, 50, 0, SkuStatus.ACTIVE, null, null)
         );
-        ProductWithStockResDto productWithStockResDto = new ProductWithStockResDto(
+        ProductWithAllResDto productWithAllResDto = new ProductWithAllResDto(
             1L, "A Desk", null, ProductType.COMPLETE, ProductStatus.DISABLED,
             100000L, 10.0, 100.0, 75.0, 50.0, skus
         );
 
-        given(productRepository.findWithStockById(1L)).willReturn(Optional.of(productWithStockResDto));
+        given(productRepository.findWithAllById(1L)).willReturn(Optional.of(productWithAllResDto));
 
         // when
-        ProductWithStockResDto result = productService.getProductWithStock(1L);
+        ProductWithAllResDto result = productService.getProductWithAll(1L);
 
         // then
         assertThat(result.name()).isEqualTo("A Desk");
@@ -111,12 +111,12 @@ class ProductServiceTest {
 
     @Test
     @DisplayName("상품 조회 실패 - 상품 없음")
-    void getProductWithStockFail_notFound() {
+    void getProductWithSkuWithStockFail_notFound() {
         // given
-        given(productRepository.findWithStockById(99L)).willReturn(Optional.empty());
+        given(productRepository.findWithAllById(99L)).willReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> productService.getProductWithStock(99L))
+        assertThatThrownBy(() -> productService.getProductWithAll(99L))
             .isInstanceOf(ServiceException.class)
             .extracting(e -> ((ServiceException) e).getErrorCode())
             .isEqualTo(ProductErrorCode.NOT_FOUND_PRODUCT);

@@ -1,8 +1,8 @@
 package com.fittura.domain.product.facade;
 
 import com.fittura.domain.product.product.dto.request.ProductCreateReqDto;
-import com.fittura.domain.product.product.dto.response.ProductResDto;
-import com.fittura.domain.product.product.dto.response.ProductWithStockResDto;
+import com.fittura.domain.product.product.dto.response.ProductWithSkuResDto;
+import com.fittura.domain.product.product.dto.response.ProductWithAllResDto;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.service.ProductService;
 import com.fittura.domain.product.product.dto.response.ProductAttributeResDto;
@@ -23,13 +23,13 @@ public class ProductFacade {
     // ========== 상품 ==========
 
     @Transactional(readOnly = true)
-    public ProductResDto getProduct(Long id) {
-        return productService.getProduct(id);
+    public ProductWithAllResDto getProductWithAll(Long id) {
+        return productService.getProductWithAll(id);
     }
 
     @Transactional(readOnly = true)
-    public ProductWithStockResDto getProductWithStock(Long id) {
-        return productService.getProductWithStock(id);
+    public ProductWithSkuResDto getProductWithSku(Long id) {
+        return productService.getProductWithSku(id);
     }
 
     @Transactional
