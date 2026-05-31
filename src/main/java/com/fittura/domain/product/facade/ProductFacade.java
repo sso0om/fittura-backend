@@ -1,6 +1,7 @@
 package com.fittura.domain.product.facade;
 
 import com.fittura.domain.product.product.dto.request.ProductCreateReqDto;
+import com.fittura.domain.product.product.dto.response.CompositionResDto;
 import com.fittura.domain.product.product.dto.response.ProductWithSkuResDto;
 import com.fittura.domain.product.product.dto.response.ProductWithAllResDto;
 import com.fittura.domain.product.product.entity.Product;
@@ -50,5 +51,12 @@ public class ProductFacade {
     @Transactional(readOnly = true)
     public List<ProductAttributeResDto> getProductAttributes(Long productId) {
         return productService.getProductAttributes(productId);
+    }
+
+
+    // ========== 구성 ==========
+
+    public List<CompositionResDto> getProductCompositions(Long productId) {
+        return skuService.getProductCompositions(productId);
     }
 }

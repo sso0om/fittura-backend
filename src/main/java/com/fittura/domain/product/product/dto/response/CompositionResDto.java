@@ -8,4 +8,5 @@ public record CompositionResDto(
     String childProductName,
     Integer quantity,
     Integer sortOrder
-) {}
+) {
+}

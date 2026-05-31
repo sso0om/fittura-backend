@@ -1,12 +1,13 @@
 package com.fittura.domain.product.sku.service;
 
+import com.fittura.domain.product.product.dto.response.CompositionResDto;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.error.ProductErrorCode;
 import com.fittura.domain.product.sku.dto.request.CompositionCreateReqDto;
 import com.fittura.domain.product.sku.dto.request.SkuCreateReqDto;
 import com.fittura.domain.product.sku.entity.ProductComposition;
 import com.fittura.domain.product.sku.entity.ProductSku;
-import com.fittura.domain.product.sku.repository.ProductCompositionRepository;
+import com.fittura.domain.product.sku.repository.CompositionRepository;
 import com.fittura.domain.product.sku.repository.ProductSkuRepository;
 import com.fittura.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,7 @@ import java.util.List;
 public class SkuService {
 
     private final ProductSkuRepository productSkuRepository;
-    private final ProductCompositionRepository compositionRepository;
+    private final CompositionRepository compositionRepository;
 
     public void createSkus(Product product, List<SkuCreateReqDto> skuDtos) {
         for (SkuCreateReqDto skuDto : skuDtos) {
@@ -33,6 +34,13 @@ public class SkuService {
             );
             productSkuRepository.save(productSku);
         }
+    }
+
+
+    // ========== 구성품 ==========
+
+    public List<CompositionResDto> getProductCompositions(Long productId) {
+        return compositionRepository.findCompositionsByProductId(productId);
     }
 
     public void createCompositions(Product product, List<CompositionCreateReqDto> compositionDtos) {

@@ -11,7 +11,9 @@ import com.fittura.domain.product.product.entity.ProductAttribute;
 import com.fittura.domain.product.product.error.ProductErrorCode;
 import com.fittura.domain.product.product.repository.ProductAttributeRepository;
 import com.fittura.domain.product.product.repository.ProductRepository;
+import com.fittura.domain.product.sku.entity.ProductComposition;
 import com.fittura.domain.product.sku.entity.ProductSku;
+import com.fittura.domain.product.sku.repository.CompositionRepository;
 import com.fittura.domain.product.sku.repository.ProductSkuRepository;
 import com.fittura.global.IntegrationTestBase;
 import org.junit.jupiter.api.DisplayName;
@@ -40,6 +42,9 @@ class ProductControllerV1Test extends IntegrationTestBase {
 
     @Autowired
     private ProductAttributeRepository attributeRepository;
+
+    @Autowired
+    private CompositionRepository compositionRepository;
 
     private static final String PRODUCT_URL = "/api/v1/products";
 
@@ -127,6 +132,55 @@ class ProductControllerV1Test extends IntegrationTestBase {
 
         // when & then
         mockMvc.perform(get(PRODUCT_URL + "/" + product.getId() + "/attributes"))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.length()").value(0));
+    }
+
+
+    // ========== 구성품 조회 ==========
+
+    @Test
+    @DisplayName("상품 구성 정보 조회 성공")
+    void getProductCompositionsSuccess() throws Exception {
+        // given
+        Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
+
+        Product childProduct = Product.create(category, "의자 다리", null, ProductType.COMPONENT, 10000L, dimension);
+        childProduct.activate();
+        productRepository.save(childProduct);
+
+        ProductSku childSku = ProductSku.create(childProduct, 10000L, 100, null, null);
+        productSkuRepository.save(childSku);
+
+        Product parentProduct = Product.create(category, "완제품 의자", null, ProductType.COMPLETE, 50000L, dimension);
+        parentProduct.activate();
+        productRepository.save(parentProduct);
+
+        compositionRepository.save(ProductComposition.create(parentProduct, childSku, 4, 0));
+
+        // when & then
+        mockMvc.perform(get(PRODUCT_URL + "/" + parentProduct.getId() + "/compositions"))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.length()").value(1))
+            .andExpect(jsonPath("$.data[0].childProductName").value("의자 다리"))
+            .andExpect(jsonPath("$.data[0].quantity").value(4));
+    }
+
+    @Test
+    @DisplayName("상품 구성 정보 조회 성공 - 구성품 없음")
+    void getProductCompositionsSuccess_empty() throws Exception {
+        // given
+        Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
+        Product product = Product.create(category, "완제품 의자", null, ProductType.COMPLETE, 50000L, dimension);
+        product.activate();
+        productRepository.save(product);
+
+        // when & then
+        mockMvc.perform(get(PRODUCT_URL + "/" + product.getId() + "/compositions"))
             .andDo(print())
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.length()").value(0));

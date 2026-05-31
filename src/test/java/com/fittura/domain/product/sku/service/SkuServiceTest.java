@@ -1,5 +1,6 @@
 package com.fittura.domain.product.sku.service;
 
+import com.fittura.domain.product.product.dto.response.CompositionResDto;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.error.ProductErrorCode;
 import com.fittura.domain.product.product.support.ProductFixture;
@@ -8,7 +9,7 @@ import com.fittura.domain.product.sku.dto.request.CompositionCreateReqDto;
 import com.fittura.domain.product.sku.dto.request.SkuCreateReqDto;
 import com.fittura.domain.product.sku.entity.ProductComposition;
 import com.fittura.domain.product.sku.entity.ProductSku;
-import com.fittura.domain.product.sku.repository.ProductCompositionRepository;
+import com.fittura.domain.product.sku.repository.CompositionRepository;
 import com.fittura.domain.product.sku.repository.ProductSkuRepository;
 import com.fittura.domain.product.sku.support.ProductSkuFixture;
 import com.fittura.global.exception.ServiceException;
@@ -37,7 +38,7 @@ class SkuServiceTest {
     private ProductSkuRepository productSkuRepository;
 
     @Mock
-    private ProductCompositionRepository compositionRepository;
+    private CompositionRepository compositionRepository;
 
     @InjectMocks
     private SkuService skuService;
@@ -129,5 +130,39 @@ class SkuServiceTest {
             .isInstanceOf(ServiceException.class)
             .extracting(e -> ((ServiceException) e).getErrorCode())
             .isEqualTo(ProductErrorCode.CHILD_SKU_ONLY_COMPONENT);
+    }
+
+
+    // ========== 구성품 조회 ==========
+
+    @Test
+    @DisplayName("상품 구성 정보 조회 성공")
+    void getProductCompositionsSuccess() {
+        // given
+        List<CompositionResDto> compositions = List.of(
+            new CompositionResDto(1L, "의자 다리", 4, 0)
+        );
+        given(compositionRepository.findCompositionsByProductId(1L)).willReturn(compositions);
+
+        // when
+        List<CompositionResDto> result = skuService.getProductCompositions(1L);
+
+        // then
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).childProductName()).isEqualTo("의자 다리");
+        assertThat(result.get(0).quantity()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("상품 구성 정보 조회 성공 - 구성품 없음")
+    void getProductCompositionsSuccess_empty() {
+        // given
+        given(compositionRepository.findCompositionsByProductId(99L)).willReturn(List.of());
+
+        // when
+        List<CompositionResDto> result = skuService.getProductCompositions(99L);
+
+        // then
+        assertThat(result).isEmpty();
     }
 }

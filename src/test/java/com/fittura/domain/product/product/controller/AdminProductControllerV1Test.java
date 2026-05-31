@@ -11,7 +11,7 @@ import com.fittura.domain.product.product.error.ProductErrorCode;
 import com.fittura.domain.product.product.repository.ProductRepository;
 import com.fittura.domain.product.product.support.ProductFixture;
 import com.fittura.domain.product.sku.entity.ProductSku;
-import com.fittura.domain.product.sku.repository.ProductCompositionRepository;
+import com.fittura.domain.product.sku.repository.CompositionRepository;
 import com.fittura.domain.product.sku.repository.ProductSkuRepository;
 import com.fittura.domain.product.sku.support.ProductSkuFixture;
 import com.fittura.global.IntegrationTestBase;
@@ -46,7 +46,7 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
     private ProductSkuRepository productSkuRepository;
 
     @Autowired
-    private ProductCompositionRepository compositionRepository;
+    private CompositionRepository compositionRepository;
 
     private static final String PRODUCT_ADMIN_URL = "/api/admin/v1/products";
 
