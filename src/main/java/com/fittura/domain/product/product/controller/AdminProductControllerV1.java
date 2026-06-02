@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -30,10 +31,11 @@ public class AdminProductControllerV1 {
     private final ProductFacade productFacade;
 
     @GetMapping
+    @Operation(summary = "제품 목록 조회", description = "관리자용 제품 목록 조회 API. sort 예시: name,asc / basePrice,desc / createdDate,desc")
     public ResponseEntity<RsData<Page<ProductResDto>>> getProducts (
         @RequestParam(required = false) String keyword,
         @RequestParam(required = false) Long categoryId,
-        Pageable pageable
+        @ParameterObject Pageable pageable
     ) {
         ProductSearchCondition searchCondition = new ProductSearchCondition(
             keyword,

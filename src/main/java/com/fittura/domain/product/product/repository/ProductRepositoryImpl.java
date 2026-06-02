@@ -3,12 +3,16 @@ package com.fittura.domain.product.product.repository;
 import com.fittura.domain.product.product.constant.ProductStatus;
 import com.fittura.domain.product.product.dto.request.ProductSearchCondition;
 import com.fittura.domain.product.product.dto.response.*;
+import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.entity.QProduct;
 import com.fittura.domain.product.sku.constant.SkuStatus;
 import com.fittura.domain.product.sku.dto.response.SkuResDto;
 import com.fittura.domain.product.sku.dto.response.SkuWithStockResDto;
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.Order;
+import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -52,6 +56,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             ))
             .from(product)
             .where(builder)
+            .orderBy(getOrderSpecifier(pageable))
             .offset(pageable.getOffset())
             .limit(pageable.getPageSize())
             .fetch();
@@ -203,5 +208,21 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             productRow.depth(),
             skus
         ));
+    }
+
+    private OrderSpecifier<?>[] getOrderSpecifier(Pageable pageable) {
+        if (pageable.getSort().isUnsorted()) {
+            return new OrderSpecifier[]{product.createdDate.desc()};
+        }
+
+        return pageable.getSort().stream()
+            .map(order -> {
+                PathBuilder<Product> path = new PathBuilder<>(Product.class, "product");
+                return new OrderSpecifier<>(
+                    order.isAscending() ? Order.ASC : Order.DESC,
+                    path.get(order.getProperty(), Comparable.class)
+                );
+            })
+            .toArray(OrderSpecifier[]::new);
     }
 }

@@ -5,12 +5,13 @@ import com.fittura.domain.product.product.constant.ProductStatus;
 import com.fittura.domain.product.product.dto.request.ProductSearchCondition;
 import com.fittura.domain.product.product.dto.response.CompositionResDto;
 import com.fittura.domain.product.product.dto.response.ProductAttributeResDto;
-import com.fittura.domain.product.product.dto.response.ProductWithSkuResDto;
 import com.fittura.domain.product.product.dto.response.ProductResDto;
+import com.fittura.domain.product.product.dto.response.ProductWithSkuResDto;
 import com.fittura.global.rsdata.RsData;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -27,10 +28,11 @@ public class ProductControllerV1 {
     private final ProductFacade productFacade;
 
     @GetMapping
+    @Operation(summary = "제품 목록 조회", description = "제품 목록 조회 API. sort 예시: name,asc / basePrice,desc / createdDate,desc")
     public ResponseEntity<RsData<Page<ProductResDto>>> getProducts (
         @RequestParam(required = false) String keyword,
         @RequestParam(required = false) Long categoryId,
-        Pageable pageable
+        @ParameterObject Pageable pageable
     ) {
         ProductSearchCondition searchCondition = new ProductSearchCondition(
             keyword,

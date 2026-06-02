@@ -160,6 +160,52 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
     }
 
     @Test
+    @DisplayName("상품 목록 조회 - 기본 정렬은 최신순")
+    void getProducts_defaultSortByLatest() throws Exception {
+        // given
+        Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
+
+        Product first = Product.create(category, "First Desk", null, ProductType.COMPONENT, 50000L, dimension);
+        first.activate();
+        productRepository.save(first);
+
+        Product second = Product.create(category, "Second Chair", null, ProductType.COMPONENT, 30000L, dimension);
+        second.activate();
+        productRepository.save(second);
+
+        // when & then
+        mockMvc.perform(get(PRODUCT_ADMIN_URL))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.content[0].name").value("Second Chair"))
+            .andExpect(jsonPath("$.data.content[1].name").value("First Desk"));
+    }
+
+    @Test
+    @DisplayName("상품 목록 조회 - 가격 오름차순 정렬")
+    void getProducts_sortByPriceAsc() throws Exception {
+        // given
+        Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
+
+        Product expensive = Product.create(category, "Expensive Desk", null, ProductType.COMPONENT, 100000L, dimension);
+        expensive.activate();
+        productRepository.save(expensive);
+
+        Product cheap = Product.create(category, "Cheap Chair", null, ProductType.COMPONENT, 30000L, dimension);
+        cheap.activate();
+        productRepository.save(cheap);
+
+        // when & then
+        mockMvc.perform(get(PRODUCT_ADMIN_URL).param("sort", "basePrice,asc"))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.content[0].name").value("Cheap Chair"))
+            .andExpect(jsonPath("$.data.content[1].name").value("Expensive Desk"));
+    }
+
+    @Test
     @WithAnonymousUser
     @DisplayName("상품 목록 조회 실패 - 인증 없음")
     void getProducts_unauthorized() throws Exception {
