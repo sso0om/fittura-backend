@@ -67,7 +67,8 @@ class CategoryServiceTest {
         // when & then
         assertThatThrownBy(() -> categoryService.getCategoryById(1L))
             .isInstanceOf(ServiceException.class)
-            .hasMessage(CategoryErrorCode.NOT_FOUND_CATEGORY.getMessage());
+            .extracting(e -> ((ServiceException) e).getErrorCode())
+            .isEqualTo(CategoryErrorCode.NOT_FOUND_CATEGORY);
 
         verify(categoryRepository).findById(1L);
     }
@@ -129,7 +130,8 @@ class CategoryServiceTest {
         // when & then
         assertThatThrownBy(() -> categoryService.createCategory(reqDto))
             .isInstanceOf(ServiceException.class)
-            .hasMessage(CategoryErrorCode.NOT_FOUND_PARENT_CATEGORY.getMessage());
+            .extracting(e -> ((ServiceException) e).getErrorCode())
+            .isEqualTo(CategoryErrorCode.NOT_FOUND_PARENT_CATEGORY);
 
         verify(categoryRepository).findById(1L);
     }
@@ -194,7 +196,8 @@ class CategoryServiceTest {
         // when & then
         assertThatThrownBy(() -> categoryService.updateCategory(1L, reqDto))
             .isInstanceOf(ServiceException.class)
-            .hasMessage(CategoryErrorCode.NOT_FOUND_CATEGORY.getMessage());
+            .extracting(e -> ((ServiceException) e).getErrorCode())
+            .isEqualTo(CategoryErrorCode.NOT_FOUND_CATEGORY);
 
         verify(categoryRepository).findById(1L);
     }
@@ -212,7 +215,8 @@ class CategoryServiceTest {
         // when & then
         assertThatThrownBy(() -> categoryService.updateCategory(1L, reqDto))
             .isInstanceOf(ServiceException.class)
-            .hasMessage(CategoryErrorCode.NOT_FOUND_PARENT_CATEGORY.getMessage());
+            .extracting(e -> ((ServiceException) e).getErrorCode())
+            .isEqualTo(CategoryErrorCode.NOT_FOUND_PARENT_CATEGORY);
 
         verify(categoryRepository).findById(1L);
         verify(categoryRepository).findById(2L);

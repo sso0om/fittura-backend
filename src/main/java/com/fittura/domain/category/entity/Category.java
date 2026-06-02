@@ -37,6 +37,7 @@ public class Category extends BaseEntity {
     private int sortOrder;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
     private CategoryStatus status;
 
 
@@ -119,6 +120,10 @@ public class Category extends BaseEntity {
 
     public boolean isArchived() {
         return this.status == CategoryStatus.ARCHIVED;
+    }
+
+    public boolean isLeaf() {
+        return this.children.isEmpty();
     }
 
 
