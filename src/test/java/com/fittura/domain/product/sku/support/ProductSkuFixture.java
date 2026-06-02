@@ -14,8 +14,7 @@ public class ProductSkuFixture {
             price,
             stock,
             "White",
-            "Wood",
-            1.5
+            "Wood"
         );
     }
 
@@ -25,8 +24,17 @@ public class ProductSkuFixture {
             10000L,
             100,
             color,
-            material,
-            2.0
+            material
+        );
+    }
+
+    public static ProductSku skuWithNoOption(Product product) {
+        return ProductSku.create(
+            product,
+            10000L,
+            100,
+            null,
+            null
         );
     }
 

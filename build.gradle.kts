@@ -49,6 +49,13 @@ dependencies {
     // Lombok
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
+    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
+
+    // QueryDSL
+    implementation("com.querydsl:querydsl-jpa:5.0.0:jakarta")
+    annotationProcessor("com.querydsl:querydsl-apt:5.0.0:jakarta")
+    annotationProcessor("jakarta.persistence:jakarta.persistence-api:3.1.0")
+    annotationProcessor("jakarta.annotation:jakarta.annotation-api:2.1.1")
 
     // Dev tools
     developmentOnly("org.springframework.boot:spring-boot-devtools")

@@ -4,19 +4,22 @@ import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.sku.constant.SkuStatus;
 import com.fittura.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
+import static lombok.AccessLevel.PRIVATE;
 import static lombok.AccessLevel.PROTECTED;
 
 @Getter
 @Entity
 @Table(name = "product_skus")
 @NoArgsConstructor(access = PROTECTED)
+@AllArgsConstructor(access = PRIVATE)
+@Builder(access = PRIVATE)
 public class ProductSku extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -42,13 +45,6 @@ public class ProductSku extends BaseEntity {
     @Column(length = 50)
     private String material;
 
-    @Column(nullable = false)
-    private Double weight = 0.0;
-
-    @OneToMany(mappedBy = "sku", cascade = CascadeType.PERSIST)
-    private List<SkuAttribute> attributes = new ArrayList<>();
-
-
     // ===== 생성 =====
 
     public static ProductSku create(
@@ -56,26 +52,23 @@ public class ProductSku extends BaseEntity {
         Long price,
         Integer stockQuantity,
         String color,
-        String material,
-        Double weight
+        String material
     ) {
         Objects.requireNonNull(product, "product must not be null");
 
-        ProductSku productSku = new ProductSku();
-        productSku.product = product;
-        productSku.price = price;
-        productSku.stockQuantity = stockQuantity;
-        productSku.status = SkuStatus.ACTIVE;
+        ProductSku productSku = ProductSku.builder()
+            .product(product)
+            .price(price)
+            .stockQuantity(stockQuantity)
+            .reservedQuantity(0)
+            .status(SkuStatus.ACTIVE)
+            .color(color)
+            .material(material)
+            .build();
 
-        productSku.color = color;
-        productSku.material = material;
-        productSku.weight = weight;
+        product.addProductSku(productSku);
 
         return productSku;
-    }
-
-    public void addAttribute(SkuAttribute skuAttribute) {
-        attributes.add(skuAttribute);
     }
 
     public boolean isArchived() {
