@@ -5,6 +5,7 @@ import com.fittura.domain.product.product.dto.response.CompositionResDto;
 import com.fittura.domain.product.product.dto.response.ProductAttributeResDto;
 import com.fittura.domain.product.product.dto.response.ProductWithAllResDto;
 import com.fittura.domain.product.product.dto.response.ProductWithSkuResDto;
+import com.fittura.domain.product.product.entity.QProduct;
 import com.fittura.domain.product.sku.constant.SkuStatus;
 import com.fittura.domain.product.sku.dto.response.SkuResDto;
 import com.fittura.domain.product.sku.dto.response.SkuWithStockResDto;
@@ -77,16 +78,18 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             .where(productAttribute.product.id.eq(id))
             .fetch();
 
+        QProduct childProduct = new QProduct("childProduct");
+
         List<CompositionResDto> compositions = queryFactory
             .select(Projections.constructor(CompositionResDto.class,
-                productComposition.childSku.id,
-                productComposition.childSku.product.name,
+                productSku.id,
+                childProduct.name,
                 productComposition.quantity,
                 productComposition.sortOrder
             ))
             .from(productComposition)
             .join(productComposition.childSku, productSku)
-            .join(productSku.product, product)
+            .join(productSku.product, childProduct)
             .where(productComposition.parentProduct.id.eq(id))
             .orderBy(productComposition.sortOrder.asc())
             .fetch();

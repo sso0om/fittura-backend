@@ -54,6 +54,6 @@ public class ProductControllerV1 {
         List<CompositionResDto> resDto = productFacade.getProductCompositions(id);
 
         return ResponseEntity
-            .ok(RsData.success("상품 고시 정보가 조회되었습니다.", resDto));
+            .ok(RsData.success("상품 구성 정보가 조회되었습니다.", resDto));
     }
 }
