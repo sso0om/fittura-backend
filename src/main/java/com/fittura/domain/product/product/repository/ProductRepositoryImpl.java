@@ -1,17 +1,20 @@
 package com.fittura.domain.product.product.repository;
 
 import com.fittura.domain.product.product.constant.ProductStatus;
-import com.fittura.domain.product.product.dto.response.CompositionResDto;
-import com.fittura.domain.product.product.dto.response.ProductAttributeResDto;
-import com.fittura.domain.product.product.dto.response.ProductWithAllResDto;
-import com.fittura.domain.product.product.dto.response.ProductWithSkuResDto;
+import com.fittura.domain.product.product.dto.request.ProductSearchCondition;
+import com.fittura.domain.product.product.dto.response.*;
 import com.fittura.domain.product.product.entity.QProduct;
 import com.fittura.domain.product.sku.constant.SkuStatus;
 import com.fittura.domain.product.sku.dto.response.SkuResDto;
 import com.fittura.domain.product.sku.dto.response.SkuWithStockResDto;
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -25,6 +28,42 @@ import static com.fittura.domain.product.sku.entity.QProductSku.productSku;
 public class ProductRepositoryImpl implements ProductRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
+
+    @Override
+    public Page<ProductResDto> findProducts(ProductSearchCondition condition, Pageable pageable) {
+        BooleanBuilder builder = new BooleanBuilder();
+
+        builder.and(product.status.in(condition.includedStatuses()));
+
+        if (condition.categoryId() != null) {
+            builder.and(product.category.id.eq(condition.categoryId()));
+        }
+        if (StringUtils.hasText(condition.keyword())) {
+            builder.and(product.name.containsIgnoreCase(condition.keyword()));
+        }
+
+        List<ProductResDto> content = queryFactory
+            .select(Projections.constructor(ProductResDto.class,
+                product.id,
+                product.name,
+                product.basePrice,
+                product.status,
+                product.productType
+            ))
+            .from(product)
+            .where(builder)
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
+
+        Long total = queryFactory
+            .select(product.count())
+            .from(product)
+            .where(builder)
+            .fetchOne();
+
+        return new PageImpl<>(content, pageable, total == null ? 0L : total);
+    }
 
     @Override
     public Optional<ProductWithAllResDto> findWithAllById(Long id) {

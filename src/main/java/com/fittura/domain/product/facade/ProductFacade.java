@@ -1,14 +1,14 @@
 package com.fittura.domain.product.facade;
 
 import com.fittura.domain.product.product.dto.request.ProductCreateReqDto;
-import com.fittura.domain.product.product.dto.response.CompositionResDto;
-import com.fittura.domain.product.product.dto.response.ProductWithSkuResDto;
-import com.fittura.domain.product.product.dto.response.ProductWithAllResDto;
+import com.fittura.domain.product.product.dto.request.ProductSearchCondition;
+import com.fittura.domain.product.product.dto.response.*;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.service.ProductService;
-import com.fittura.domain.product.product.dto.response.ProductAttributeResDto;
 import com.fittura.domain.product.sku.service.SkuService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +22,11 @@ public class ProductFacade {
     private final SkuService skuService;
 
     // ========== 상품 ==========
+
+    @Transactional(readOnly = true)
+    public Page<ProductResDto> getProducts(ProductSearchCondition searchCondition, Pageable pageable) {
+        return productService.getProducts(searchCondition, pageable);
+    }
 
     @Transactional(readOnly = true)
     public ProductWithAllResDto getProductWithAll(Long id) {

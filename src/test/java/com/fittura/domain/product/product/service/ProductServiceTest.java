@@ -10,8 +10,10 @@ import com.fittura.domain.product.product.constant.ProductStatus;
 import com.fittura.domain.product.product.constant.ProductType;
 import com.fittura.domain.product.product.dto.request.AttributeCreateReqDto;
 import com.fittura.domain.product.product.dto.request.ProductCreateReqDto;
+import com.fittura.domain.product.product.dto.request.ProductSearchCondition;
 import com.fittura.domain.product.product.dto.response.CompositionResDto;
 import com.fittura.domain.product.product.dto.response.ProductAttributeResDto;
+import com.fittura.domain.product.product.dto.response.ProductResDto;
 import com.fittura.domain.product.product.dto.response.ProductWithAllResDto;
 import com.fittura.domain.product.product.dto.response.ProductWithSkuResDto;
 import com.fittura.domain.product.product.error.ProductErrorCode;
@@ -22,6 +24,10 @@ import com.fittura.domain.product.sku.dto.request.SkuCreateReqDto;
 import com.fittura.domain.product.sku.dto.response.SkuResDto;
 import com.fittura.domain.product.sku.dto.response.SkuWithStockResDto;
 import com.fittura.global.exception.ServiceException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,6 +54,50 @@ class ProductServiceTest {
 
     @InjectMocks
     private ProductService productService;
+
+    // ========== 상품 목록 조회 ==========
+
+    @Test
+    @DisplayName("상품 목록 조회 성공")
+    void getProductsSuccess() {
+        // given
+        ProductSearchCondition condition = new ProductSearchCondition(null, null, List.of(ProductStatus.ACTIVE, ProductStatus.DISCONTINUED));
+        Pageable pageable = PageRequest.of(0, 10);
+        List<ProductResDto> content = List.of(
+            new ProductResDto(1L, "A Desk", 50000L, ProductStatus.ACTIVE, ProductType.COMPONENT),
+            new ProductResDto(2L, "A Chair", 30000L, ProductStatus.DISCONTINUED, ProductType.COMPONENT)
+        );
+        Page<ProductResDto> page = new PageImpl<>(content, pageable, 2);
+
+        given(productRepository.findProducts(condition, pageable)).willReturn(page);
+
+        // when
+        Page<ProductResDto> result = productService.getProducts(condition, pageable);
+
+        // then
+        assertThat(result.getContent()).hasSize(2);
+        assertThat(result.getTotalElements()).isEqualTo(2);
+        assertThat(result.getContent().get(0).name()).isEqualTo("A Desk");
+    }
+
+    @Test
+    @DisplayName("상품 목록 조회 성공 - 결과 없음")
+    void getProductsSuccess_empty() {
+        // given
+        ProductSearchCondition condition = new ProductSearchCondition("없는상품", null, List.of(ProductStatus.ACTIVE));
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<ProductResDto> emptyPage = Page.empty(pageable);
+
+        given(productRepository.findProducts(condition, pageable)).willReturn(emptyPage);
+
+        // when
+        Page<ProductResDto> result = productService.getProducts(condition, pageable);
+
+        // then
+        assertThat(result.getContent()).isEmpty();
+        assertThat(result.getTotalElements()).isZero();
+    }
+
 
     // ========== 사용자 상품 조회 ==========
 
