@@ -97,6 +97,7 @@ class ProductControllerV1Test extends IntegrationTestBase {
             .andExpect(status().isNotFound());
     }
 
+
     // ========== 속성 조회 ==========
 
     @Test
@@ -135,6 +136,16 @@ class ProductControllerV1Test extends IntegrationTestBase {
             .andDo(print())
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.length()").value(0));
+    }
+
+    @Test
+    @DisplayName("상품 고시 정보 조회 실패 - 상품 없음")
+    void getProductAttributesFail_notFound() throws Exception {
+        // when & then
+        mockMvc.perform(get(PRODUCT_URL + "/9999/attributes"))
+            .andDo(print())
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value(ProductErrorCode.NOT_FOUND_PRODUCT.getCode()));
     }
 
 
@@ -184,5 +195,15 @@ class ProductControllerV1Test extends IntegrationTestBase {
             .andDo(print())
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.length()").value(0));
+    }
+
+    @Test
+    @DisplayName("상품 구성 정보 조회 실패 - 상품 없음")
+    void getProductCompositionsFail_notFound() throws Exception {
+        // when & then
+        mockMvc.perform(get(PRODUCT_URL + "/9999/compositions"))
+            .andDo(print())
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value(ProductErrorCode.NOT_FOUND_PRODUCT.getCode()));
     }
 }
