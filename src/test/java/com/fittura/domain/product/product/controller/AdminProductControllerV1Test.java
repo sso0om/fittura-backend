@@ -4,6 +4,7 @@ import com.fittura.domain.category.entity.Category;
 import com.fittura.domain.category.error.CategoryErrorCode;
 import com.fittura.domain.category.repository.CategoryRepository;
 import com.fittura.domain.category.support.CategoryFixture;
+import com.fittura.domain.product.product.constant.ProductStatus;
 import com.fittura.domain.product.product.constant.ProductType;
 import com.fittura.domain.product.product.entity.Dimension;
 import com.fittura.domain.product.product.entity.Product;
@@ -22,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
@@ -65,15 +67,61 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
         activeProduct.activate();
         productRepository.save(activeProduct);
 
-        // DISABLED는 Product.create()의 기본 상태
         productRepository.save(Product.create(category, "Disabled Chair", null, ProductType.COMPONENT, 30000L, dimension));
+
+        Product discontinuedProduct = Product.create(category, "Discontinued Sofa", null, ProductType.COMPONENT, 70000L, dimension);
+        ReflectionTestUtils.setField(discontinuedProduct, "status", ProductStatus.DISCONTINUED);
+        productRepository.save(discontinuedProduct);
 
         // when & then
         mockMvc.perform(get(PRODUCT_ADMIN_URL))
             .andDo(print())
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.content").isArray())
-            .andExpect(jsonPath("$.data.totalElements").value(2));
+            .andExpect(jsonPath("$.data.totalElements").value(3));
+    }
+
+    @Test
+    @DisplayName("상품 목록 조회 - ACTIVE 상품만 조회")
+    void getProducts_statusFilter() throws Exception {
+        // given
+        Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
+
+        Product activeProduct = Product.create(category, "Active Desk", null, ProductType.COMPONENT, 50000L, dimension);
+        activeProduct.activate();
+        productRepository.save(activeProduct);
+
+        productRepository.save(Product.create(category, "Disabled Chair", null, ProductType.COMPONENT, 30000L, dimension));
+
+        // when & then
+        mockMvc.perform(get(PRODUCT_ADMIN_URL).param("statuses", "ACTIVE"))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.totalElements").value(1))
+            .andExpect(jsonPath("$.data.content[0].name").value("Active Desk"));
+    }
+
+    @Test
+    @DisplayName("상품 목록 조회 - DISABLED 상품만 조회")
+    void getProducts_includesArchived() throws Exception {
+        // given
+        Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
+
+        Product activeProduct = Product.create(category, "Active Desk", null, ProductType.COMPONENT, 50000L, dimension);
+        activeProduct.activate();
+        productRepository.save(activeProduct);
+
+        Product disabledProduct = Product.create(category, "DISABLED Desk", null, ProductType.COMPONENT, 50000L, dimension);
+        productRepository.save(disabledProduct);
+
+        // when & then
+        mockMvc.perform(get(PRODUCT_ADMIN_URL).param("statuses", "DISABLED"))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.totalElements").value(1))
+            .andExpect(jsonPath("$.data.content[0].name").value("DISABLED Desk"));
     }
 
     @Test

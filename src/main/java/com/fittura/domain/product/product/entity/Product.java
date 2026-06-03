@@ -97,6 +97,10 @@ public class Product extends BaseEntity {
         this.status = ProductStatus.ACTIVE;
     }
 
+    public void discontinue() {
+        this.status = ProductStatus.DISCONTINUED;
+    }
+
     public boolean isComplete() {
         return productType == ProductType.COMPLETE;
     }

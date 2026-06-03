@@ -38,7 +38,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
     public Page<ProductResDto> findProducts(ProductSearchCondition condition, Pageable pageable) {
         BooleanExpression colorCond = colorIn(condition.colors());
         BooleanExpression materialCond = materialIn(condition.materials());
-        boolean skuFilterExists = colorCond != null && materialCond != null;
+        boolean skuFilterExists = colorCond != null || materialCond != null;
 
         JPAQuery<ProductResDto> query = queryFactory
             .select(Projections.constructor(ProductResDto.class,

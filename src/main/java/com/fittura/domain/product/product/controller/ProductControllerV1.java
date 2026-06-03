@@ -28,16 +28,21 @@ public class ProductControllerV1 {
     private final ProductFacade productFacade;
 
     @GetMapping
-    @Operation(summary = "제품 목록 조회", description = "제품 목록 조회 API. sort 예시: name,asc / basePrice,desc / createdDate,desc")
+    @Operation(summary = "제품 목록 조회", description = "제품 목록 조회 API - sort 예시: basePrice,desc / createdDate,desc")
     public ResponseEntity<RsData<Page<ProductResDto>>> getProducts (
+        @RequestParam(required = false) List<ProductStatus> statuses,
         @RequestParam(required = false) Long categoryId,
         @RequestParam(required = false) String keyword,
         @RequestParam(required = false) List<String> colors,
         @RequestParam(required = false) List<String> materials,
         @ParameterObject Pageable pageable
     ) {
+        List<ProductStatus> includedStatuses = (statuses == null || statuses.isEmpty())
+            ? List.of(ProductStatus.ACTIVE, ProductStatus.DISCONTINUED)
+            : statuses;
+
         ProductSearchCondition searchCondition = new ProductSearchCondition(
-            List.of(ProductStatus.ACTIVE, ProductStatus.DISCONTINUED),
+            includedStatuses,
             categoryId,
             keyword,
             colors,

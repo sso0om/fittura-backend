@@ -4,7 +4,6 @@ import com.fittura.domain.category.entity.Category;
 import com.fittura.domain.category.repository.CategoryRepository;
 import com.fittura.domain.category.support.CategoryFixture;
 import com.fittura.domain.product.product.constant.AttributeKey;
-import com.fittura.domain.product.product.constant.ProductStatus;
 import com.fittura.domain.product.product.constant.ProductType;
 import com.fittura.domain.product.product.entity.Dimension;
 import com.fittura.domain.product.product.entity.Product;
@@ -17,7 +16,6 @@ import com.fittura.domain.product.sku.entity.ProductSku;
 import com.fittura.domain.product.sku.repository.CompositionRepository;
 import com.fittura.domain.product.sku.repository.ProductSkuRepository;
 import com.fittura.global.IntegrationTestBase;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,7 +63,7 @@ class ProductControllerV1Test extends IntegrationTestBase {
         productRepository.save(activeProduct);
 
         Product discontinuedProduct = Product.create(category, "Discontinued Chair", null, ProductType.COMPONENT, 30000L, dimension);
-        ReflectionTestUtils.setField(discontinuedProduct, "status", ProductStatus.DISCONTINUED);
+        discontinuedProduct.discontinue();
         productRepository.save(discontinuedProduct);
 
         // when & then
@@ -74,6 +72,29 @@ class ProductControllerV1Test extends IntegrationTestBase {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.content").isArray())
             .andExpect(jsonPath("$.data.totalElements").value(2));
+    }
+
+    @Test
+    @DisplayName("상품 목록 조회 - 품절 제외 (ACTIVE만 조회)")
+    void getProducts_excludesDiscontinued() throws Exception {
+        // given
+        Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
+
+        Product activeProduct = Product.create(category, "Active Desk", null, ProductType.COMPONENT, 50000L, dimension);
+        activeProduct.activate();
+        productRepository.save(activeProduct);
+
+        Product discontinuedProduct = Product.create(category, "Discontinued Chair", null, ProductType.COMPONENT, 30000L, dimension);
+        discontinuedProduct.discontinue();
+        productRepository.save(discontinuedProduct);
+
+        // when & then
+        mockMvc.perform(get(PRODUCT_URL).param("statuses", "ACTIVE"))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.totalElements").value(1))
+            .andExpect(jsonPath("$.data.content[0].name").value("Active Desk"));
     }
 
     @Test
@@ -135,6 +156,11 @@ class ProductControllerV1Test extends IntegrationTestBase {
         productRepository.save(woodProduct);
         productSkuRepository.save(ProductSku.create(woodProduct, 50000L, 100, "White", "Wood"));
 
+        Product woodBrownProduct = Product.create(category, "Wood Brown Desk", null, ProductType.COMPONENT, 60000L, dimension);
+        woodBrownProduct.activate();
+        productRepository.save(woodBrownProduct);
+        productSkuRepository.save(ProductSku.create(woodBrownProduct, 60000L, 100, "Brown", "Wood"));
+
         Product metalProduct = Product.create(category, "Metal Black Chair", null, ProductType.COMPONENT, 70000L, dimension);
         metalProduct.activate();
         productRepository.save(metalProduct);
@@ -142,12 +168,13 @@ class ProductControllerV1Test extends IntegrationTestBase {
 
         // when & then
         mockMvc.perform(get(PRODUCT_URL)
-                .param("colors", "White")
+                .param("colors", "White", "Brown")
                 .param("materials", "Wood"))
             .andDo(print())
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.totalElements").value(1))
-            .andExpect(jsonPath("$.data.content[0].name").value("Wood White Desk"));
+            .andExpect(jsonPath("$.data.totalElements").value(2))
+            .andExpect(jsonPath("$.data.content[0].name").value("Wood Brown Desk"))
+            .andExpect(jsonPath("$.data.content[1].name").value("Wood White Desk"));
     }
 
     @Test
