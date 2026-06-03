@@ -6,9 +6,11 @@ import com.fittura.domain.category.repository.CategoryRepository;
 import com.fittura.domain.product.product.constant.ProductType;
 import com.fittura.domain.product.product.dto.request.AttributeCreateReqDto;
 import com.fittura.domain.product.product.dto.request.ProductCreateReqDto;
+import com.fittura.domain.product.product.dto.request.ProductSearchCondition;
 import com.fittura.domain.product.product.dto.response.ProductAttributeResDto;
-import com.fittura.domain.product.product.dto.response.ProductWithSkuResDto;
 import com.fittura.domain.product.product.dto.response.ProductWithAllResDto;
+import com.fittura.domain.product.product.dto.response.ProductWithSkuResDto;
+import com.fittura.domain.product.product.dto.response.ProductResDto;
 import com.fittura.domain.product.product.entity.Dimension;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.entity.ProductAttribute;
@@ -17,6 +19,8 @@ import com.fittura.domain.product.product.repository.ProductAttributeRepository;
 import com.fittura.domain.product.product.repository.ProductRepository;
 import com.fittura.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -30,6 +34,10 @@ public class ProductService {
     private final ProductAttributeRepository attributeRepository;
 
     // ========== 상품 ==========
+
+    public Page<ProductResDto> getProducts(ProductSearchCondition searchCondition, Pageable pageable) {
+        return productRepository.findProducts(searchCondition, pageable);
+    }
 
     public ProductWithAllResDto getProductWithAll(Long id) {
         return productRepository.findWithAllById(id)
