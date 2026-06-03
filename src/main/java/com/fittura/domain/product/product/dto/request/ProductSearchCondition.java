@@ -5,8 +5,10 @@ import com.fittura.domain.product.product.constant.ProductStatus;
 import java.util.List;
 
 public record ProductSearchCondition(
-    String keyword,
+    List<ProductStatus> includedStatuses,
     Long categoryId,
-    List<ProductStatus> includedStatuses
+    String keyword,
+    List<String> colors,
+    List<String> materials
 ) {
 }

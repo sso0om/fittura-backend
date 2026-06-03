@@ -33,14 +33,18 @@ public class AdminProductControllerV1 {
     @GetMapping
     @Operation(summary = "제품 목록 조회", description = "관리자용 제품 목록 조회 API. sort 예시: name,asc / basePrice,desc / createdDate,desc")
     public ResponseEntity<RsData<Page<ProductResDto>>> getProducts (
-        @RequestParam(required = false) String keyword,
         @RequestParam(required = false) Long categoryId,
+        @RequestParam(required = false) String keyword,
+        @RequestParam(required = false) List<String> colors,
+        @RequestParam(required = false) List<String> materials,
         @ParameterObject Pageable pageable
     ) {
         ProductSearchCondition searchCondition = new ProductSearchCondition(
-            keyword,
+            List.of(ProductStatus.ACTIVE, ProductStatus.DISCONTINUED, ProductStatus.DISABLED),
             categoryId,
-            List.of(ProductStatus.ACTIVE, ProductStatus.DISCONTINUED, ProductStatus.DISABLED)
+            keyword,
+            colors,
+            materials
         );
         Page<ProductResDto> resDtos = productFacade.getProducts(searchCondition, pageable);
 

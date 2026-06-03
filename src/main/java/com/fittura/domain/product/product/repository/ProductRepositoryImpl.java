@@ -8,11 +8,12 @@ import com.fittura.domain.product.product.entity.QProduct;
 import com.fittura.domain.product.sku.constant.SkuStatus;
 import com.fittura.domain.product.sku.dto.response.SkuResDto;
 import com.fittura.domain.product.sku.dto.response.SkuWithStockResDto;
-import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.PathBuilder;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -35,36 +36,55 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
 
     @Override
     public Page<ProductResDto> findProducts(ProductSearchCondition condition, Pageable pageable) {
-        BooleanBuilder builder = new BooleanBuilder();
+        BooleanExpression colorCond = colorIn(condition.colors());
+        BooleanExpression materialCond = materialIn(condition.materials());
+        boolean skuFilterExists = colorCond != null && materialCond != null;
 
-        builder.and(product.status.in(condition.includedStatuses()));
-
-        if (condition.categoryId() != null) {
-            builder.and(product.category.id.eq(condition.categoryId()));
-        }
-        if (StringUtils.hasText(condition.keyword())) {
-            builder.and(product.name.containsIgnoreCase(condition.keyword()));
-        }
-
-        List<ProductResDto> content = queryFactory
+        JPAQuery<ProductResDto> query = queryFactory
             .select(Projections.constructor(ProductResDto.class,
                 product.id,
                 product.name,
                 product.basePrice,
                 product.status,
-                product.productType
+                product.productType,
+                product.createdDate
             ))
-            .from(product)
-            .where(builder)
+            .distinct()
+            .from(product);
+
+        if (skuFilterExists) {
+            query.leftJoin(productSku).on(productSku.product.id.eq(product.id));
+        }
+
+        List<ProductResDto> content = query
+            .where(
+                statusIn(condition.includedStatuses()),
+                categoryEq(condition.categoryId()),
+                keywordContains(condition.keyword()),
+                colorCond,
+                materialCond
+            )
             .orderBy(getOrderSpecifier(pageable))
             .offset(pageable.getOffset())
             .limit(pageable.getPageSize())
             .fetch();
 
-        Long total = queryFactory
-            .select(product.count())
-            .from(product)
-            .where(builder)
+        JPAQuery<Long> countQuery = queryFactory
+            .select(product.countDistinct())
+            .from(product);
+
+        if (skuFilterExists) {
+            countQuery.leftJoin(productSku).on(productSku.product.id.eq(product.id));
+        }
+
+        Long total = countQuery
+            .where(
+                statusIn(condition.includedStatuses()),
+                categoryEq(condition.categoryId()),
+                keywordContains(condition.keyword()),
+                colorCond,
+                materialCond
+            )
             .fetchOne();
 
         return new PageImpl<>(content, pageable, total == null ? 0L : total);
@@ -209,6 +229,36 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             skus
         ));
     }
+
+
+    // ========== BooleanExpression ==========
+
+    private BooleanExpression statusIn(List<ProductStatus> statuses) {
+        return (statuses == null || statuses.isEmpty()) ? null : product.status.in(statuses);
+    }
+
+    private BooleanExpression categoryEq(Long categoryId) {
+        return categoryId == null ? null : product.category.id.eq(categoryId);
+    }
+
+    private BooleanExpression keywordContains(String keyword) {
+        return StringUtils.hasText(keyword) ? product.name.containsIgnoreCase(keyword) : null;
+    }
+
+    private BooleanExpression colorIn(List<String> colors) {
+        return (colors == null || colors.isEmpty())
+            ? null
+            : productSku.color.in(colors);
+    }
+
+    private BooleanExpression materialIn(List<String> materials) {
+        return (materials == null || materials.isEmpty())
+            ? null
+            : productSku.material.in(materials);
+    }
+
+
+    // ========== OrderSpecifier ==========
 
     private OrderSpecifier<?>[] getOrderSpecifier(Pageable pageable) {
         if (pageable.getSort().isUnsorted()) {

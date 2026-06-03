@@ -30,14 +30,18 @@ public class ProductControllerV1 {
     @GetMapping
     @Operation(summary = "제품 목록 조회", description = "제품 목록 조회 API. sort 예시: name,asc / basePrice,desc / createdDate,desc")
     public ResponseEntity<RsData<Page<ProductResDto>>> getProducts (
-        @RequestParam(required = false) String keyword,
         @RequestParam(required = false) Long categoryId,
+        @RequestParam(required = false) String keyword,
+        @RequestParam(required = false) List<String> colors,
+        @RequestParam(required = false) List<String> materials,
         @ParameterObject Pageable pageable
     ) {
         ProductSearchCondition searchCondition = new ProductSearchCondition(
-            keyword,
+            List.of(ProductStatus.ACTIVE, ProductStatus.DISCONTINUED),
             categoryId,
-            List.of(ProductStatus.ACTIVE, ProductStatus.DISCONTINUED)
+            keyword,
+            colors,
+            materials
         );
         Page<ProductResDto> resDtos = productFacade.getProducts(searchCondition, pageable);
 

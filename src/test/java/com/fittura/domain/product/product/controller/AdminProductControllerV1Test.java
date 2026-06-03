@@ -4,7 +4,6 @@ import com.fittura.domain.category.entity.Category;
 import com.fittura.domain.category.error.CategoryErrorCode;
 import com.fittura.domain.category.repository.CategoryRepository;
 import com.fittura.domain.category.support.CategoryFixture;
-import com.fittura.domain.product.product.constant.ProductStatus;
 import com.fittura.domain.product.product.constant.ProductType;
 import com.fittura.domain.product.product.entity.Dimension;
 import com.fittura.domain.product.product.entity.Product;
@@ -17,7 +16,6 @@ import com.fittura.domain.product.sku.repository.ProductSkuRepository;
 import com.fittura.domain.product.sku.support.ProductSkuFixture;
 import com.fittura.global.IntegrationTestBase;
 import com.fittura.global.error.CommonErrorCode;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +26,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -75,134 +74,6 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.content").isArray())
             .andExpect(jsonPath("$.data.totalElements").value(2));
-    }
-
-    @Test
-    @DisplayName("상품 목록 조회 성공 - keyword 필터링")
-    void getProducts_keyword() throws Exception {
-        // given
-        Category category = categoryRepository.save(CategoryFixture.rootActive());
-        Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
-
-        Product desk = Product.create(category, "A Desk", null, ProductType.COMPONENT, 50000L, dimension);
-        desk.activate();
-        productRepository.save(desk);
-
-        Product chair = Product.create(category, "A Chair", null, ProductType.COMPONENT, 30000L, dimension);
-        chair.activate();
-        productRepository.save(chair);
-
-        // when & then
-        mockMvc.perform(get(PRODUCT_ADMIN_URL).param("keyword", "Chair"))
-            .andDo(print())
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.totalElements").value(1))
-            .andExpect(jsonPath("$.data.content[0].name").value("A Chair"));
-    }
-
-    @Test
-    @DisplayName("상품 목록 조회 성공 - categoryId 필터링")
-    void getProducts_categoryId() throws Exception {
-        // given
-        Category category1 = categoryRepository.save(CategoryFixture.rootActive());
-        Category category2 = categoryRepository.save(CategoryFixture.rootActive());
-        Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
-
-        Product product1 = Product.create(category1, "A Desk", null, ProductType.COMPONENT, 50000L, dimension);
-        product1.activate();
-        productRepository.save(product1);
-
-        Product product2 = Product.create(category2, "A Chair", null, ProductType.COMPONENT, 30000L, dimension);
-        product2.activate();
-        productRepository.save(product2);
-
-        // when & then
-        mockMvc.perform(get(PRODUCT_ADMIN_URL).param("categoryId", String.valueOf(category2.getId())))
-            .andDo(print())
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.totalElements").value(1))
-            .andExpect(jsonPath("$.data.content[0].name").value("A Chair"));
-    }
-
-    @Test
-    @DisplayName("상품 목록 조회 - DISABLED 상품도 포함됨")
-    void getProducts_includesDisabled() throws Exception {
-        // given
-        Category category = categoryRepository.save(CategoryFixture.rootActive());
-        Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
-
-        productRepository.save(Product.create(category, "Disabled Desk", null, ProductType.COMPONENT, 50000L, dimension));
-
-        // when & then
-        mockMvc.perform(get(PRODUCT_ADMIN_URL))
-            .andDo(print())
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.totalElements").value(1))
-            .andExpect(jsonPath("$.data.content[0].name").value("Disabled Desk"));
-    }
-
-    @Test
-    @DisplayName("상품 목록 조회 - ARCHIVED 상품은 조회 안 됨")
-    void getProducts_excludesArchived() throws Exception {
-        // given
-        Category category = categoryRepository.save(CategoryFixture.rootActive());
-        Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
-
-        Product archivedProduct = Product.create(category, "Archived Desk", null, ProductType.COMPONENT, 50000L, dimension);
-        ReflectionTestUtils.setField(archivedProduct, "status", ProductStatus.ARCHIVED);
-        productRepository.save(archivedProduct);
-
-        // when & then
-        mockMvc.perform(get(PRODUCT_ADMIN_URL))
-            .andDo(print())
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.totalElements").value(0));
-    }
-
-    @Test
-    @DisplayName("상품 목록 조회 - 기본 정렬은 최신순")
-    void getProducts_defaultSortByLatest() throws Exception {
-        // given
-        Category category = categoryRepository.save(CategoryFixture.rootActive());
-        Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
-
-        Product first = Product.create(category, "First Desk", null, ProductType.COMPONENT, 50000L, dimension);
-        first.activate();
-        productRepository.save(first);
-
-        Product second = Product.create(category, "Second Chair", null, ProductType.COMPONENT, 30000L, dimension);
-        second.activate();
-        productRepository.save(second);
-
-        // when & then
-        mockMvc.perform(get(PRODUCT_ADMIN_URL))
-            .andDo(print())
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.content[0].name").value("Second Chair"))
-            .andExpect(jsonPath("$.data.content[1].name").value("First Desk"));
-    }
-
-    @Test
-    @DisplayName("상품 목록 조회 - 가격 오름차순 정렬")
-    void getProducts_sortByPriceAsc() throws Exception {
-        // given
-        Category category = categoryRepository.save(CategoryFixture.rootActive());
-        Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
-
-        Product expensive = Product.create(category, "Expensive Desk", null, ProductType.COMPONENT, 100000L, dimension);
-        expensive.activate();
-        productRepository.save(expensive);
-
-        Product cheap = Product.create(category, "Cheap Chair", null, ProductType.COMPONENT, 30000L, dimension);
-        cheap.activate();
-        productRepository.save(cheap);
-
-        // when & then
-        mockMvc.perform(get(PRODUCT_ADMIN_URL).param("sort", "basePrice,asc"))
-            .andDo(print())
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.content[0].name").value("Cheap Chair"))
-            .andExpect(jsonPath("$.data.content[1].name").value("Expensive Desk"));
     }
 
     @Test

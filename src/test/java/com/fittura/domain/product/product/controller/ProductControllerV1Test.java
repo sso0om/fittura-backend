@@ -124,6 +124,33 @@ class ProductControllerV1Test extends IntegrationTestBase {
     }
 
     @Test
+    @DisplayName("상품 목록 조회 성공 - colors, materials 필터링")
+    void getProducts_colorsAndMaterials() throws Exception {
+        // given
+        Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
+
+        Product woodProduct = Product.create(category, "Wood White Desk", null, ProductType.COMPONENT, 50000L, dimension);
+        woodProduct.activate();
+        productRepository.save(woodProduct);
+        productSkuRepository.save(ProductSku.create(woodProduct, 50000L, 100, "White", "Wood"));
+
+        Product metalProduct = Product.create(category, "Metal Black Chair", null, ProductType.COMPONENT, 70000L, dimension);
+        metalProduct.activate();
+        productRepository.save(metalProduct);
+        productSkuRepository.save(ProductSku.create(metalProduct, 70000L, 100, "Black", "Metal"));
+
+        // when & then
+        mockMvc.perform(get(PRODUCT_URL)
+                .param("colors", "White")
+                .param("materials", "Wood"))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.totalElements").value(1))
+            .andExpect(jsonPath("$.data.content[0].name").value("Wood White Desk"));
+    }
+
+    @Test
     @DisplayName("상품 목록 조회 - DISABLED 상품은 조회 안 됨")
     void getProducts_excludesDisabled() throws Exception {
         // given
@@ -138,6 +165,52 @@ class ProductControllerV1Test extends IntegrationTestBase {
             .andDo(print())
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.totalElements").value(0));
+    }
+
+    @Test
+    @DisplayName("상품 목록 조회 - 기본 정렬은 최신순")
+    void getProducts_defaultSortByLatest() throws Exception {
+        // given
+        Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
+
+        Product first = Product.create(category, "First Desk", null, ProductType.COMPONENT, 50000L, dimension);
+        first.activate();
+        productRepository.save(first);
+
+        Product second = Product.create(category, "Second Chair", null, ProductType.COMPONENT, 30000L, dimension);
+        second.activate();
+        productRepository.save(second);
+
+        // when & then
+        mockMvc.perform(get(PRODUCT_URL))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.content[0].name").value("Second Chair"))
+            .andExpect(jsonPath("$.data.content[1].name").value("First Desk"));
+    }
+
+    @Test
+    @DisplayName("상품 목록 조회 - 가격 오름차순 정렬")
+    void getProducts_sortByPriceAsc() throws Exception {
+        // given
+        Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
+
+        Product expensive = Product.create(category, "Expensive Desk", null, ProductType.COMPONENT, 100000L, dimension);
+        expensive.activate();
+        productRepository.save(expensive);
+
+        Product cheap = Product.create(category, "Cheap Chair", null, ProductType.COMPONENT, 30000L, dimension);
+        cheap.activate();
+        productRepository.save(cheap);
+
+        // when & then
+        mockMvc.perform(get(PRODUCT_URL).param("sort", "basePrice,asc"))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.content[0].name").value("Cheap Chair"))
+            .andExpect(jsonPath("$.data.content[1].name").value("Expensive Desk"));
     }
 
 
