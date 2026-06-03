@@ -17,7 +17,7 @@ public class CompositionRepositoryImpl implements CompositionRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public List<CompositionResDto> findCompositionsByProductId(Long productId) {
+    public List<CompositionResDto> findCompositionDtosByProductId(Long productId) {
         QProduct childProduct = new QProduct("childProduct");
 
         return queryFactory

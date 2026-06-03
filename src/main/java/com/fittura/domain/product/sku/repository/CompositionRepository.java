@@ -8,5 +8,5 @@ import java.util.List;
 
 @Repository
 public interface CompositionRepository extends JpaRepository<ProductComposition, Long>, CompositionRepositoryCustom {
-    public List<ProductComposition> findByParentProductId(Long productId);
+    List<ProductComposition> findByParentProductId(Long productId);
 }

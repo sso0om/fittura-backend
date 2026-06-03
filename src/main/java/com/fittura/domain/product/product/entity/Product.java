@@ -89,8 +89,28 @@ public class Product extends BaseEntity {
         productSkus.add(productSku);
     }
 
-    void addAttribute(ProductAttribute productAttribute) {
+    public void addAttribute(ProductAttribute productAttribute) {
         attributes.add(productAttribute);
+    }
+
+
+    // ===== 수정 =====
+
+    public void update(
+        Category category,
+        String name,
+        String description,
+        Long basePrice,
+        Dimension dimension
+    ) {
+        Objects.requireNonNull(category, "category must not be null");
+        Objects.requireNonNull(dimension, "dimension must not be null");
+
+        this.category = category;
+        this.name = name;
+        this.description = description;
+        this.basePrice = basePrice;
+        this.dimension = dimension;
     }
 
     public void activate() {
@@ -100,6 +120,9 @@ public class Product extends BaseEntity {
     public void discontinue() {
         this.status = ProductStatus.DISCONTINUED;
     }
+
+
+    // ===== 필드 확인 =====
 
     public boolean isComplete() {
         return productType == ProductType.COMPLETE;

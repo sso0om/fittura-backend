@@ -71,6 +71,13 @@ public class ProductSku extends BaseEntity {
         return productSku;
     }
 
+    public void update(Long price, Integer integer, String color, String material) {
+        this.price = price;
+        this.stockQuantity = integer;
+        this.color = color;
+        this.material = material;
+    }
+
     public boolean isArchived() {
         return status == SkuStatus.ARCHIVED;
     }

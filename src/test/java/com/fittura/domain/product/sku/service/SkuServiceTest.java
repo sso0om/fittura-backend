@@ -6,11 +6,14 @@ import com.fittura.domain.product.product.error.ProductErrorCode;
 import com.fittura.domain.product.product.support.ProductFixture;
 import com.fittura.domain.product.sku.constant.SkuStatus;
 import com.fittura.domain.product.sku.dto.request.CompositionCreateReqDto;
+import com.fittura.domain.product.sku.dto.request.CompositionUpdateReqDto;
 import com.fittura.domain.product.sku.dto.request.SkuCreateReqDto;
+import com.fittura.domain.product.sku.dto.request.SkuUpdateReqDto;
 import com.fittura.domain.product.sku.entity.ProductComposition;
 import com.fittura.domain.product.sku.entity.ProductSku;
 import com.fittura.domain.product.sku.repository.CompositionRepository;
 import com.fittura.domain.product.sku.repository.ProductSkuRepository;
+import com.fittura.domain.product.sku.support.ProductCompositionFixture;
 import com.fittura.domain.product.sku.support.ProductSkuFixture;
 import com.fittura.global.exception.ServiceException;
 import org.junit.jupiter.api.DisplayName;
@@ -133,19 +136,87 @@ class SkuServiceTest {
     }
 
 
+    // ========== SKU 수정 ==========
+
+    @Test
+    @DisplayName("SKU 수정 성공 - 기존 SKU 업데이트")
+    void updateSkuSuccess_updateExisting() {
+        // given
+        Product product = ProductFixture.component("A Desk", 50000L);
+        ProductSku existing = ProductSkuFixture.skuWithId(1L, product);
+
+        given(productSkuRepository.findByProductId(product.getId())).willReturn(List.of(existing));
+
+        List<SkuUpdateReqDto> reqDto = List.of(
+            new SkuUpdateReqDto(1L, 9000L, 80, "Black", "Metal")
+        );
+
+        // when
+        skuService.updateSku(product, reqDto);
+
+        // then
+        assertThat(existing.getPrice()).isEqualTo(9000L);
+        assertThat(existing.getStockQuantity()).isEqualTo(80);
+        assertThat(existing.getColor()).isEqualTo("Black");
+        assertThat(existing.getMaterial()).isEqualTo("Metal");
+    }
+
+    @Test
+    @DisplayName("SKU 수정 성공 - 새 SKU 추가")
+    void updateSkuSuccess_addNew() {
+        // given
+        Product product = ProductFixture.component("A Desk", 50000L);
+        ProductSku existing = ProductSkuFixture.skuWithId(1L, product);
+
+        given(productSkuRepository.findByProductId(product.getId())).willReturn(List.of(existing));
+
+        List<SkuUpdateReqDto> reqDto = List.of(
+            new SkuUpdateReqDto(1L, 20000L, 50, "White", "Wood"),
+            new SkuUpdateReqDto(null, 15000L, 30, "Black", "Metal")
+        );
+
+        // when
+        skuService.updateSku(product, reqDto);
+
+        // then
+        verify(productSkuRepository, times(1)).save(any(ProductSku.class));
+    }
+
+    @Test
+    @DisplayName("SKU 수정 성공 - 기존 SKU 삭제")
+    void updateSkuSuccess_deleteRemoved() {
+        // given
+        Product product = ProductFixture.component("A Desk", 50000L);
+        ProductSku toDelete = ProductSkuFixture.skuWithId(1L, product);
+        ProductSku toKeep = ProductSkuFixture.skuWithId(2L, product);
+
+        given(productSkuRepository.findByProductId(product.getId())).willReturn(List.of(toDelete, toKeep));
+
+        List<SkuUpdateReqDto> reqDto = List.of(
+            new SkuUpdateReqDto(2L, 20000L, 50, "White", "Wood")
+        );
+
+        // when
+        skuService.updateSku(product, reqDto);
+
+        // then
+        verify(productSkuRepository, times(1)).delete(toDelete);
+    }
+
+
     // ========== 구성품 조회 ==========
 
     @Test
-    @DisplayName("상품 구성 정보 조회 성공")
-    void getProductCompositionsSuccess() {
+    @DisplayName("상품 구성 조회 성공")
+    void getProductCompositionDtosSuccess() {
         // given
         List<CompositionResDto> compositions = List.of(
             new CompositionResDto(1L, "의자 다리", 4, 0)
         );
-        given(compositionRepository.findCompositionsByProductId(1L)).willReturn(compositions);
+        given(compositionRepository.findCompositionDtosByProductId(1L)).willReturn(compositions);
 
         // when
-        List<CompositionResDto> result = skuService.getProductCompositions(1L);
+        List<CompositionResDto> result = skuService.getProductCompositionDtos(1L);
 
         // then
         assertThat(result).hasSize(1);
@@ -154,15 +225,153 @@ class SkuServiceTest {
     }
 
     @Test
-    @DisplayName("상품 구성 정보 조회 성공 - 구성품 없음")
-    void getProductCompositionsSuccess_empty() {
+    @DisplayName("상품 구성 조회 성공 - 구성품 없음")
+    void getProductCompositionDtosSuccess_empty() {
         // given
-        given(compositionRepository.findCompositionsByProductId(99L)).willReturn(List.of());
+        given(compositionRepository.findCompositionDtosByProductId(99L)).willReturn(List.of());
 
         // when
-        List<CompositionResDto> result = skuService.getProductCompositions(99L);
+        List<CompositionResDto> result = skuService.getProductCompositionDtos(99L);
 
         // then
         assertThat(result).isEmpty();
+    }
+
+    
+    // ========== 상품 구성 수정 ==========
+
+    @Test
+    @DisplayName("상품 구성 수정 성공 - 기존 Composition 업데이트")
+    void updateCompositionsSuccess_updateExisting() {
+        // given
+        Product completeProduct = ProductFixture.complete("A Desk", 100000L);
+        Product componentProduct = ProductFixture.component("Chair Leg", 5000L);
+        ProductSku childSku = ProductSkuFixture.skuWithId(1L, componentProduct);
+        ProductComposition existing = ProductCompositionFixture.composition(completeProduct, childSku, 2, 0);
+
+        given(compositionRepository.findByParentProductId(completeProduct.getId())).willReturn(List.of(existing));
+
+        List<CompositionUpdateReqDto> reqDto = List.of(
+            new CompositionUpdateReqDto(null, 1L, 4, 1)
+        );
+
+        // when
+        skuService.updateCompositions(completeProduct, reqDto);
+
+        // then
+        assertThat(existing.getQuantity()).isEqualTo(4);
+        assertThat(existing.getSortOrder()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("상품 구성 수정 성공 - 새 Composition 추가")
+    void updateCompositionsSuccess_addNew() {
+        // given
+        Product completeProduct = ProductFixture.complete("A Desk", 100000L);
+        Product componentProduct = ProductFixture.component("Chair Leg", 5000L);
+        ProductSku existingChildSku = ProductSkuFixture.skuWithId(1L, componentProduct);
+        ProductSku newChildSku = ProductSkuFixture.skuWithId(2L, componentProduct);
+        ProductComposition existing = ProductCompositionFixture.composition(completeProduct, existingChildSku, 2, 0);
+
+        given(compositionRepository.findByParentProductId(completeProduct.getId())).willReturn(List.of(existing));
+        given(productSkuRepository.findById(2L)).willReturn(Optional.of(newChildSku));
+
+        List<CompositionUpdateReqDto> reqDto = List.of(
+            new CompositionUpdateReqDto(null, 1L, 2, 0),
+            new CompositionUpdateReqDto(null, 2L, 1, 1)
+        );
+
+        // when
+        skuService.updateCompositions(completeProduct, reqDto);
+
+        // then
+        verify(compositionRepository, times(1)).save(any(ProductComposition.class));
+    }
+
+    @Test
+    @DisplayName("상품 구성 수정 성공 - 기존 Composition 삭제")
+    void updateCompositionsSuccess_deleteRemoved() {
+        // given
+        Product completeProduct = ProductFixture.complete("A Desk", 100000L);
+        Product componentProduct = ProductFixture.component("Chair Leg", 5000L);
+        ProductSku toDeleteSku = ProductSkuFixture.skuWithId(1L, componentProduct);
+        ProductSku toKeepSku = ProductSkuFixture.skuWithId(2L, componentProduct);
+        ProductComposition toDelete = ProductCompositionFixture.composition(completeProduct, toDeleteSku, 2, 0);
+        ProductComposition toKeep = ProductCompositionFixture.composition(completeProduct, toKeepSku, 1, 1);
+
+        given(compositionRepository.findByParentProductId(completeProduct.getId())).willReturn(List.of(toDelete, toKeep));
+
+        List<CompositionUpdateReqDto> reqDto = List.of(
+            new CompositionUpdateReqDto(null, 2L, 1, 1)
+        );
+
+        // when
+        skuService.updateCompositions(completeProduct, reqDto);
+
+        // then
+        verify(compositionRepository, times(1)).delete(toDelete);
+    }
+
+    @Test
+    @DisplayName("상품 구성 수정 실패 - SKU 없음")
+    void updateCompositionsFail_skuNotFound() {
+        // given
+        Product completeProduct = ProductFixture.complete("A Desk", 100000L);
+
+        given(compositionRepository.findByParentProductId(completeProduct.getId())).willReturn(List.of());
+        given(productSkuRepository.findById(99L)).willReturn(Optional.empty());
+
+        List<CompositionUpdateReqDto> reqDto = List.of(
+            new CompositionUpdateReqDto(null, 99L, 2, 0)
+        );
+
+        // when & then
+        assertThatThrownBy(() -> skuService.updateCompositions(completeProduct, reqDto))
+            .isInstanceOf(ServiceException.class)
+            .extracting(e -> ((ServiceException) e).getErrorCode())
+            .isEqualTo(ProductErrorCode.NOT_FOUND_SKU);
+    }
+
+    @Test
+    @DisplayName("상품 구성 수정 실패 - ARCHIVED SKU")
+    void updateCompositionsFail_skuArchived() {
+        // given
+        Product completeProduct = ProductFixture.complete("A Desk", 100000L);
+        ProductSku archivedSku = ProductSkuFixture.skuWithId(1L, ProductFixture.component("Chair Leg", 5000L));
+        ReflectionTestUtils.setField(archivedSku, "status", SkuStatus.ARCHIVED);
+
+        given(compositionRepository.findByParentProductId(completeProduct.getId())).willReturn(List.of());
+        given(productSkuRepository.findById(1L)).willReturn(Optional.of(archivedSku));
+
+        List<CompositionUpdateReqDto> reqDto = List.of(
+            new CompositionUpdateReqDto(null, 1L, 2, 0)
+        );
+
+        // when & then
+        assertThatThrownBy(() -> skuService.updateCompositions(completeProduct, reqDto))
+            .isInstanceOf(ServiceException.class)
+            .extracting(e -> ((ServiceException) e).getErrorCode())
+            .isEqualTo(ProductErrorCode.ARCHIVED_SKU);
+    }
+
+    @Test
+    @DisplayName("상품 구성 수정 실패 - COMPLETE 상품의 SKU")
+    void updateCompositionsFail_skuIsComplete() {
+        // given
+        Product completeProduct = ProductFixture.complete("A Desk", 100000L);
+        ProductSku completeSku = ProductSkuFixture.skuWithId(1L, completeProduct);
+
+        given(compositionRepository.findByParentProductId(completeProduct.getId())).willReturn(List.of());
+        given(productSkuRepository.findById(1L)).willReturn(Optional.of(completeSku));
+
+        List<CompositionUpdateReqDto> reqDto = List.of(
+            new CompositionUpdateReqDto(null, 1L, 2, 0)
+        );
+
+        // when & then
+        assertThatThrownBy(() -> skuService.updateCompositions(completeProduct, reqDto))
+            .isInstanceOf(ServiceException.class)
+            .extracting(e -> ((ServiceException) e).getErrorCode())
+            .isEqualTo(ProductErrorCode.CHILD_SKU_ONLY_COMPONENT);
     }
 }

@@ -2,6 +2,7 @@ package com.fittura.domain.product.facade;
 
 import com.fittura.domain.product.product.dto.request.ProductCreateReqDto;
 import com.fittura.domain.product.product.dto.request.ProductSearchCondition;
+import com.fittura.domain.product.product.dto.request.ProductUpdateReqDto;
 import com.fittura.domain.product.product.dto.response.*;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.service.ProductService;
@@ -50,6 +51,19 @@ public class ProductFacade {
         return product.getId();
     }
 
+    @Transactional
+    public void updateProduct(Long id, ProductUpdateReqDto reqDto) {
+        Product product = productService.getProduct(id);
+
+        productService.updateProduct(product, reqDto);
+        productService.updateProductAttribute(product, reqDto.attributes());
+        skuService.updateSku(product, reqDto.skus());
+
+        if (product.isComplete()) {
+            skuService.updateCompositions(product, reqDto.compositions());
+        }
+    }
+
 
     // ========== 속성 ==========
 
@@ -65,6 +79,6 @@ public class ProductFacade {
     @Transactional(readOnly = true)
     public List<CompositionResDto> getProductCompositions(Long productId) {
         productService.validateProductExists(productId);
-        return skuService.getProductCompositions(productId);
+        return skuService.getProductCompositionDtos(productId);
     }
 }

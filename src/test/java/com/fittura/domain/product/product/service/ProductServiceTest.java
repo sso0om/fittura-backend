@@ -9,8 +9,16 @@ import com.fittura.domain.product.product.constant.AttributeKey;
 import com.fittura.domain.product.product.constant.ProductStatus;
 import com.fittura.domain.product.product.constant.ProductType;
 import com.fittura.domain.product.product.dto.request.AttributeCreateReqDto;
+import com.fittura.domain.product.product.dto.request.AttributeUpdateReqDto;
 import com.fittura.domain.product.product.dto.request.ProductCreateReqDto;
 import com.fittura.domain.product.product.dto.request.ProductSearchCondition;
+import com.fittura.domain.product.product.dto.request.ProductUpdateReqDto;
+import com.fittura.domain.product.product.entity.Product;
+import com.fittura.domain.product.product.entity.ProductAttribute;
+import com.fittura.domain.product.product.repository.ProductAttributeRepository;
+import com.fittura.domain.product.product.support.ProductFixture;
+import com.fittura.domain.product.sku.dto.request.CompositionUpdateReqDto;
+import com.fittura.domain.product.sku.dto.request.SkuUpdateReqDto;
 import com.fittura.domain.product.product.dto.response.CompositionResDto;
 import com.fittura.domain.product.product.dto.response.ProductAttributeResDto;
 import com.fittura.domain.product.product.dto.response.ProductResDto;
@@ -42,6 +50,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class ProductServiceTest {
@@ -51,6 +60,9 @@ class ProductServiceTest {
 
     @Mock
     private CategoryRepository categoryRepository;
+
+    @Mock
+    private ProductAttributeRepository attributeRepository;
 
     @InjectMocks
     private ProductService productService;
@@ -323,6 +335,159 @@ class ProductServiceTest {
     }
 
 
+    // ========== 상품 수정 ==========
+
+    @Test
+    @DisplayName("상품 수정 성공")
+    void updateProductSuccess() {
+        // given
+        Category newCategory = CategoryFixture.rootActive();
+        Product product = ProductFixture.component("Old Name", 50000L);
+
+        ProductUpdateReqDto reqDto = new ProductUpdateReqDto(
+            1L, "New Name", "새 설명", 80000L,
+            20.0, 200.0, 120.0, 60.0,
+            List.of(skuUpdateDto(null)), List.of(), List.of()
+        );
+
+        given(categoryRepository.findById(1L)).willReturn(Optional.of(newCategory));
+
+        // when
+        productService.updateProduct(product, reqDto);
+
+        // then
+        assertThat(product.getName()).isEqualTo("New Name");
+        assertThat(product.getBasePrice()).isEqualTo(80000L);
+        assertThat(product.getCategory()).isEqualTo(newCategory);
+    }
+
+    @Test
+    @DisplayName("상품 수정 실패 - 카테고리 없음")
+    void updateProductFail_categoryNotFound() {
+        // given
+        Product product = ProductFixture.component("Old Name", 50000L);
+        ProductUpdateReqDto reqDto = new ProductUpdateReqDto(
+            99L, "New Name", null, 80000L,
+            20.0, 200.0, 120.0, 60.0,
+            List.of(skuUpdateDto(null)), List.of(), List.of()
+        );
+
+        given(categoryRepository.findById(99L)).willReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> productService.updateProduct(product, reqDto))
+            .isInstanceOf(ServiceException.class)
+            .extracting(e -> ((ServiceException) e).getErrorCode())
+            .isEqualTo(CategoryErrorCode.NOT_FOUND_CATEGORY);
+    }
+
+    @Test
+    @DisplayName("상품 수정 실패 - ARCHIVED 카테고리")
+    void updateProductFail_categoryArchived() {
+        // given
+        Category archived = CategoryFixture.rootActive();
+        ReflectionTestUtils.setField(archived, "status", CategoryStatus.ARCHIVED);
+
+        Product product = ProductFixture.component("Old Name", 50000L);
+        ProductUpdateReqDto reqDto = new ProductUpdateReqDto(
+            1L, "New Name", null, 80000L,
+            20.0, 200.0, 120.0, 60.0,
+            List.of(skuUpdateDto(null)), List.of(), List.of()
+        );
+
+        given(categoryRepository.findById(1L)).willReturn(Optional.of(archived));
+
+        // when & then
+        assertThatThrownBy(() -> productService.updateProduct(product, reqDto))
+            .isInstanceOf(ServiceException.class)
+            .extracting(e -> ((ServiceException) e).getErrorCode())
+            .isEqualTo(CategoryErrorCode.ARCHIVED_CATEGORY);
+    }
+
+    @Test
+    @DisplayName("상품 수정 실패 - 리프 카테고리가 아님")
+    void updateProductFail_categoryNotLeaf() {
+        // given
+        Category parent = CategoryFixture.rootActive();
+        CategoryFixture.childActive(parent);
+
+        Product product = ProductFixture.component("Old Name", 50000L);
+        ProductUpdateReqDto reqDto = new ProductUpdateReqDto(
+            1L, "New Name", null, 80000L,
+            20.0, 200.0, 120.0, 60.0,
+            List.of(skuUpdateDto(null)), List.of(), List.of()
+        );
+
+        given(categoryRepository.findById(1L)).willReturn(Optional.of(parent));
+
+        // when & then
+        assertThatThrownBy(() -> productService.updateProduct(product, reqDto))
+            .isInstanceOf(ServiceException.class)
+            .extracting(e -> ((ServiceException) e).getErrorCode())
+            .isEqualTo(CategoryErrorCode.NOT_LEAF_CATEGORY);
+    }
+
+
+    // ========== 속성 수정 ==========
+
+    @Test
+    @DisplayName("속성 수정 성공 - 기존 속성 값 변경")
+    void updateProductAttributeSuccess_updateExisting() {
+        // given
+        Product product = ProductFixture.component("A Desk", 50000L);
+        ProductAttribute existing = ProductAttribute.create(product, AttributeKey.SIZE_LABEL, "M");
+        ReflectionTestUtils.setField(existing, "id", 1L);
+
+        given(attributeRepository.findByProductId(product.getId())).willReturn(List.of(existing));
+
+        List<AttributeUpdateReqDto> reqDto = List.of(
+            new AttributeUpdateReqDto(1L, AttributeKey.SIZE_LABEL, "XL")
+        );
+
+        // when
+        productService.updateProductAttribute(product, reqDto);
+
+        // then
+        assertThat(existing.getAttributeValue()).isEqualTo("XL");
+    }
+
+    @Test
+    @DisplayName("속성 수정 성공 - 새 속성 추가")
+    void updateProductAttributeSuccess_addNew() {
+        // given
+        Product product = ProductFixture.component("A Desk", 50000L);
+
+        given(attributeRepository.findByProductId(product.getId())).willReturn(List.of());
+
+        List<AttributeUpdateReqDto> reqDto = List.of(
+            new AttributeUpdateReqDto(null, AttributeKey.SIZE_LABEL, "L")
+        );
+
+        // when
+        productService.updateProductAttribute(product, reqDto);
+
+        // then
+        assertThat(product.getAttributes()).hasSize(1);
+        assertThat(product.getAttributes().get(0).getAttributeValue()).isEqualTo("L");
+    }
+
+    @Test
+    @DisplayName("속성 수정 성공 - 기존 속성 삭제")
+    void updateProductAttributeSuccess_deleteRemoved() {
+        // given
+        Product product = ProductFixture.component("A Desk", 50000L);
+        ProductAttribute toDelete = ProductAttribute.create(product, AttributeKey.SIZE_LABEL, "M");
+
+        given(attributeRepository.findByProductId(product.getId())).willReturn(List.of(toDelete));
+
+        // when - 빈 리스트를 전달하면 기존 속성은 삭제
+        productService.updateProductAttribute(product, List.of());
+
+        // then
+        verify(attributeRepository).delete(toDelete);
+    }
+
+
     // ========== 핼퍼 메서드 ==========
 
     private SkuCreateReqDto skuDto() {
@@ -335,5 +500,9 @@ class ProductServiceTest {
 
     private CompositionCreateReqDto compositionDto() {
         return new CompositionCreateReqDto(1L, 2, 0);
+    }
+
+    private SkuUpdateReqDto skuUpdateDto(Long id) {
+        return new SkuUpdateReqDto(id, 10000L, 100, "White", "Wood");
     }
 }

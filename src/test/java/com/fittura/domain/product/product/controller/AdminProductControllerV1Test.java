@@ -9,6 +9,7 @@ import com.fittura.domain.product.product.constant.ProductType;
 import com.fittura.domain.product.product.entity.Dimension;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.error.ProductErrorCode;
+import com.fittura.domain.product.product.repository.ProductAttributeRepository;
 import com.fittura.domain.product.product.repository.ProductRepository;
 import com.fittura.domain.product.product.support.ProductFixture;
 import com.fittura.domain.product.sku.entity.ProductSku;
@@ -28,8 +29,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -50,6 +50,9 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
 
     @Autowired
     private CompositionRepository compositionRepository;
+
+    @Autowired
+    private ProductAttributeRepository productAttributeRepository;
 
     private static final String PRODUCT_ADMIN_URL = "/api/admin/v1/products";
 
@@ -507,6 +510,293 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
             .andExpect(jsonPath("$.code").value(ProductErrorCode.COMPONENT_NOT_HAVE_COMPOSITION.getCode()))
             .andExpect(jsonPath("$.message").value(ProductErrorCode.COMPONENT_NOT_HAVE_COMPOSITION.getMessage()));
     }
+
+    // ========== 상품 수정 ==========
+
+    @Test
+    @DisplayName("단품 수정 성공")
+    void updateComponentSuccess() throws Exception {
+        // given
+        Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
+        Product product = productRepository.save(
+            Product.create(category, "Old Name", "설명", ProductType.COMPONENT, 50000L, dimension)
+        );
+        ProductSku sku = productSkuRepository.save(ProductSku.create(product, 45000L, 100, "White", "Wood"));
+
+        String reqBody = """
+            {
+                "categoryId": %d,
+                "name": "New Name",
+                "description": "새로운 설명",
+                "basePrice": 80000,
+                "weight": 20.0,
+                "width": 200.0,
+                "height": 120.0,
+                "depth": 60.0,
+                "skus": [{
+                    "id": %d,
+                    "price": 75000,
+                    "stockQuantity": 80,
+                    "color": "Black",
+                    "material": "Metal"
+                }],
+                "attributes": [],
+                "compositions": []
+            }
+        """.formatted(category.getId(), sku.getId());
+
+        // when & then
+        mockMvc.perform(put(PRODUCT_ADMIN_URL + "/" + product.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody)
+            )
+            .andDo(print())
+            .andExpect(handler().handlerType(AdminProductControllerV1.class))
+            .andExpect(handler().methodName("updateProduct"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.message").value("제품이 수정되었습니다."));
+
+        Product updated = productRepository.findById(product.getId()).orElseThrow();
+        assertThat(updated.getName()).isEqualTo("New Name");
+        assertThat(updated.getBasePrice()).isEqualTo(80000L);
+    }
+
+    @Test
+    @DisplayName("완제품 수정 성공 - 구성품 변경")
+    void updateCompleteSuccess_withCompositions() throws Exception {
+        // given
+        Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
+
+        Product componentProduct = productRepository.save(
+            Product.create(category, "Chair Leg", null, ProductType.COMPONENT, 5000L, dimension)
+        );
+        ProductSku oldChildSku = productSkuRepository.save(ProductSku.create(componentProduct, 5000L, 100, "White", "Wood"));
+        ProductSku newChildSku = productSkuRepository.save(ProductSku.create(componentProduct, 5000L, 100, "Black", "Metal"));
+
+        Product completeProduct = productRepository.save(
+            Product.create(category, "A Desk", null, ProductType.COMPLETE, 100000L, dimension)
+        );
+        ProductSku completeSku = productSkuRepository.save(ProductSku.create(completeProduct, 90000L, 50, "White", "Wood"));
+        compositionRepository.save(com.fittura.domain.product.sku.entity.ProductComposition.create(completeProduct, oldChildSku, 4, 0));
+
+        long compositionCountBefore = compositionRepository.count();
+
+        String reqBody = """
+            {
+                "categoryId": %d,
+                "name": "A Desk Updated",
+                "basePrice": 120000,
+                "weight": 20.0,
+                "width": 200.0,
+                "height": 120.0,
+                "depth": 60.0,
+                "skus": [{
+                    "id": %d,
+                    "price": 110000,
+                    "stockQuantity": 40,
+                    "color": "White",
+                    "material": "Wood"
+                }],
+                "attributes": [],
+                "compositions": [{
+                    "childSkuId": %d,
+                    "quantity": 2,
+                    "sortOrder": 0
+                }]
+            }
+        """.formatted(category.getId(), completeSku.getId(), newChildSku.getId());
+
+        // when & then
+        mockMvc.perform(put(PRODUCT_ADMIN_URL + "/" + completeProduct.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody)
+            )
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.message").value("제품이 수정되었습니다."));
+
+        assertThat(compositionRepository.count()).isEqualTo(compositionCountBefore);
+    }
+
+    @Test
+    @DisplayName("상품 수정 성공 - 속성 추가")
+    void updateSuccess_withNewAttribute() throws Exception {
+        // given
+        Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
+        Product product = productRepository.save(
+            Product.create(category, "A Desk", null, ProductType.COMPONENT, 50000L, dimension)
+        );
+        ProductSku sku = productSkuRepository.save(ProductSku.create(product, 45000L, 100, "White", "Wood"));
+
+        String reqBody = """
+            {
+                "categoryId": %d,
+                "name": "A Desk",
+                "basePrice": 50000,
+                "weight": 40.5,
+                "width": 150.0,
+                "height": 100.0,
+                "depth": 50.0,
+                "skus": [{
+                    "id": %d,
+                    "price": 45000,
+                    "stockQuantity": 100,
+                    "color": "White",
+                    "material": "Wood"
+                }],
+                "attributes": [{
+                    "attributeKey": "SIZE_LABEL",
+                    "attributeValue": "L"
+                }],
+                "compositions": []
+            }
+        """.formatted(category.getId(), sku.getId());
+
+        // when & then
+        mockMvc.perform(put(PRODUCT_ADMIN_URL + "/" + product.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody)
+            )
+            .andDo(print())
+            .andExpect(status().isOk());
+
+        assertThat(productAttributeRepository.findByProductId(product.getId())).hasSize(1);
+        assertThat(productAttributeRepository.findByProductId(product.getId()).get(0).getAttributeValue()).isEqualTo("L");
+    }
+
+    @Test
+    @DisplayName("상품 수정 실패 - 상품 없음")
+    void updateFail_productNotFound() throws Exception {
+        // given
+        Category category = categoryRepository.save(CategoryFixture.rootActive());
+
+        String reqBody = """
+            {
+                "categoryId": %d,
+                "name": "New Name",
+                "basePrice": 80000,
+                "weight": 20.0,
+                "width": 200.0,
+                "height": 120.0,
+                "depth": 60.0,
+                "skus": [{
+                    "price": 75000,
+                    "stockQuantity": 80,
+                    "color": "Black",
+                    "material": "Metal"
+                }],
+                "attributes": [],
+                "compositions": []
+            }
+        """.formatted(category.getId());
+
+        // when & then
+        mockMvc.perform(put(PRODUCT_ADMIN_URL + "/9999")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody)
+            )
+            .andDo(print())
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value(ProductErrorCode.NOT_FOUND_PRODUCT.getCode()));
+    }
+
+    @Test
+    @DisplayName("상품 수정 실패 - validation 오류 (skus 비어있음)")
+    void updateFail_validationError() throws Exception {
+        // given
+        String reqBody = """
+            {
+                "categoryId": 1,
+                "name": "New Name",
+                "basePrice": 80000,
+                "weight": 20.0,
+                "width": 200.0,
+                "height": 120.0,
+                "depth": 60.0,
+                "skus": [],
+                "attributes": [],
+                "compositions": []
+            }
+        """;
+
+        // when & then
+        mockMvc.perform(put(PRODUCT_ADMIN_URL + "/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody)
+            )
+            .andDo(print())
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value(CommonErrorCode.VALIDATION_ERROR.getCode()));
+    }
+
+    @Test
+    @WithAnonymousUser
+    @DisplayName("상품 수정 실패 - 인증 없음")
+    void updateFail_unauthorized() throws Exception {
+        // given
+        String reqBody = """
+            {
+                "categoryId": 1,
+                "name": "New Name",
+                "basePrice": 80000,
+                "weight": 20.0,
+                "width": 200.0,
+                "height": 120.0,
+                "depth": 60.0,
+                "skus": [{"price": 75000, "stockQuantity": 80}],
+                "attributes": [],
+                "compositions": []
+            }
+        """;
+
+        // when & then
+        mockMvc.perform(put(PRODUCT_ADMIN_URL + "/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody)
+            )
+            .andDo(print())
+            .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("상품 수정 실패 - 카테고리 없음")
+    void updateFail_categoryNotFound() throws Exception {
+        // given
+        Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
+        Product product = productRepository.save(
+            Product.create(category, "A Desk", null, ProductType.COMPONENT, 50000L, dimension)
+        );
+        productSkuRepository.save(ProductSku.create(product, 45000L, 100, "White", "Wood"));
+
+        String reqBody = """
+            {
+                "categoryId": 9999,
+                "name": "New Name",
+                "basePrice": 80000,
+                "weight": 20.0,
+                "width": 200.0,
+                "height": 120.0,
+                "depth": 60.0,
+                "skus": [{"price": 75000, "stockQuantity": 80}],
+                "attributes": [],
+                "compositions": []
+            }
+        """;
+
+        // when & then
+        mockMvc.perform(put(PRODUCT_ADMIN_URL + "/" + product.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody)
+            )
+            .andDo(print())
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value(CategoryErrorCode.NOT_FOUND_CATEGORY.getCode()));
+    }
+
 
     @Test
     @DisplayName("완제품 생성 실패 - 구성품으로 완제품 SKU 등록")
