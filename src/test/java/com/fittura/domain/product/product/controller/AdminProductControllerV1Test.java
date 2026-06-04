@@ -12,6 +12,7 @@ import com.fittura.domain.product.product.error.ProductErrorCode;
 import com.fittura.domain.product.product.repository.ProductAttributeRepository;
 import com.fittura.domain.product.product.repository.ProductRepository;
 import com.fittura.domain.product.product.support.ProductFixture;
+import com.fittura.domain.product.sku.entity.ProductComposition;
 import com.fittura.domain.product.sku.entity.ProductSku;
 import com.fittura.domain.product.sku.repository.CompositionRepository;
 import com.fittura.domain.product.sku.repository.ProductSkuRepository;
@@ -27,6 +28,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -206,7 +209,6 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
                 "categoryId": %d,
                 "name": "A Desk",
                 "productType": "COMPLETE",
-                "basePrice": 100000,
                 "weight": 10.5,
                 "width": 10.0,
                 "height": 10.0,
@@ -263,7 +265,6 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
                 "categoryId": %d,
                 "name": "Chair Leg",
                 "productType": "COMPONENT",
-                "basePrice": 5000,
                 "weight": 2.0,
                 "width": 10.0,
                 "height": 10.0,
@@ -311,7 +312,6 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
                 "categoryId": %d,
                 "name": "Chair Leg",
                 "productType": "COMPONENT",
-                "basePrice": 5000,
                 "weight": 2.0,
                 "width": 10.0,
                 "height": 10.0,
@@ -345,7 +345,6 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
                 "categoryId": 1,
                 "name": "A Desk",
                 "productType": "COMPLETE",
-                "basePrice": 100000,
                 "weight": 2.0,
                 "width": 10.0,
                 "height": 10.0,
@@ -377,7 +376,6 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
                 "categoryId": %d,
                 "name": "A Desk",
                 "productType": "COMPLETE",
-                "basePrice": 100000,
                 "weight": 10.5,
                 "width": 10.0,
                 "height": 10.0,
@@ -411,7 +409,6 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
                 "categoryId": 9999,
                 "name": "Chair Leg",
                 "productType": "COMPONENT",
-                "basePrice": 5000,
                 "weight": 2.0,
                 "width": 10.0,
                 "height": 10.0,
@@ -448,7 +445,6 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
             "categoryId": %d,
             "name": "Chair Leg",
             "productType": "COMPONENT",
-            "basePrice": 5000,
             "weight": 2.0,
             "width": 10.0,
             "height": 10.0,
@@ -485,7 +481,6 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
             "categoryId": %d,
             "name": "Chair Leg",
             "productType": "COMPONENT",
-            "basePrice": 5000,
             "weight": 2.0,
             "width": 10.0,
             "height": 10.0,
@@ -529,7 +524,6 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
                 "categoryId": %d,
                 "name": "New Name",
                 "description": "새로운 설명",
-                "basePrice": 80000,
                 "weight": 20.0,
                 "width": 200.0,
                 "height": 120.0,
@@ -587,7 +581,6 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
             {
                 "categoryId": %d,
                 "name": "A Desk Updated",
-                "basePrice": 120000,
                 "weight": 20.0,
                 "width": 200.0,
                 "height": 120.0,
@@ -618,6 +611,11 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
             .andExpect(jsonPath("$.message").value("제품이 수정되었습니다."));
 
         assertThat(compositionRepository.count()).isEqualTo(compositionCountBefore);
+
+        List<ProductComposition> compositions = compositionRepository.findByParentProductId(completeProduct.getId());
+        assertThat(compositions).hasSize(1);
+        assertThat(compositions.get(0).getChildSku().getId()).isEqualTo(newChildSku.getId());
+        assertThat(compositions.get(0).getQuantity()).isEqualTo(2);
     }
 
     @Test
@@ -635,7 +633,6 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
             {
                 "categoryId": %d,
                 "name": "A Desk",
-                "basePrice": 50000,
                 "weight": 40.5,
                 "width": 150.0,
                 "height": 100.0,
@@ -677,12 +674,12 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
             {
                 "categoryId": %d,
                 "name": "New Name",
-                "basePrice": 80000,
                 "weight": 20.0,
                 "width": 200.0,
                 "height": 120.0,
                 "depth": 60.0,
                 "skus": [{
+                    "id": null,
                     "price": 75000,
                     "stockQuantity": 80,
                     "color": "Black",
@@ -711,7 +708,6 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
             {
                 "categoryId": 1,
                 "name": "New Name",
-                "basePrice": 80000,
                 "weight": 20.0,
                 "width": 200.0,
                 "height": 120.0,
@@ -741,7 +737,6 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
             {
                 "categoryId": 1,
                 "name": "New Name",
-                "basePrice": 80000,
                 "weight": 20.0,
                 "width": 200.0,
                 "height": 120.0,
@@ -770,22 +765,27 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
         Product product = productRepository.save(
             Product.create(category, "A Desk", null, ProductType.COMPONENT, dimension)
         );
-        productSkuRepository.save(ProductSku.create(product, 45000L, 100, "White", "Wood"));
+        ProductSku sku = productSkuRepository.save(ProductSku.create(product, 45000L, 100, "White", "Wood"));
 
         String reqBody = """
             {
                 "categoryId": 9999,
                 "name": "New Name",
-                "basePrice": 80000,
                 "weight": 20.0,
                 "width": 200.0,
                 "height": 120.0,
                 "depth": 60.0,
-                "skus": [{"price": 75000, "stockQuantity": 80}],
+                "skus": [{
+                    "id": %d,
+                    "price": 75000,
+                    "stockQuantity": 80,
+                    "color": "White",
+                    "material": "Wood"
+                }],
                 "attributes": [],
                 "compositions": []
             }
-        """;
+        """.formatted(sku.getId());
 
         // when & then
         mockMvc.perform(put(PRODUCT_ADMIN_URL + "/" + product.getId())
@@ -811,7 +811,6 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
                 "categoryId": %d,
                 "name": "A Desk",
                 "productType": "COMPLETE",
-                "basePrice": 100000,
                 "weight": 2.0,
                 "width": 10.0,
                 "height": 10.0,
