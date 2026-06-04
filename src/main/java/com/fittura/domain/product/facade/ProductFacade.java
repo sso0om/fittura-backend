@@ -43,6 +43,7 @@ public class ProductFacade {
     public Long createProduct(ProductCreateReqDto reqDto) {
         Product product = productService.createProduct(reqDto);
         skuService.createSkus(product, reqDto.skus());
+        productService.syncBasePrice(product);
 
         if (product.isComplete()) {
             skuService.createCompositions(product, reqDto.compositions());
@@ -58,6 +59,7 @@ public class ProductFacade {
         productService.updateProduct(product, reqDto);
         productService.updateProductAttribute(product, reqDto.attributes());
         skuService.updateSku(product, reqDto.skus());
+        productService.syncBasePrice(product);
 
         if (product.isComplete()) {
             skuService.updateCompositions(product, reqDto.compositions());

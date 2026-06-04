@@ -17,7 +17,7 @@ class ProductSkuTest {
     @DisplayName("SKU 생성 성공")
     void createSku() {
         // when
-        Product product = ProductFixture.complete("완제품", 20000L);
+        Product product = ProductFixture.complete("완제품");
         ProductSku productSku = ProductSkuFixture.sku(product, 20000L, 20);
 
         assertThat(productSku.getProduct()).isEqualTo(product);

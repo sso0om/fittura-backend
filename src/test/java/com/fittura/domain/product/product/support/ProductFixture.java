@@ -13,23 +13,23 @@ public class ProductFixture {
 
     private ProductFixture() {}
 
-    public static Product product(Category category, String name, ProductType productType, Long basePrice) {
-        return Product.create(category, name, "상품 설명", productType, basePrice, DEFAULT_DIMENSION);
+    public static Product product(Category category, String name, ProductType productType) {
+        return Product.create(category, name, "상품 설명", productType, DEFAULT_DIMENSION);
     }
 
-    public static Product complete(Category category, String name, Long basePrice) {
-        return product(category, name, ProductType.COMPLETE, basePrice);
+    public static Product complete(Category category, String name) {
+        return product(category, name, ProductType.COMPLETE);
     }
 
-    public static Product component(Category category, String name, Long basePrice) {
-        return product(category, name, ProductType.COMPONENT, basePrice);
+    public static Product component(Category category, String name) {
+        return product(category, name, ProductType.COMPONENT);
     }
 
-    public static Product complete(String name, Long basePrice) {
-        return complete(DEFAULT_CATEGORY, name, basePrice);
+    public static Product complete(String name) {
+        return complete(DEFAULT_CATEGORY, name);
     }
 
-    public static Product component(String name, Long basePrice) {
-        return component(DEFAULT_CATEGORY, name, basePrice);
+    public static Product component(String name) {
+        return component(DEFAULT_CATEGORY, name);
     }
 }

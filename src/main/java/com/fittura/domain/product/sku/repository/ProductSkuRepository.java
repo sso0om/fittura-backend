@@ -8,6 +8,5 @@ import java.util.List;
 
 @Repository
 public interface ProductSkuRepository extends JpaRepository<ProductSku, Long> {
-
     List<ProductSku> findByProductId(Long productId);
 }

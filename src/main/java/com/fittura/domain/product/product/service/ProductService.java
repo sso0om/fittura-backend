@@ -75,7 +75,6 @@ public class ProductService {
             reqDto.name(),
             reqDto.description(),
             reqDto.productType(),
-            reqDto.basePrice(),
             dimension
         );
 
@@ -114,6 +113,11 @@ public class ProductService {
             dimension
         );
     }
+
+    public void syncBasePrice(Product product) {
+        product.syncBasePrice();
+    }
+
 
 
     // ========== 속성 ==========

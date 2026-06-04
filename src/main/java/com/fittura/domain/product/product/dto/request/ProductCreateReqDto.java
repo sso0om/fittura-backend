@@ -28,11 +28,6 @@ public record ProductCreateReqDto(
     @NotNull
     ProductType productType,
 
-    @Schema(example = "100000")
-    @NotNull
-    @PositiveOrZero
-    Long basePrice,
-
     @Schema(example = "40.5")
     @NotNull
     @Positive

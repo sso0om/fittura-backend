@@ -66,13 +66,13 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
         Category category = categoryRepository.save(CategoryFixture.rootActive());
         Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
 
-        Product activeProduct = Product.create(category, "Active Desk", null, ProductType.COMPONENT, 50000L, dimension);
+        Product activeProduct = Product.create(category, "Active Desk", null, ProductType.COMPONENT, dimension);
         activeProduct.activate();
         productRepository.save(activeProduct);
 
-        productRepository.save(Product.create(category, "Disabled Chair", null, ProductType.COMPONENT, 30000L, dimension));
+        productRepository.save(Product.create(category, "Disabled Chair", null, ProductType.COMPONENT, dimension));
 
-        Product discontinuedProduct = Product.create(category, "Discontinued Sofa", null, ProductType.COMPONENT, 70000L, dimension);
+        Product discontinuedProduct = Product.create(category, "Discontinued Sofa", null, ProductType.COMPONENT, dimension);
         ReflectionTestUtils.setField(discontinuedProduct, "status", ProductStatus.DISCONTINUED);
         productRepository.save(discontinuedProduct);
 
@@ -91,11 +91,11 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
         Category category = categoryRepository.save(CategoryFixture.rootActive());
         Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
 
-        Product activeProduct = Product.create(category, "Active Desk", null, ProductType.COMPONENT, 50000L, dimension);
+        Product activeProduct = Product.create(category, "Active Desk", null, ProductType.COMPONENT, dimension);
         activeProduct.activate();
         productRepository.save(activeProduct);
 
-        productRepository.save(Product.create(category, "Disabled Chair", null, ProductType.COMPONENT, 30000L, dimension));
+        productRepository.save(Product.create(category, "Disabled Chair", null, ProductType.COMPONENT, dimension));
 
         // when & then
         mockMvc.perform(get(PRODUCT_ADMIN_URL).param("statuses", "ACTIVE"))
@@ -112,11 +112,11 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
         Category category = categoryRepository.save(CategoryFixture.rootActive());
         Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
 
-        Product activeProduct = Product.create(category, "Active Desk", null, ProductType.COMPONENT, 50000L, dimension);
+        Product activeProduct = Product.create(category, "Active Desk", null, ProductType.COMPONENT, dimension);
         activeProduct.activate();
         productRepository.save(activeProduct);
 
-        Product disabledProduct = Product.create(category, "DISABLED Desk", null, ProductType.COMPONENT, 50000L, dimension);
+        Product disabledProduct = Product.create(category, "DISABLED Desk", null, ProductType.COMPONENT, dimension);
         productRepository.save(disabledProduct);
 
         // when & then
@@ -147,7 +147,7 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
         Category category = categoryRepository.save(CategoryFixture.rootActive());
         Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
         Product product = productRepository.save(
-            Product.create(category, "A Desk", "책상입니다.", ProductType.COMPONENT, 50000L, dimension)
+            Product.create(category, "A Desk", "책상입니다.", ProductType.COMPONENT, dimension)
         );
         productSkuRepository.save(ProductSku.create(product, 45000L, 100, "White", "Wood"));
 
@@ -191,7 +191,7 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
         Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
 
         Product componentProduct = productRepository.save(
-            Product.create(category, "Chair Leg", null, ProductType.COMPONENT, 5000L, dimension)
+            Product.create(category, "Chair Leg", null, ProductType.COMPONENT, dimension)
         );
         ProductSku childSku = productSkuRepository.save(
             ProductSku.create(componentProduct, 5000L, 100, "White", "Wood")
@@ -477,7 +477,7 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
     void createFail_componentWithCompositions() throws Exception {
         // given
         Category category = categoryRepository.save(CategoryFixture.rootActive());
-        Product componentProduct = productRepository.save(ProductFixture.component(category, "Chair Leg", 5000L));
+        Product componentProduct = productRepository.save(ProductFixture.component(category, "Chair Leg"));
         ProductSku childSku = productSkuRepository.save(ProductSkuFixture.sku(componentProduct, 5000L, 100));
 
         String reqBody = """
@@ -520,7 +520,7 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
         Category category = categoryRepository.save(CategoryFixture.rootActive());
         Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
         Product product = productRepository.save(
-            Product.create(category, "Old Name", "설명", ProductType.COMPONENT, 50000L, dimension)
+            Product.create(category, "Old Name", "설명", ProductType.COMPONENT, dimension)
         );
         ProductSku sku = productSkuRepository.save(ProductSku.create(product, 45000L, 100, "White", "Wood"));
 
@@ -559,7 +559,7 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
 
         Product updated = productRepository.findById(product.getId()).orElseThrow();
         assertThat(updated.getName()).isEqualTo("New Name");
-        assertThat(updated.getBasePrice()).isEqualTo(80000L);
+        assertThat(updated.getBasePrice()).isEqualTo(75000);
     }
 
     @Test
@@ -570,13 +570,13 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
         Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
 
         Product componentProduct = productRepository.save(
-            Product.create(category, "Chair Leg", null, ProductType.COMPONENT, 5000L, dimension)
+            Product.create(category, "Chair Leg", null, ProductType.COMPONENT, dimension)
         );
         ProductSku oldChildSku = productSkuRepository.save(ProductSku.create(componentProduct, 5000L, 100, "White", "Wood"));
         ProductSku newChildSku = productSkuRepository.save(ProductSku.create(componentProduct, 5000L, 100, "Black", "Metal"));
 
         Product completeProduct = productRepository.save(
-            Product.create(category, "A Desk", null, ProductType.COMPLETE, 100000L, dimension)
+            Product.create(category, "A Desk", null, ProductType.COMPLETE, dimension)
         );
         ProductSku completeSku = productSkuRepository.save(ProductSku.create(completeProduct, 90000L, 50, "White", "Wood"));
         compositionRepository.save(com.fittura.domain.product.sku.entity.ProductComposition.create(completeProduct, oldChildSku, 4, 0));
@@ -627,7 +627,7 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
         Category category = categoryRepository.save(CategoryFixture.rootActive());
         Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
         Product product = productRepository.save(
-            Product.create(category, "A Desk", null, ProductType.COMPONENT, 50000L, dimension)
+            Product.create(category, "A Desk", null, ProductType.COMPONENT, dimension)
         );
         ProductSku sku = productSkuRepository.save(ProductSku.create(product, 45000L, 100, "White", "Wood"));
 
@@ -768,7 +768,7 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
         Category category = categoryRepository.save(CategoryFixture.rootActive());
         Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
         Product product = productRepository.save(
-            Product.create(category, "A Desk", null, ProductType.COMPONENT, 50000L, dimension)
+            Product.create(category, "A Desk", null, ProductType.COMPONENT, dimension)
         );
         productSkuRepository.save(ProductSku.create(product, 45000L, 100, "White", "Wood"));
 
@@ -803,7 +803,7 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
     void createCompleteFail_childSkuIsComplete() throws Exception {
         // given
         Category category = categoryRepository.save(CategoryFixture.rootActive());
-        Product completeProduct = productRepository.save(ProductFixture.complete(category, "기존 완제품", 100000L));
+        Product completeProduct = productRepository.save(ProductFixture.complete(category, "기존 완제품"));
         ProductSku completeSku = productSkuRepository.save(ProductSkuFixture.sku(completeProduct, 10000L, 100));
 
         String reqBody = """

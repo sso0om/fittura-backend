@@ -3,7 +3,9 @@ package com.fittura.domain.product.product.entity;
 import com.fittura.domain.category.entity.Category;
 import com.fittura.domain.product.product.constant.ProductStatus;
 import com.fittura.domain.product.product.constant.ProductType;
+import com.fittura.domain.product.product.error.ProductErrorCode;
 import com.fittura.domain.product.sku.entity.ProductSku;
+import com.fittura.global.exception.ServiceException;
 import com.fittura.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -65,7 +67,6 @@ public class Product extends BaseEntity {
         String name,
         String description,
         ProductType productType,
-        Long basePrice,
         Dimension dimension
     ) {
         Objects.requireNonNull(category, "category must not be null");
@@ -76,7 +77,7 @@ public class Product extends BaseEntity {
             .name(name)
             .description(description)
             .productType(productType)
-            .basePrice(basePrice)
+            .basePrice(0L)
             .dimension(dimension)
             .status(ProductStatus.DISABLED)
             .build();
@@ -111,6 +112,14 @@ public class Product extends BaseEntity {
         this.description = description;
         this.basePrice = basePrice;
         this.dimension = dimension;
+    }
+
+    public void syncBasePrice() {
+        this.basePrice = productSkus.stream()
+            .filter(s -> !s.isArchived())
+            .mapToLong(ProductSku::getPrice)
+            .min()
+            .orElseThrow(() -> new ServiceException(ProductErrorCode.PRODUCT_HAVA_SKU));
     }
 
     public void activate() {

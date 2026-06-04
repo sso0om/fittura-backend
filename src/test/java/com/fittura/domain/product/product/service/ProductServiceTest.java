@@ -8,40 +8,32 @@ import com.fittura.domain.category.support.CategoryFixture;
 import com.fittura.domain.product.product.constant.AttributeKey;
 import com.fittura.domain.product.product.constant.ProductStatus;
 import com.fittura.domain.product.product.constant.ProductType;
-import com.fittura.domain.product.product.dto.request.AttributeCreateReqDto;
-import com.fittura.domain.product.product.dto.request.AttributeUpdateReqDto;
-import com.fittura.domain.product.product.dto.request.ProductCreateReqDto;
-import com.fittura.domain.product.product.dto.request.ProductSearchCondition;
-import com.fittura.domain.product.product.dto.request.ProductUpdateReqDto;
+import com.fittura.domain.product.product.dto.request.*;
+import com.fittura.domain.product.product.dto.response.*;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.entity.ProductAttribute;
-import com.fittura.domain.product.product.repository.ProductAttributeRepository;
-import com.fittura.domain.product.product.support.ProductFixture;
-import com.fittura.domain.product.sku.dto.request.CompositionUpdateReqDto;
-import com.fittura.domain.product.sku.dto.request.SkuUpdateReqDto;
-import com.fittura.domain.product.product.dto.response.CompositionResDto;
-import com.fittura.domain.product.product.dto.response.ProductAttributeResDto;
-import com.fittura.domain.product.product.dto.response.ProductResDto;
-import com.fittura.domain.product.product.dto.response.ProductWithAllResDto;
-import com.fittura.domain.product.product.dto.response.ProductWithSkuResDto;
 import com.fittura.domain.product.product.error.ProductErrorCode;
+import com.fittura.domain.product.product.repository.ProductAttributeRepository;
 import com.fittura.domain.product.product.repository.ProductRepository;
+import com.fittura.domain.product.product.support.ProductFixture;
 import com.fittura.domain.product.sku.constant.SkuStatus;
 import com.fittura.domain.product.sku.dto.request.CompositionCreateReqDto;
 import com.fittura.domain.product.sku.dto.request.SkuCreateReqDto;
+import com.fittura.domain.product.sku.dto.request.SkuUpdateReqDto;
 import com.fittura.domain.product.sku.dto.response.SkuResDto;
 import com.fittura.domain.product.sku.dto.response.SkuWithStockResDto;
+import com.fittura.domain.product.sku.support.ProductSkuFixture;
 import com.fittura.global.exception.ServiceException;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
@@ -228,7 +220,7 @@ class ProductServiceTest {
     void createFail_categoryNotFound() {
         // given
         ProductCreateReqDto reqDto = new ProductCreateReqDto(
-            99L, "A Desk", null, ProductType.COMPLETE, 100000L,
+            99L, "A Desk", null, ProductType.COMPLETE,
             40.5, 150.0, 100.0, 50.0,
             List.of(skuDto()),
             List.of(attributeDto()),
@@ -252,7 +244,7 @@ class ProductServiceTest {
         ReflectionTestUtils.setField(archived, "status", CategoryStatus.ARCHIVED);
 
         ProductCreateReqDto reqDto = new ProductCreateReqDto(
-            1L, "A Desk", null, ProductType.COMPLETE, 100000L,
+            1L, "A Desk", null, ProductType.COMPLETE,
             40.5, 150.0, 100.0, 50.0,
             List.of(skuDto()),
             List.of(attributeDto()),
@@ -276,7 +268,7 @@ class ProductServiceTest {
         CategoryFixture.childActive(parent); // parent에 자식 추가 → isLeaf() == false
 
         ProductCreateReqDto reqDto = new ProductCreateReqDto(
-            1L, "A Desk", null, ProductType.COMPLETE, 100000L,
+            1L, "A Desk", null, ProductType.COMPLETE,
             40.5, 150.0, 100.0, 50.0,
             List.of(skuDto()),
             List.of(attributeDto()),
@@ -297,7 +289,7 @@ class ProductServiceTest {
     void createCompleteFail_noCompositions() {
         // given
         ProductCreateReqDto reqDto = new ProductCreateReqDto(
-            1L, "A Desk", null, ProductType.COMPLETE, 100000L,
+            1L, "A Desk", null, ProductType.COMPLETE,
             40.5, 150.0, 100.0, 50.0,
             List.of(skuDto()),
             List.of(attributeDto()),
@@ -318,7 +310,7 @@ class ProductServiceTest {
     void createComponentFail_hasCompositions() {
         // given
         ProductCreateReqDto reqDto = new ProductCreateReqDto(
-            1L, "A Desk", null, ProductType.COMPONENT, 100000L,
+            1L, "A Desk", null, ProductType.COMPONENT,
             40.5, 150.0, 100.0, 50.0,
             List.of(skuDto()),
             List.of(attributeDto()),
@@ -342,7 +334,7 @@ class ProductServiceTest {
     void updateProductSuccess() {
         // given
         Category newCategory = CategoryFixture.rootActive();
-        Product product = ProductFixture.component("Old Name", 50000L);
+        Product product = ProductFixture.component("Old Name");
 
         ProductUpdateReqDto reqDto = new ProductUpdateReqDto(
             1L, "New Name", "새 설명", 80000L,
@@ -365,7 +357,7 @@ class ProductServiceTest {
     @DisplayName("상품 수정 실패 - 카테고리 없음")
     void updateProductFail_categoryNotFound() {
         // given
-        Product product = ProductFixture.component("Old Name", 50000L);
+        Product product = ProductFixture.component("Old Name");
         ProductUpdateReqDto reqDto = new ProductUpdateReqDto(
             99L, "New Name", null, 80000L,
             20.0, 200.0, 120.0, 60.0,
@@ -388,7 +380,7 @@ class ProductServiceTest {
         Category archived = CategoryFixture.rootActive();
         ReflectionTestUtils.setField(archived, "status", CategoryStatus.ARCHIVED);
 
-        Product product = ProductFixture.component("Old Name", 50000L);
+        Product product = ProductFixture.component("Old Name");
         ProductUpdateReqDto reqDto = new ProductUpdateReqDto(
             1L, "New Name", null, 80000L,
             20.0, 200.0, 120.0, 60.0,
@@ -411,7 +403,7 @@ class ProductServiceTest {
         Category parent = CategoryFixture.rootActive();
         CategoryFixture.childActive(parent);
 
-        Product product = ProductFixture.component("Old Name", 50000L);
+        Product product = ProductFixture.component("Old Name");
         ProductUpdateReqDto reqDto = new ProductUpdateReqDto(
             1L, "New Name", null, 80000L,
             20.0, 200.0, 120.0, 60.0,
@@ -428,13 +420,30 @@ class ProductServiceTest {
     }
 
 
+    // ========== basePrice 동기화 ==========
+
+    @Test
+    @DisplayName("basePrice 동기화 성공")
+    void syncBasePriceSuccess() {
+        // given
+        Product product = ProductFixture.component("책상");
+        ProductSkuFixture.sku(product, 30000L, 10);
+
+        // when
+        productService.syncBasePrice(product);
+
+        // then
+        assertThat(product.getBasePrice()).isEqualTo(30000L);
+    }
+
+
     // ========== 속성 수정 ==========
 
     @Test
     @DisplayName("속성 수정 성공 - 기존 속성 값 변경")
     void updateProductAttributeSuccess_updateExisting() {
         // given
-        Product product = ProductFixture.component("A Desk", 50000L);
+        Product product = ProductFixture.component("A Desk");
         ProductAttribute existing = ProductAttribute.create(product, AttributeKey.SIZE_LABEL, "M");
         ReflectionTestUtils.setField(existing, "id", 1L);
 
@@ -455,7 +464,7 @@ class ProductServiceTest {
     @DisplayName("속성 수정 성공 - 새 속성 추가")
     void updateProductAttributeSuccess_addNew() {
         // given
-        Product product = ProductFixture.component("A Desk", 50000L);
+        Product product = ProductFixture.component("A Desk");
 
         given(attributeRepository.findByProductId(product.getId())).willReturn(List.of());
 
@@ -475,7 +484,7 @@ class ProductServiceTest {
     @DisplayName("속성 수정 성공 - 기존 속성 삭제")
     void updateProductAttributeSuccess_deleteRemoved() {
         // given
-        Product product = ProductFixture.component("A Desk", 50000L);
+        Product product = ProductFixture.component("A Desk");
         ProductAttribute toDelete = ProductAttribute.create(product, AttributeKey.SIZE_LABEL, "M");
 
         given(attributeRepository.findByProductId(product.getId())).willReturn(List.of(toDelete));
