@@ -1,16 +1,15 @@
 package com.fittura.domain.product.product.dto.request;
 
-import com.fittura.domain.product.product.constant.ProductType;
-import com.fittura.domain.product.sku.dto.request.CompositionCreateReqDto;
-import com.fittura.domain.product.sku.dto.request.SkuCreateReqDto;
+import com.fittura.domain.product.sku.dto.request.CompositionUpdateReqDto;
+import com.fittura.domain.product.sku.dto.request.SkuUpdateReqDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 
 import java.util.List;
 
-@Schema(description = "상품 생성 요청 DTO")
-public record ProductCreateReqDto(
+@Schema(description = "상품 수정 요청 DTO")
+public record ProductUpdateReqDto(
 
     @Schema(example = "1")
     @NotNull
@@ -23,10 +22,6 @@ public record ProductCreateReqDto(
 
     @Schema(example = "북유럽 스타일의 원목 의자입니다.")
     String description,
-
-    @Schema(example = "COMPLETE")
-    @NotNull
-    ProductType productType,
 
     @Schema(example = "40.5")
     @NotNull
@@ -51,15 +46,15 @@ public record ProductCreateReqDto(
     @Valid
     @NotNull
     @Size(min = 1)
-    List<SkuCreateReqDto> skus,
+    List<SkuUpdateReqDto> skus,
 
     @Valid
-    List<AttributeCreateReqDto> attributes,
+    List<AttributeUpdateReqDto> attributes,
 
     @Valid
-    List<CompositionCreateReqDto> compositions
+    List<CompositionUpdateReqDto> compositions
 ) {
-    public ProductCreateReqDto {
+    public ProductUpdateReqDto {
         attributes = attributes != null ? attributes : List.of();
         compositions = compositions != null ? compositions : List.of();
     }

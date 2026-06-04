@@ -3,12 +3,14 @@ package com.fittura.domain.product.sku.entity;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.Objects;
 
 import static lombok.AccessLevel.PROTECTED;
 
+@Getter
 @Entity
 @Table(
     name = "product_compositions",
@@ -55,5 +57,14 @@ public class ProductComposition extends BaseEntity {
         productComposition.sortOrder = sortOrder;
 
         return productComposition;
+    }
+
+    public void update(Integer quantity, Integer sortOrder) {
+        if (quantity < 1) {
+            throw new IllegalArgumentException("quantity must be greater than or equal to 1");
+        }
+
+        this.quantity = quantity;
+        this.sortOrder = sortOrder;
     }
 }

@@ -4,6 +4,7 @@ import com.fittura.domain.product.facade.ProductFacade;
 import com.fittura.domain.product.product.constant.ProductStatus;
 import com.fittura.domain.product.product.dto.request.ProductCreateReqDto;
 import com.fittura.domain.product.product.dto.request.ProductSearchCondition;
+import com.fittura.domain.product.product.dto.request.ProductUpdateReqDto;
 import com.fittura.domain.product.product.dto.response.ProductWithAllResDto;
 import com.fittura.domain.product.product.dto.response.ProductResDto;
 import com.fittura.global.rsdata.RsData;
@@ -78,5 +79,17 @@ public class AdminProductControllerV1 {
         return ResponseEntity
             .status(HttpStatus.CREATED)
             .body(RsData.createSuccess("제품이 생성되었습니다.", productId));
+    }
+
+    @PutMapping("/{id}")
+    @Operation(summary = "제품 수정", description = "제품 수정 API")
+    public ResponseEntity<RsData<Void>> updateProduct(
+        @PathVariable Long id,
+        @RequestBody @Valid ProductUpdateReqDto reqDto
+    ) {
+        productFacade.updateProduct(id, reqDto);
+
+        return ResponseEntity
+            .ok(RsData.success("제품이 수정되었습니다.", null));
     }
 }

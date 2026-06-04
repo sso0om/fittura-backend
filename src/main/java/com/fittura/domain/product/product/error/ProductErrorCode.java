@@ -16,6 +16,7 @@ public enum ProductErrorCode implements ErrorCode {
     ARCHIVED_PRODUCT(HttpStatus.BAD_REQUEST, "P400-04", "ARCHIVED 상품은 사용불가 합니다."),
     ARCHIVED_SKU(HttpStatus.BAD_REQUEST, "P400-05", "ARCHIVED SKU는 사용불가 합니다."),
     COMPOSITION_QUANTITY_MIN1(HttpStatus.BAD_REQUEST, "P400-06", "구성품은 한 개 이상이어야 합니다."),
+    PRODUCT_HAVA_SKU(HttpStatus.BAD_REQUEST, "P400-07", "상품의 SKU가 한 개 이상이어야 합니다."),
 
         // 404
     NOT_FOUND_PRODUCT(HttpStatus.NOT_FOUND, "P404-01", "존재하지 않는 상품입니다."),
