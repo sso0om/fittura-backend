@@ -5,6 +5,7 @@ import com.fittura.domain.category.support.CategoryFixture;
 import com.fittura.domain.product.product.constant.ProductType;
 import com.fittura.domain.product.product.entity.Dimension;
 import com.fittura.domain.product.product.entity.Product;
+import org.springframework.test.util.ReflectionTestUtils;
 
 public class ProductFixture {
 
@@ -31,5 +32,11 @@ public class ProductFixture {
 
     public static Product component(String name) {
         return component(DEFAULT_CATEGORY, name);
+    }
+
+    public static Product componentWithId(Long id, String name) {
+        Product product = component(name);
+        ReflectionTestUtils.setField(product, "id", id);
+        return product;
     }
 }

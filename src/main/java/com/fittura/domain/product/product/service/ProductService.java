@@ -61,7 +61,7 @@ public class ProductService {
         Category category = getCategory(reqDto.categoryId());
 
         validateCategory(category);
-        validateProductType(reqDto);
+        validateProductType(reqDto.productType(), reqDto.compositions().isEmpty());
 
         Dimension dimension = Dimension.of(
             reqDto.weight(),
@@ -97,6 +97,7 @@ public class ProductService {
     public void updateProduct(Product product, ProductUpdateReqDto reqDto) {
         Category category = getCategory(reqDto.categoryId());
         validateCategory(category);
+        validateProductType(product.getProductType(), reqDto.compositions().isEmpty());
 
         Dimension dimension = Dimension.of(
             reqDto.weight(),
@@ -173,11 +174,11 @@ public class ProductService {
         }
     }
 
-    private static void validateProductType(ProductCreateReqDto reqDto) {
-        if (reqDto.productType() == ProductType.COMPLETE && reqDto.compositions().isEmpty()) {
+    private static void validateProductType(ProductType productType, boolean compositionsEmpty) {
+        if (productType == ProductType.COMPLETE && compositionsEmpty) {
             throw new ServiceException(ProductErrorCode.COMPLETE_HAVE_COMPOSITIONS);
         }
-        if (reqDto.productType() == ProductType.COMPONENT && !reqDto.compositions().isEmpty()) {
+        if (productType == ProductType.COMPONENT && !compositionsEmpty) {
             throw new ServiceException(ProductErrorCode.COMPONENT_NOT_HAVE_COMPOSITION);
         }
     }

@@ -186,7 +186,8 @@ class SkuServiceTest {
     @DisplayName("SKU 수정 성공 - 기존 SKU 삭제")
     void updateSkuSuccess_deleteRemoved() {
         // given
-        Product product = ProductFixture.component("A Desk");
+        Product product = ProductFixture.componentWithId(1L, "A Desk");
+
         ProductSku toDelete = ProductSkuFixture.skuWithId(1L, product);
         ProductSku toKeep = ProductSkuFixture.skuWithId(2L, product);
 
@@ -200,7 +201,7 @@ class SkuServiceTest {
         skuService.updateSku(product, reqDto);
 
         // then
-        verify(productSkuRepository, times(1)).delete(toDelete);
+        assertThat(toDelete.isArchived()).isTrue();
     }
 
 

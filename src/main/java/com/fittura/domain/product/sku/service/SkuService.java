@@ -53,9 +53,16 @@ public class SkuService {
             .filter(Objects::nonNull)
             .collect(Collectors.toSet());
 
+        // id가 null이 아니고 existingMap에 없을 때: 다른 상품 SKU 또는 존재하지 않는 id
+        incomingIds.forEach(id -> {
+            if (!existingMap.containsKey(id)) {
+                throw new ServiceException(ProductErrorCode.NOT_FOUND_SKU);
+            }
+        });
+
         existing.stream()
             .filter(s -> !incomingIds.contains(s.getId()))
-            .forEach(productSkuRepository::delete);
+            .forEach(ProductSku::archive);
 
         for (SkuUpdateReqDto dto : reqDto) {
             if (dto.id() == null) {

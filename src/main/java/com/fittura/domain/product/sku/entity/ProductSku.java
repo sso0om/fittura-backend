@@ -78,6 +78,10 @@ public class ProductSku extends BaseEntity {
         this.material = material;
     }
 
+    public void archive() {
+        this.status = SkuStatus.ARCHIVED;
+    }
+
     public boolean isArchived() {
         return status == SkuStatus.ARCHIVED;
     }
