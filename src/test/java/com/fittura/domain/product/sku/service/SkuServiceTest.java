@@ -375,4 +375,76 @@ class SkuServiceTest {
             .extracting(e -> ((ServiceException) e).getErrorCode())
             .isEqualTo(ProductErrorCode.CHILD_SKU_ONLY_COMPONENT);
     }
+
+
+    // ========== SKU 삭제 유효성 검사 ==========
+
+    @Test
+    @DisplayName("SKU 삭제 유효성 검사 성공 - 완제품은 참조 체크 없이 통과")
+    void validateDeletableSku_completeProduct() {
+        // given
+        Product completeProduct = ProductFixture.complete("A Desk");
+
+        // when & then (no exception)
+        skuService.validateDeletableSku(completeProduct);
+    }
+
+    @Test
+    @DisplayName("SKU 삭제 유효성 검사 성공 - 단품이고 다른 완제품에서 미참조")
+    void validateDeletableSku_component_notReferenced() {
+        // given
+        Product componentProduct = ProductFixture.componentWithId(1L, "Chair Leg");
+        given(compositionRepository.isSkuReferencedByOther(componentProduct.getId())).willReturn(false);
+
+        // when & then (no exception)
+        skuService.validateDeletableSku(componentProduct);
+    }
+
+    @Test
+    @DisplayName("SKU 삭제 유효성 검사 실패 - 단품 SKU가 다른 완제품의 구성품으로 참조됨")
+    void validateDeletableSku_component_referenced() {
+        // given
+        Product componentProduct = ProductFixture.componentWithId(1L, "Chair Leg");
+        given(compositionRepository.isSkuReferencedByOther(componentProduct.getId())).willReturn(true);
+
+        // when & then
+        assertThatThrownBy(() -> skuService.validateDeletableSku(componentProduct))
+            .isInstanceOf(ServiceException.class)
+            .extracting(e -> ((ServiceException) e).getErrorCode())
+            .isEqualTo(ProductErrorCode.PRODUCT_SKU_REFERENCED_BY_OTHER);
+    }
+
+
+    // ========== SKU/구성품 삭제 ==========
+
+    @Test
+    @DisplayName("SKU 삭제 성공 - 모든 SKU ARCHIVED 처리")
+    void deleteSkusSuccess() {
+        // given
+        Product product = ProductFixture.componentWithId(1L, "Chair Leg");
+        ProductSku sku1 = ProductSkuFixture.skuWithId(1L, product);
+        ProductSku sku2 = ProductSkuFixture.skuWithId(2L, product);
+
+        given(productSkuRepository.findByProductId(product.getId())).willReturn(List.of(sku1, sku2));
+
+        // when
+        skuService.deleteSkus(product);
+
+        // then
+        assertThat(sku1.isArchived()).isTrue();
+        assertThat(sku2.isArchived()).isTrue();
+    }
+
+    @Test
+    @DisplayName("구성품 삭제 성공 - 완제품 ID로 전체 삭제")
+    void deleteCompositionsSuccess() {
+        // given
+        Product completeProduct = ProductFixture.componentWithId(1L, "A Desk");
+
+        // when
+        skuService.deleteCompositions(completeProduct);
+
+        // then
+        verify(compositionRepository).deleteAllByParentProductId(completeProduct.getId());
+    }
 }

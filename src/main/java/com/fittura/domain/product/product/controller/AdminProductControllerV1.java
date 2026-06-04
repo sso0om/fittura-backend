@@ -92,4 +92,15 @@ public class AdminProductControllerV1 {
         return ResponseEntity
             .ok(RsData.success("제품이 수정되었습니다.", null));
     }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "제품 삭제", description = "제품 삭제 API")
+    public ResponseEntity<RsData<Void>> deleteProduct(
+        @PathVariable Long id
+    ) {
+        productFacade.deleteProduct(id);
+
+        return ResponseEntity
+            .ok(RsData.success("<UNK> <UNK>.", null));
+    }
 }

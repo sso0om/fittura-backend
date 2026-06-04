@@ -128,6 +128,10 @@ public class Product extends BaseEntity {
         this.status = ProductStatus.DISCONTINUED;
     }
 
+    public void archive() {
+        this.status = ProductStatus.ARCHIVED;
+    }
+
 
     // ===== 필드 확인 =====
 

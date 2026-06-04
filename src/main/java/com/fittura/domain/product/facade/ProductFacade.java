@@ -66,6 +66,21 @@ public class ProductFacade {
         }
     }
 
+    @Transactional
+    public void deleteProduct(Long id) {
+        Product product = productService.getProduct(id);
+
+        productService.validateDeletableProduct(product);
+        skuService.validateDeletableSku(product);
+
+        if (product.isComplete()) {
+            skuService.deleteCompositions(product);
+        }
+        productService.deleteProductAttributes(product);
+        skuService.deleteSkus(product);
+        productService.deleteProduct(product);
+    }
+
 
     // ========== 속성 ==========
 

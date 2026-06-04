@@ -81,6 +81,12 @@ public class SkuService {
         }
     }
 
+    public void deleteSkus(Product product) {
+        for (ProductSku productSku : getProductSkus(product.getId())) {
+            productSku.archive();
+        }
+    }
+
 
     // ========== 구성품 ==========
 
@@ -137,8 +143,20 @@ public class SkuService {
         }
     }
 
+    public void deleteCompositions(Product product) {
+        compositionRepository.deleteAllByParentProductId(product.getId());
+    }
+
 
     // ===== 유효성 검사 메서드 ====
+
+    public void validateDeletableSku(Product product) {
+        if (product.isComplete()) return;
+
+        if(compositionRepository.isSkuReferencedByOther(product.getId())) {
+            throw new ServiceException(ProductErrorCode.PRODUCT_SKU_REFERENCED_BY_OTHER);
+        }
+    }
 
     private void validateProductSkuForComposition(ProductSku productSku) {
         if (productSku.isArchived()) {

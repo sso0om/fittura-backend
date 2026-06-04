@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface CompositionRepository extends JpaRepository<ProductComposition, Long>, CompositionRepositoryCustom {
     List<ProductComposition> findByParentProductId(Long productId);
+
+    void deleteAllByParentProductId(Long parentProductId);
 }

@@ -496,6 +496,35 @@ class ProductServiceTest {
     }
 
 
+    // ========== 상품 삭제 ==========
+
+    @Test
+    @DisplayName("상품 삭제 성공 - ARCHIVED 상태로 변경")
+    void deleteProductSuccess() {
+        // given
+        Product product = ProductFixture.component("Chair Leg");
+
+        // when
+        productService.deleteProduct(product);
+
+        // then
+        assertThat(product.isArchived()).isTrue();
+    }
+
+    @Test
+    @DisplayName("속성 삭제 성공 - 상품 ID로 전체 삭제")
+    void deleteProductAttributesSuccess() {
+        // given
+        Product product = ProductFixture.componentWithId(1L, "A Desk");
+
+        // when
+        productService.deleteProductAttributes(product);
+
+        // then
+        verify(attributeRepository).deleteAllByProductId(product.getId());
+    }
+
+
     // ========== 핼퍼 메서드 ==========
 
     private SkuCreateReqDto skuDto() {

@@ -4,10 +4,12 @@ import com.fittura.domain.category.entity.Category;
 import com.fittura.domain.category.error.CategoryErrorCode;
 import com.fittura.domain.category.repository.CategoryRepository;
 import com.fittura.domain.category.support.CategoryFixture;
+import com.fittura.domain.product.product.constant.AttributeKey;
 import com.fittura.domain.product.product.constant.ProductStatus;
 import com.fittura.domain.product.product.constant.ProductType;
 import com.fittura.domain.product.product.entity.Dimension;
 import com.fittura.domain.product.product.entity.Product;
+import com.fittura.domain.product.product.entity.ProductAttribute;
 import com.fittura.domain.product.product.error.ProductErrorCode;
 import com.fittura.domain.product.product.repository.ProductAttributeRepository;
 import com.fittura.domain.product.product.repository.ProductRepository;
@@ -833,5 +835,108 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
             .andDo(print())
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.code").value(ProductErrorCode.CHILD_SKU_ONLY_COMPONENT.getCode()));
+    }
+
+
+    // ========== 상품 삭제 ==========
+
+    @Test
+    @DisplayName("단품 삭제 성공 - 상품/SKU ARCHIVED, 속성 삭제")
+    void deleteComponentSuccess() throws Exception {
+        // given
+        Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Product product = productRepository.save(ProductFixture.component(category, "Chair Leg"));
+        ProductSku sku = productSkuRepository.save(ProductSku.create(product, 5000L, 100, "White", "Wood"));
+        productAttributeRepository.save(ProductAttribute.create(product, AttributeKey.SIZE_LABEL, "L"));
+
+        // when & then
+        mockMvc.perform(delete(PRODUCT_ADMIN_URL + "/" + product.getId()))
+            .andDo(print())
+            .andExpect(handler().handlerType(AdminProductControllerV1.class))
+            .andExpect(handler().methodName("deleteProduct"))
+            .andExpect(status().isOk());
+
+        Product deleted = productRepository.findById(product.getId()).orElseThrow();
+        assertThat(deleted.isArchived()).isTrue();
+
+        ProductSku deletedSku = productSkuRepository.findById(sku.getId()).orElseThrow();
+        assertThat(deletedSku.isArchived()).isTrue();
+
+        assertThat(productAttributeRepository.findByProductId(product.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("완제품 삭제 성공 - 구성품 레코드 삭제 포함")
+    void deleteCompleteSuccess() throws Exception {
+        // given
+        Category category = categoryRepository.save(CategoryFixture.rootActive());
+
+        Product componentProduct = productRepository.save(ProductFixture.component(category, "Chair Leg"));
+        ProductSku componentSku = productSkuRepository.save(ProductSku.create(componentProduct, 5000L, 100, "White", "Wood"));
+
+        Product completeProduct = productRepository.save(ProductFixture.complete(category, "A Desk"));
+        ProductSku completeSku = productSkuRepository.save(ProductSku.create(completeProduct, 90000L, 50, "White", "Wood"));
+        compositionRepository.save(ProductComposition.create(completeProduct, componentSku, 4, 0));
+
+        // when & then
+        mockMvc.perform(delete(PRODUCT_ADMIN_URL + "/" + completeProduct.getId()))
+            .andDo(print())
+            .andExpect(status().isOk());
+
+        Product deleted = productRepository.findById(completeProduct.getId()).orElseThrow();
+        assertThat(deleted.isArchived()).isTrue();
+
+        ProductSku deletedSku = productSkuRepository.findById(completeSku.getId()).orElseThrow();
+        assertThat(deletedSku.isArchived()).isTrue();
+
+        assertThat(compositionRepository.findByParentProductId(completeProduct.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("상품 삭제 실패 - 상품 없음")
+    void deleteProductFail_notFound() throws Exception {
+        mockMvc.perform(delete(PRODUCT_ADMIN_URL + "/9999"))
+            .andDo(print())
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value(ProductErrorCode.NOT_FOUND_PRODUCT.getCode()));
+    }
+
+    @Test
+    @WithAnonymousUser
+    @DisplayName("상품 삭제 실패 - 인증 없음")
+    void deleteProductFail_unauthorized() throws Exception {
+        mockMvc.perform(delete(PRODUCT_ADMIN_URL + "/1"))
+            .andDo(print())
+            .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    @DisplayName("상품 삭제 실패 - 권한 없음")
+    void deleteProductFail_forbidden() throws Exception {
+        mockMvc.perform(delete(PRODUCT_ADMIN_URL + "/1"))
+            .andDo(print())
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.code").value(CommonErrorCode.FORBIDDEN.getCode()));
+    }
+
+    @Test
+    @DisplayName("상품 삭제 실패 - 단품 SKU가 다른 완제품의 구성품으로 참조됨")
+    void deleteProductFail_skuReferencedByOther() throws Exception {
+        // given
+        Category category = categoryRepository.save(CategoryFixture.rootActive());
+
+        Product componentProduct = productRepository.save(ProductFixture.component(category, "Chair Leg"));
+        ProductSku componentSku = productSkuRepository.save(ProductSku.create(componentProduct, 5000L, 100, "White", "Wood"));
+
+        Product completeProduct = productRepository.save(ProductFixture.complete(category, "A Desk"));
+        productSkuRepository.save(ProductSku.create(completeProduct, 90000L, 50, "White", "Wood"));
+        compositionRepository.save(ProductComposition.create(completeProduct, componentSku, 4, 0));
+
+        // when & then
+        mockMvc.perform(delete(PRODUCT_ADMIN_URL + "/" + componentProduct.getId()))
+            .andDo(print())
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value(ProductErrorCode.PRODUCT_SKU_REFERENCED_BY_OTHER.getCode()));
     }
 }
