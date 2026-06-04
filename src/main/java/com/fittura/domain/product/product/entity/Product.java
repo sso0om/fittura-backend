@@ -101,7 +101,6 @@ public class Product extends BaseEntity {
         Category category,
         String name,
         String description,
-        Long basePrice,
         Dimension dimension
     ) {
         Objects.requireNonNull(category, "category must not be null");
@@ -110,7 +109,6 @@ public class Product extends BaseEntity {
         this.category = category;
         this.name = name;
         this.description = description;
-        this.basePrice = basePrice;
         this.dimension = dimension;
     }
 

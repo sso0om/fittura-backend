@@ -337,7 +337,7 @@ class ProductServiceTest {
         Product product = ProductFixture.component("Old Name");
 
         ProductUpdateReqDto reqDto = new ProductUpdateReqDto(
-            1L, "New Name", "새 설명", 80000L,
+            1L, "New Name", "새 설명",
             20.0, 200.0, 120.0, 60.0,
             List.of(skuUpdateDto(null)), List.of(), List.of()
         );
@@ -349,7 +349,6 @@ class ProductServiceTest {
 
         // then
         assertThat(product.getName()).isEqualTo("New Name");
-        assertThat(product.getBasePrice()).isEqualTo(80000L);
         assertThat(product.getCategory()).isEqualTo(newCategory);
     }
 
@@ -359,7 +358,7 @@ class ProductServiceTest {
         // given
         Product product = ProductFixture.component("Old Name");
         ProductUpdateReqDto reqDto = new ProductUpdateReqDto(
-            99L, "New Name", null, 80000L,
+            99L, "New Name", null,
             20.0, 200.0, 120.0, 60.0,
             List.of(skuUpdateDto(null)), List.of(), List.of()
         );
@@ -382,7 +381,7 @@ class ProductServiceTest {
 
         Product product = ProductFixture.component("Old Name");
         ProductUpdateReqDto reqDto = new ProductUpdateReqDto(
-            1L, "New Name", null, 80000L,
+            1L, "New Name", null,
             20.0, 200.0, 120.0, 60.0,
             List.of(skuUpdateDto(null)), List.of(), List.of()
         );
@@ -405,7 +404,7 @@ class ProductServiceTest {
 
         Product product = ProductFixture.component("Old Name");
         ProductUpdateReqDto reqDto = new ProductUpdateReqDto(
-            1L, "New Name", null, 80000L,
+            1L, "New Name", null,
             20.0, 200.0, 120.0, 60.0,
             List.of(skuUpdateDto(null)), List.of(), List.of()
         );

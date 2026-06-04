@@ -109,7 +109,6 @@ public class ProductService {
             category,
             reqDto.name(),
             reqDto.description(),
-            reqDto.basePrice(),
             dimension
         );
     }

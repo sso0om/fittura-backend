@@ -23,11 +23,6 @@ public record ProductUpdateReqDto(
     @Schema(example = "북유럽 스타일의 원목 의자입니다.")
     String description,
 
-    @Schema(example = "100000")
-    @NotNull
-    @PositiveOrZero
-    Long basePrice,
-
     @Schema(example = "40.5")
     @NotNull
     @Positive
