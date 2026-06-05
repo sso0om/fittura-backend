@@ -17,7 +17,7 @@ public class CompositionRepositoryImpl implements CompositionRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public List<CompositionResDto> findCompositionsByProductId(Long productId) {
+    public List<CompositionResDto> findCompositionDtosByProductId(Long productId) {
         QProduct childProduct = new QProduct("childProduct");
 
         return queryFactory
@@ -33,5 +33,17 @@ public class CompositionRepositoryImpl implements CompositionRepositoryCustom {
             .where(productComposition.parentProduct.id.eq(productId))
             .orderBy(productComposition.sortOrder.asc())
             .fetch();
+    }
+
+    @Override
+    public boolean isAnySkuReferencedByOther(Long productId) {
+        return queryFactory
+            .selectOne()
+            .from(productComposition)
+            .where(
+                productComposition.childSku.product.id.eq(productId),
+                productComposition.parentProduct.id.ne(productId)
+            )
+            .fetchFirst() != null;
     }
 }

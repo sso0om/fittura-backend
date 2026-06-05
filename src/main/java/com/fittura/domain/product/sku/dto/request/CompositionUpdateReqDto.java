@@ -5,8 +5,10 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 
-@Schema(description = "구성품 생성 요청 DTO")
-public record CompositionCreateReqDto(
+public record CompositionUpdateReqDto(
+
+    @Schema(example = "1L")
+    Long id,
 
     @Schema(example = "10")
     @NotNull
@@ -21,4 +23,5 @@ public record CompositionCreateReqDto(
     @NotNull
     @PositiveOrZero
     Integer sortOrder
-) {}
+) {
+}

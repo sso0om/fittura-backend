@@ -5,5 +5,6 @@ import com.fittura.domain.product.product.dto.response.CompositionResDto;
 import java.util.List;
 
 public interface CompositionRepositoryCustom {
-    List<CompositionResDto> findCompositionsByProductId(Long productId);
+    List<CompositionResDto> findCompositionDtosByProductId(Long productId);
+    boolean isAnySkuReferencedByOther(Long productId);
 }

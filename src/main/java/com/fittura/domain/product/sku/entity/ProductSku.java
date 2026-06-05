@@ -71,6 +71,25 @@ public class ProductSku extends BaseEntity {
         return productSku;
     }
 
+    public void update(Long price, Integer stockQuantity, String color, String material) {
+        this.price = price;
+        this.stockQuantity = stockQuantity;
+        this.color = color;
+        this.material = material;
+    }
+
+    public void soldOut() {
+        this.status = SkuStatus.SOLDOUT;
+    }
+
+    public void discontinue() {
+        this.status = SkuStatus.DISCONTINUED;
+    }
+
+    public void archive() {
+        this.status = SkuStatus.ARCHIVED;
+    }
+
     public boolean isArchived() {
         return status == SkuStatus.ARCHIVED;
     }

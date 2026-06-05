@@ -46,4 +46,8 @@ public class ProductAttribute extends BaseEntity {
         product.addAttribute(productAttribute);
         return productAttribute;
     }
+
+    public void updateValue(String attributeValue) {
+        this.attributeValue = attributeValue;
+    }
 }
