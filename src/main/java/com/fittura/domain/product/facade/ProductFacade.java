@@ -72,6 +72,11 @@ public class ProductFacade {
     }
 
     @Transactional
+    public void discontinueProduct(Long id) {
+        productService.discontinueProduct(id);
+    }
+
+    @Transactional
     public void deleteProduct(Long id) {
         Product product = productService.getProduct(id);
 

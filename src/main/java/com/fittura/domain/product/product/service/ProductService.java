@@ -125,6 +125,11 @@ public class ProductService {
         product.disable();
     }
 
+    public void discontinueProduct(Long id) {
+        Product product = getProduct(id);
+        product.discontinue();
+    }
+
     public void deleteProduct(Product product) {
         product.archive();
     }
