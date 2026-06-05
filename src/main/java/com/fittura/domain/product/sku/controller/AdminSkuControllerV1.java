@@ -1,4 +1,4 @@
-package com.fittura.domain.product.sku;
+package com.fittura.domain.product.sku.controller;
 
 import com.fittura.domain.product.facade.ProductFacade;
 import com.fittura.global.rsdata.RsData;
