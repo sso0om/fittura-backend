@@ -227,7 +227,7 @@ class ProductServiceTest {
             List.of(compositionDto())
         );
 
-        given(categoryRepository.findById(99L)).willReturn(Optional.empty());
+        givenCategoryNotFound(99L);
 
         // when & then
         assertThatThrownBy(() -> productService.createProduct(reqDto))
@@ -251,7 +251,7 @@ class ProductServiceTest {
             List.of(compositionDto())
         );
 
-        given(categoryRepository.findById(1L)).willReturn(Optional.of(archived));
+        givenCategoryFound(1L, archived);
 
         // when & then
         assertThatThrownBy(() -> productService.createProduct(reqDto))
@@ -275,7 +275,7 @@ class ProductServiceTest {
             List.of(compositionDto())
         );
 
-        given(categoryRepository.findById(1L)).willReturn(Optional.of(parent));
+        givenCategoryFound(1L, parent);
 
         // when & then
         assertThatThrownBy(() -> productService.createProduct(reqDto))
@@ -296,7 +296,7 @@ class ProductServiceTest {
             List.of()
         );
 
-        given(categoryRepository.findById(1L)).willReturn(Optional.of(CategoryFixture.rootActive()));
+        givenCategoryFound(1L, CategoryFixture.rootActive());
 
         // when & then
         assertThatThrownBy(() -> productService.createProduct(reqDto))
@@ -317,7 +317,7 @@ class ProductServiceTest {
             List.of(compositionDto())  // compositions 있음
         );
 
-        given(categoryRepository.findById(1L)).willReturn(Optional.of(CategoryFixture.rootActive()));
+        givenCategoryFound(1L, CategoryFixture.rootActive());
 
         // when & then
         assertThatThrownBy(() -> productService.createProduct(reqDto))
@@ -342,7 +342,7 @@ class ProductServiceTest {
             List.of(skuUpdateDto(null)), List.of(), List.of()
         );
 
-        given(categoryRepository.findById(1L)).willReturn(Optional.of(newCategory));
+        givenCategoryFound(1L, newCategory);
 
         // when
         productService.updateProduct(product, reqDto);
@@ -363,7 +363,7 @@ class ProductServiceTest {
             List.of(skuUpdateDto(null)), List.of(), List.of()
         );
 
-        given(categoryRepository.findById(99L)).willReturn(Optional.empty());
+        givenCategoryNotFound(99L);
 
         // when & then
         assertThatThrownBy(() -> productService.updateProduct(product, reqDto))
@@ -386,7 +386,7 @@ class ProductServiceTest {
             List.of(skuUpdateDto(null)), List.of(), List.of()
         );
 
-        given(categoryRepository.findById(1L)).willReturn(Optional.of(archived));
+        givenCategoryFound(1L, archived);
 
         // when & then
         assertThatThrownBy(() -> productService.updateProduct(product, reqDto))
@@ -409,7 +409,7 @@ class ProductServiceTest {
             List.of(skuUpdateDto(null)), List.of(), List.of()
         );
 
-        given(categoryRepository.findById(1L)).willReturn(Optional.of(parent));
+        givenCategoryFound(1L, parent);
 
         // when & then
         assertThatThrownBy(() -> productService.updateProduct(product, reqDto))
@@ -578,5 +578,13 @@ class ProductServiceTest {
 
     private SkuUpdateReqDto skuUpdateDto(Long id) {
         return new SkuUpdateReqDto(id, 10000L, 100, "White", "Wood");
+    }
+
+    private void givenCategoryNotFound(Long categoryId) {
+        given(categoryRepository.findById(categoryId)).willReturn(Optional.empty());
+    }
+
+    private void givenCategoryFound(Long categoryId, Category category) {
+        given(categoryRepository.findById(categoryId)).willReturn(Optional.of(category));
     }
 }

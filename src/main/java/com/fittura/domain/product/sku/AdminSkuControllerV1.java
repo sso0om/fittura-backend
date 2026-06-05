@@ -31,4 +31,15 @@ public class AdminSkuControllerV1 {
 
         return ResponseEntity.ok(RsData.success("SKU가 일시품절되었습니다.", null));
     }
+
+    @PatchMapping("/{skuId}/discontinue")
+    @Operation(summary = "SKU 단종", description = "SKU 단종 처리")
+    public ResponseEntity<RsData<Void>> discontinueSku(
+        @PathVariable Long productId,
+        @PathVariable Long skuId
+    ) {
+        productFacade.discontinueSku(productId, skuId);
+
+        return ResponseEntity.ok(RsData.success("SKU가 단종되었습니다.", null));
+    }
 }

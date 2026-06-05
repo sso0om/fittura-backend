@@ -99,6 +99,11 @@ public class ProductFacade {
         skuService.soldOutSku(productId, skuId);
     }
 
+    @Transactional
+    public void discontinueSku(Long productId, Long skuId) {
+        skuService.discontinueSku(productId, skuId);
+    }
+
 
     // ========== 속성 ==========
 

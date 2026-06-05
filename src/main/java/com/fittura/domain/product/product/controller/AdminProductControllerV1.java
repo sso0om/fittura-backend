@@ -104,7 +104,7 @@ public class AdminProductControllerV1 {
             .ok(RsData.success("제품이 비활성화되었습니다.", null));
     }
 
-    @PatchMapping("/{id}/discontinued")
+    @PatchMapping("/{id}/discontinue")
     @Operation(summary = "제품 단종", description = "제품 단종 처리 API")
     public ResponseEntity<RsData<Void>> discontinueProduct(
         @PathVariable Long id

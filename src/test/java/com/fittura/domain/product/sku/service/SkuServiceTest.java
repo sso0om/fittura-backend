@@ -77,7 +77,7 @@ class SkuServiceTest {
         Product product = ProductFixture.component("A Desk");
         ProductSku existing = ProductSkuFixture.skuWithId(1L, product);
 
-        given(productSkuRepository.findByProductId(product.getId())).willReturn(List.of(existing));
+        givenSkus(product.getId(), List.of(existing));
 
         List<SkuUpdateReqDto> reqDto = List.of(
             new SkuUpdateReqDto(1L, 9000L, 80, "Black", "Metal")
@@ -100,7 +100,7 @@ class SkuServiceTest {
         Product product = ProductFixture.component("A Desk");
         ProductSku existing = ProductSkuFixture.skuWithId(1L, product);
 
-        given(productSkuRepository.findByProductId(product.getId())).willReturn(List.of(existing));
+        givenSkus(product.getId(), List.of(existing));
 
         List<SkuUpdateReqDto> reqDto = List.of(
             new SkuUpdateReqDto(1L, 20000L, 50, "White", "Wood"),
@@ -123,7 +123,7 @@ class SkuServiceTest {
         ProductSku toDelete = ProductSkuFixture.skuWithId(1L, product);
         ProductSku toKeep = ProductSkuFixture.skuWithId(2L, product);
 
-        given(productSkuRepository.findByProductId(product.getId())).willReturn(List.of(toDelete, toKeep));
+        givenSkus(product.getId(), List.of(toDelete, toKeep));
 
         List<SkuUpdateReqDto> reqDto = List.of(
             new SkuUpdateReqDto(2L, 20000L, 50, "White", "Wood")
@@ -147,7 +147,7 @@ class SkuServiceTest {
         ProductSku sku1 = ProductSkuFixture.skuWithId(1L, product);
         ProductSku sku2 = ProductSkuFixture.skuWithId(2L, product);
 
-        given(productSkuRepository.findByProductId(product.getId())).willReturn(List.of(sku1, sku2));
+        givenSkus(product.getId(), List.of(sku1, sku2));
 
         // when
         skuService.deleteSkus(product);
@@ -202,7 +202,7 @@ class SkuServiceTest {
         Product componentProduct = ProductFixture.component("Chair Leg");
         ProductSku componentSku = ProductSkuFixture.skuWithId(1L, componentProduct);
 
-        given(productSkuRepository.findById(1L)).willReturn(Optional.of(componentSku));
+        givenSkuFound(1L, componentSku);
 
         // when
         skuService.createCompositions(completeProduct, List.of(new CompositionCreateReqDto(1L, 4, 0)));
@@ -217,7 +217,7 @@ class SkuServiceTest {
         // given
         Product product = ProductFixture.complete("A Desk");
 
-        given(productSkuRepository.findById(99L)).willReturn(Optional.empty());
+        givenSkuNotFound(99L);
 
         // when & then
         assertThatThrownBy(() -> skuService.createCompositions(product, List.of(new CompositionCreateReqDto(99L, 4, 0))))
@@ -234,13 +234,13 @@ class SkuServiceTest {
         ProductSku archivedSku = ProductSkuFixture.skuWithId(1L, ProductFixture.component("Chair Leg"));
         ReflectionTestUtils.setField(archivedSku, "status", SkuStatus.ARCHIVED);
 
-        given(productSkuRepository.findById(1L)).willReturn(Optional.of(archivedSku));
+        givenSkuNotFound(1L);
 
         // when & then
         assertThatThrownBy(() -> skuService.createCompositions(product, List.of(new CompositionCreateReqDto(1L, 4, 0))))
             .isInstanceOf(ServiceException.class)
             .extracting(e -> ((ServiceException) e).getErrorCode())
-            .isEqualTo(ProductErrorCode.ARCHIVED_SKU);
+            .isEqualTo(ProductErrorCode.NOT_FOUND_SKU);
     }
 
     @Test
@@ -250,7 +250,7 @@ class SkuServiceTest {
         Product completeProduct = ProductFixture.complete("A Desk");
         ProductSku completeSku = ProductSkuFixture.skuWithId(1L, completeProduct);
 
-        given(productSkuRepository.findById(1L)).willReturn(Optional.of(completeSku));
+        givenSkuFound(1L, completeSku);
 
         // when & then
         assertThatThrownBy(() -> skuService.createCompositions(completeProduct, List.of(new CompositionCreateReqDto(1L, 4, 0))))
@@ -271,7 +271,7 @@ class SkuServiceTest {
         ProductSku childSku = ProductSkuFixture.skuWithId(1L, componentProduct);
         ProductComposition existing = ProductCompositionFixture.composition(completeProduct, childSku, 2, 0);
 
-        given(compositionRepository.findByParentProductId(completeProduct.getId())).willReturn(List.of(existing));
+        givenCompositions(completeProduct.getId(), List.of(existing));
 
         List<CompositionUpdateReqDto> reqDto = List.of(
             new CompositionUpdateReqDto(null, 1L, 4, 1)
@@ -295,8 +295,8 @@ class SkuServiceTest {
         ProductSku newChildSku = ProductSkuFixture.skuWithId(2L, componentProduct);
         ProductComposition existing = ProductCompositionFixture.composition(completeProduct, existingChildSku, 2, 0);
 
-        given(compositionRepository.findByParentProductId(completeProduct.getId())).willReturn(List.of(existing));
-        given(productSkuRepository.findById(2L)).willReturn(Optional.of(newChildSku));
+        givenCompositions(completeProduct.getId(), List.of(existing));
+        givenSkuFound(2L, newChildSku);
 
         List<CompositionUpdateReqDto> reqDto = List.of(
             new CompositionUpdateReqDto(null, 1L, 2, 0),
@@ -321,7 +321,7 @@ class SkuServiceTest {
         ProductComposition toDelete = ProductCompositionFixture.composition(completeProduct, toDeleteSku, 2, 0);
         ProductComposition toKeep = ProductCompositionFixture.composition(completeProduct, toKeepSku, 1, 1);
 
-        given(compositionRepository.findByParentProductId(completeProduct.getId())).willReturn(List.of(toDelete, toKeep));
+        givenCompositions(completeProduct.getId(), List.of(toDelete, toKeep));
 
         List<CompositionUpdateReqDto> reqDto = List.of(
             new CompositionUpdateReqDto(null, 2L, 1, 1)
@@ -340,8 +340,8 @@ class SkuServiceTest {
         // given
         Product completeProduct = ProductFixture.complete("A Desk");
 
-        given(compositionRepository.findByParentProductId(completeProduct.getId())).willReturn(List.of());
-        given(productSkuRepository.findById(99L)).willReturn(Optional.empty());
+        givenCompositions(completeProduct.getId(), List.of());
+        givenSkuNotFound(99L);
 
         List<CompositionUpdateReqDto> reqDto = List.of(
             new CompositionUpdateReqDto(null, 99L, 2, 0)
@@ -362,8 +362,8 @@ class SkuServiceTest {
         ProductSku archivedSku = ProductSkuFixture.skuWithId(1L, ProductFixture.component("Chair Leg"));
         ReflectionTestUtils.setField(archivedSku, "status", SkuStatus.ARCHIVED);
 
-        given(compositionRepository.findByParentProductId(completeProduct.getId())).willReturn(List.of());
-        given(productSkuRepository.findById(1L)).willReturn(Optional.of(archivedSku));
+        givenCompositions(completeProduct.getId(), List.of());
+        givenSkuNotFound(1L);
 
         List<CompositionUpdateReqDto> reqDto = List.of(
             new CompositionUpdateReqDto(null, 1L, 2, 0)
@@ -373,7 +373,7 @@ class SkuServiceTest {
         assertThatThrownBy(() -> skuService.updateCompositions(completeProduct, reqDto))
             .isInstanceOf(ServiceException.class)
             .extracting(e -> ((ServiceException) e).getErrorCode())
-            .isEqualTo(ProductErrorCode.ARCHIVED_SKU);
+            .isEqualTo(ProductErrorCode.NOT_FOUND_SKU);
     }
 
     @Test
@@ -383,8 +383,8 @@ class SkuServiceTest {
         Product completeProduct = ProductFixture.complete("A Desk");
         ProductSku completeSku = ProductSkuFixture.skuWithId(1L, completeProduct);
 
-        given(compositionRepository.findByParentProductId(completeProduct.getId())).willReturn(List.of());
-        given(productSkuRepository.findById(1L)).willReturn(Optional.of(completeSku));
+        givenCompositions(completeProduct.getId(), List.of());
+        givenSkuFound(1L, completeSku);
 
         List<CompositionUpdateReqDto> reqDto = List.of(
             new CompositionUpdateReqDto(null, 1L, 2, 0)
@@ -449,5 +449,27 @@ class SkuServiceTest {
             .isInstanceOf(ServiceException.class)
             .extracting(e -> ((ServiceException) e).getErrorCode())
             .isEqualTo(ProductErrorCode.PRODUCT_SKU_REFERENCED_BY_OTHER);
+    }
+
+
+    // ========== 헬퍼 메서드 ==========
+
+    private void givenSkuNotFound(Long skuId) {
+        given(productSkuRepository.findByIdAndStatusNot(skuId, SkuStatus.ARCHIVED))
+            .willReturn(Optional.empty());
+    }
+
+    private void givenSkuFound(Long skuId, ProductSku sku) {
+        given(productSkuRepository.findByIdAndStatusNot(skuId, SkuStatus.ARCHIVED))
+            .willReturn(Optional.of(sku));
+    }
+
+    private void givenSkus(Long productId, List<ProductSku> skus) {
+        given(productSkuRepository.findByProductIdAndStatusNot(productId, SkuStatus.ARCHIVED))
+            .willReturn(skus);
+    }
+
+    private void givenCompositions(Long productId, List<ProductComposition> compositions) {
+        given(compositionRepository.findByParentProductId(productId)).willReturn(compositions);
     }
 }

@@ -872,7 +872,7 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
         Product product = productRepository.save(ProductFixture.component(category, "A Desk"));
 
         // when & then
-        mockMvc.perform(patch(PRODUCT_ADMIN_URL + "/" + product.getId() + "/discontinued"))
+        mockMvc.perform(patch(PRODUCT_ADMIN_URL + "/" + product.getId() + "/discontinue"))
             .andDo(print())
             .andExpect(handler().handlerType(AdminProductControllerV1.class))
             .andExpect(handler().methodName("discontinueProduct"))
