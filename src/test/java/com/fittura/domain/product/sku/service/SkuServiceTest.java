@@ -137,6 +137,73 @@ class SkuServiceTest {
     }
 
 
+    // ========== SKU 일시품절 ==========
+
+    @Test
+    @DisplayName("SKU 일시품절 성공")
+    void soldOutSkuSuccess() {
+        // given
+        Product product = ProductFixture.componentWithId(1L, "Chair");
+        ProductSku sku = ProductSkuFixture.skuWithId(1L, product);
+
+        given(productSkuRepository.existsByIdAndProductId(1L, 1L)).willReturn(true);
+        givenSkuFound(1L, sku);
+
+        // when
+        skuService.soldOutSku(1L, 1L);
+
+        // then
+        assertThat(sku.getStatus()).isEqualTo(SkuStatus.SOLDOUT);
+    }
+
+    @Test
+    @DisplayName("SKU 일시품절 실패 - SKU가 해당 상품에 속하지 않음")
+    void soldOutSkuFail_skuNotBelongsToProduct() {
+        // given
+        given(productSkuRepository.existsByIdAndProductId(1L, 99L)).willReturn(false);
+
+        // when & then
+        assertThatThrownBy(() -> skuService.soldOutSku(1L, 99L))
+            .isInstanceOf(ServiceException.class)
+            .extracting(e -> ((ServiceException) e).getErrorCode())
+            .isEqualTo(ProductErrorCode.SKU_NOT_BELONGS_TO_PRODUCT);
+    }
+
+    @Test
+    @DisplayName("SKU 일시품절 실패 - ARCHIVED SKU")
+    void soldOutSkuFail_skuArchived() {
+        // given
+        given(productSkuRepository.existsByIdAndProductId(1L, 1L)).willReturn(true);
+        givenSkuNotFound(1L);
+
+        // when & then
+        assertThatThrownBy(() -> skuService.soldOutSku(1L, 1L))
+            .isInstanceOf(ServiceException.class)
+            .extracting(e -> ((ServiceException) e).getErrorCode())
+            .isEqualTo(ProductErrorCode.NOT_FOUND_SKU);
+    }
+
+
+    // ========== SKU 단종 ==========
+
+    @Test
+    @DisplayName("SKU 단종 성공")
+    void discontinueSkuSuccess() {
+        // given
+        Product product = ProductFixture.componentWithId(1L, "Chair");
+        ProductSku sku = ProductSkuFixture.skuWithId(1L, product);
+
+        given(productSkuRepository.existsByIdAndProductId(1L, 1L)).willReturn(true);
+        givenSkuFound(1L, sku);
+
+        // when
+        skuService.discontinueSku(1L, 1L);
+
+        // then
+        assertThat(sku.getStatus()).isEqualTo(SkuStatus.DISCONTINUED);
+    }
+
+
     // ========== SKU 삭제 ==========
 
     @Test
