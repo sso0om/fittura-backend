@@ -14,5 +14,5 @@ public interface ProductSkuRepository extends JpaRepository<ProductSku, Long> {
 
     Optional<ProductSku> findByIdAndStatusNot(Long skuId, SkuStatus status);
 
-    boolean existsByIdAndProductId(Long productId, Long skuId);
+    boolean existsByProductIdAndId(Long productId, Long skuId);
 }

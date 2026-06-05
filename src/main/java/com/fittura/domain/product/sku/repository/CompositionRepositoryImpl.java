@@ -36,7 +36,7 @@ public class CompositionRepositoryImpl implements CompositionRepositoryCustom {
     }
 
     @Override
-    public boolean isSkuReferencedByOther(Long productId) {
+    public boolean isAnySkuReferencedByOther(Long productId) {
         return queryFactory
             .selectOne()
             .from(productComposition)

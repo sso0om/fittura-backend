@@ -168,7 +168,7 @@ public class SkuService {
     public void validateDeletableSku(Product product) {
         if (product.isComplete()) return;
 
-        if(compositionRepository.isSkuReferencedByOther(product.getId())) {
+        if(compositionRepository.isAnySkuReferencedByOther(product.getId())) {
             throw new ServiceException(ProductErrorCode.PRODUCT_SKU_REFERENCED_BY_OTHER);
         }
     }
@@ -180,7 +180,7 @@ public class SkuService {
     }
 
     public void validateSkuOwnedByProduct(Long productId, Long skuId) {
-        if (!productSkuRepository.existsByIdAndProductId(productId, skuId)) {
+        if (!productSkuRepository.existsByProductIdAndId(productId, skuId)) {
             throw new ServiceException(ProductErrorCode.SKU_NOT_BELONGS_TO_PRODUCT);
         }
     }

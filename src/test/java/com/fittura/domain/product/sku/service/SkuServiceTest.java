@@ -146,7 +146,7 @@ class SkuServiceTest {
         Product product = ProductFixture.componentWithId(1L, "Chair");
         ProductSku sku = ProductSkuFixture.skuWithId(1L, product);
 
-        given(productSkuRepository.existsByIdAndProductId(1L, 1L)).willReturn(true);
+        given(productSkuRepository.existsByProductIdAndId(1L, 1L)).willReturn(true);
         givenSkuFound(1L, sku);
 
         // when
@@ -160,7 +160,7 @@ class SkuServiceTest {
     @DisplayName("SKU 일시품절 실패 - SKU가 해당 상품에 속하지 않음")
     void soldOutSkuFail_skuNotBelongsToProduct() {
         // given
-        given(productSkuRepository.existsByIdAndProductId(1L, 99L)).willReturn(false);
+        given(productSkuRepository.existsByProductIdAndId(1L, 99L)).willReturn(false);
 
         // when & then
         assertThatThrownBy(() -> skuService.soldOutSku(1L, 99L))
@@ -173,7 +173,7 @@ class SkuServiceTest {
     @DisplayName("SKU 일시품절 실패 - ARCHIVED SKU")
     void soldOutSkuFail_skuArchived() {
         // given
-        given(productSkuRepository.existsByIdAndProductId(1L, 1L)).willReturn(true);
+        given(productSkuRepository.existsByProductIdAndId(1L, 1L)).willReturn(true);
         givenSkuNotFound(1L);
 
         // when & then
@@ -193,7 +193,7 @@ class SkuServiceTest {
         Product product = ProductFixture.componentWithId(1L, "Chair");
         ProductSku sku = ProductSkuFixture.skuWithId(1L, product);
 
-        given(productSkuRepository.existsByIdAndProductId(1L, 1L)).willReturn(true);
+        given(productSkuRepository.existsByProductIdAndId(1L, 1L)).willReturn(true);
         givenSkuFound(1L, sku);
 
         // when
@@ -498,7 +498,7 @@ class SkuServiceTest {
     void validateDeletableSku_component_notReferenced() {
         // given
         Product componentProduct = ProductFixture.componentWithId(1L, "Chair Leg");
-        given(compositionRepository.isSkuReferencedByOther(componentProduct.getId())).willReturn(false);
+        given(compositionRepository.isAnySkuReferencedByOther(componentProduct.getId())).willReturn(false);
 
         // when & then (no exception)
         skuService.validateDeletableSku(componentProduct);
@@ -509,7 +509,7 @@ class SkuServiceTest {
     void validateDeletableSku_component_referenced() {
         // given
         Product componentProduct = ProductFixture.componentWithId(1L, "Chair Leg");
-        given(compositionRepository.isSkuReferencedByOther(componentProduct.getId())).willReturn(true);
+        given(compositionRepository.isAnySkuReferencedByOther(componentProduct.getId())).willReturn(true);
 
         // when & then
         assertThatThrownBy(() -> skuService.validateDeletableSku(componentProduct))

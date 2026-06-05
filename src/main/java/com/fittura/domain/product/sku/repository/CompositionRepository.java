@@ -14,6 +14,6 @@ public interface CompositionRepository extends JpaRepository<ProductComposition,
     List<ProductComposition> findByParentProductId(Long productId);
 
     @Modifying
-    @Query("DELETE FROM ProductComposition c WHERE c.parentProduct.id = :productId")
-    void deleteAllByParentProductId(@Param("productId") Long parentProductId);
+    @Query("DELETE FROM ProductComposition c WHERE c.parentProduct.id = :parentProductId")
+    void deleteAllByParentProductId(@Param("parentProductId") Long parentProductId);
 }
