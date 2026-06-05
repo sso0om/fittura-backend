@@ -508,6 +508,44 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
             .andExpect(jsonPath("$.message").value(ProductErrorCode.COMPONENT_NOT_HAVE_COMPOSITION.getMessage()));
     }
 
+    @Test
+    @DisplayName("완제품 생성 실패 - 구성품으로 완제품 SKU 등록")
+    void createCompleteFail_childSkuIsComplete() throws Exception {
+        // given
+        Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Product completeProduct = productRepository.save(ProductFixture.complete(category, "기존 완제품"));
+        ProductSku completeSku = productSkuRepository.save(ProductSkuFixture.sku(completeProduct, 10000L, 100));
+
+        String reqBody = """
+            {
+                "categoryId": %d,
+                "name": "A Desk",
+                "productType": "COMPLETE",
+                "weight": 2.0,
+                "width": 10.0,
+                "height": 10.0,
+                "depth": 10.0,
+                "skus": [{
+                    "price": 4500,
+                    "stockQuantity": 100
+                }],
+                "attributes": [],
+                "compositions": [
+                    { "childSkuId": %d, "quantity": 1, "sortOrder": 0 }
+                ]
+            }
+        """.formatted(category.getId(), completeSku.getId());
+
+        mockMvc.perform(post(PRODUCT_ADMIN_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody)
+            )
+            .andDo(print())
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value(ProductErrorCode.CHILD_SKU_ONLY_COMPONENT.getCode()));
+    }
+
+
     // ========== 상품 수정 ==========
 
     @Test
@@ -800,41 +838,49 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
     }
 
 
+    // ========== 상품 비활성화 ==========
+
     @Test
-    @DisplayName("완제품 생성 실패 - 구성품으로 완제품 SKU 등록")
-    void createCompleteFail_childSkuIsComplete() throws Exception {
+    @DisplayName("상품 비활성화 성공 - DISABLED 상태로 변경")
+    void disableProductSuccess() throws Exception {
         // given
         Category category = categoryRepository.save(CategoryFixture.rootActive());
-        Product completeProduct = productRepository.save(ProductFixture.complete(category, "기존 완제품"));
-        ProductSku completeSku = productSkuRepository.save(ProductSkuFixture.sku(completeProduct, 10000L, 100));
+        Product product = productRepository.save(ProductFixture.component(category, "A Desk"));
+        ReflectionTestUtils.setField(product, "status", ProductStatus.ACTIVE);
+        productRepository.save(product);
 
-        String reqBody = """
-            {
-                "categoryId": %d,
-                "name": "A Desk",
-                "productType": "COMPLETE",
-                "weight": 2.0,
-                "width": 10.0,
-                "height": 10.0,
-                "depth": 10.0,
-                "skus": [{
-                    "price": 4500,
-                    "stockQuantity": 100
-                }],
-                "attributes": [],
-                "compositions": [
-                    { "childSkuId": %d, "quantity": 1, "sortOrder": 0 }
-                ]
-            }
-        """.formatted(category.getId(), completeSku.getId());
-
-        mockMvc.perform(post(PRODUCT_ADMIN_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(reqBody)
-            )
+        // when & then
+        mockMvc.perform(patch(PRODUCT_ADMIN_URL + "/" + product.getId() + "/disable"))
             .andDo(print())
-            .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.code").value(ProductErrorCode.CHILD_SKU_ONLY_COMPONENT.getCode()));
+            .andExpect(handler().handlerType(AdminProductControllerV1.class))
+            .andExpect(handler().methodName("disableProduct"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.message").value("제품이 비활성화되었습니다."));
+
+        Product updated = productRepository.findById(product.getId()).orElseThrow();
+        assertThat(updated.getStatus()).isEqualTo(ProductStatus.DISABLED);
+    }
+
+
+    // ========== 상품 단종 ==========
+
+    @Test
+    @DisplayName("상품 단종 성공 - DISCONTINUED 상태로 변경")
+    void discontinueProductSuccess() throws Exception {
+        // given
+        Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Product product = productRepository.save(ProductFixture.component(category, "A Desk"));
+
+        // when & then
+        mockMvc.perform(patch(PRODUCT_ADMIN_URL + "/" + product.getId() + "/discontinued"))
+            .andDo(print())
+            .andExpect(handler().handlerType(AdminProductControllerV1.class))
+            .andExpect(handler().methodName("discontinueProduct"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.message").value("제품이 단종되었습니다."));
+
+        Product updated = productRepository.findById(product.getId()).orElseThrow();
+        assertThat(updated.getStatus()).isEqualTo(ProductStatus.DISCONTINUED);
     }
 
 

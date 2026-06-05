@@ -47,7 +47,7 @@ class SkuServiceTest {
     private SkuService skuService;
 
 
-    // ========== ProductSku 생성 ==========
+    // ========== SKU 생성 ==========
 
     @Test
     @DisplayName("SKU 생성 성공")
@@ -65,74 +65,6 @@ class SkuServiceTest {
         // then
         verify(productSkuRepository, times(2)).save(any(ProductSku.class));
         assertThat(product.getProductSkus()).hasSize(2);
-    }
-
-
-    // ========== Composition 생성 ==========
-
-    @Test
-    @DisplayName("Composition 생성 성공")
-    void createCompositionsSuccess() {
-        // given
-        Product completeProduct = ProductFixture.complete("A Desk");
-        Product componentProduct = ProductFixture.component("Chair Leg");
-        ProductSku componentSku = ProductSkuFixture.skuWithId(1L, componentProduct);
-
-        given(productSkuRepository.findById(1L)).willReturn(Optional.of(componentSku));
-
-        // when
-        skuService.createCompositions(completeProduct, List.of(new CompositionCreateReqDto(1L, 4, 0)));
-
-        // then
-        verify(compositionRepository, times(1)).save(any(ProductComposition.class));
-    }
-
-    @Test
-    @DisplayName("Composition 생성 실패 - SKU 없음")
-    void createCompositionsFail_skuNotFound() {
-        // given
-        Product product = ProductFixture.complete("A Desk");
-
-        given(productSkuRepository.findById(99L)).willReturn(Optional.empty());
-
-        // when & then
-        assertThatThrownBy(() -> skuService.createCompositions(product, List.of(new CompositionCreateReqDto(99L, 4, 0))))
-            .isInstanceOf(ServiceException.class)
-            .extracting(e -> ((ServiceException) e).getErrorCode())
-            .isEqualTo(ProductErrorCode.NOT_FOUND_SKU);
-    }
-
-    @Test
-    @DisplayName("Composition 생성 실패 - ARCHIVED SKU")
-    void createCompositionsFail_skuArchived() {
-        // given
-        Product product = ProductFixture.complete("A Desk");
-        ProductSku archivedSku = ProductSkuFixture.skuWithId(1L, ProductFixture.component("Chair Leg"));
-        ReflectionTestUtils.setField(archivedSku, "status", SkuStatus.ARCHIVED);
-
-        given(productSkuRepository.findById(1L)).willReturn(Optional.of(archivedSku));
-
-        // when & then
-        assertThatThrownBy(() -> skuService.createCompositions(product, List.of(new CompositionCreateReqDto(1L, 4, 0))))
-            .isInstanceOf(ServiceException.class)
-            .extracting(e -> ((ServiceException) e).getErrorCode())
-            .isEqualTo(ProductErrorCode.ARCHIVED_SKU);
-    }
-
-    @Test
-    @DisplayName("Composition 생성 실패 - COMPLETE 상품의 SKU")
-    void createCompositionsFail_skuIsComplete() {
-        // given
-        Product completeProduct = ProductFixture.complete("A Desk");
-        ProductSku completeSku = ProductSkuFixture.skuWithId(1L, completeProduct);
-
-        given(productSkuRepository.findById(1L)).willReturn(Optional.of(completeSku));
-
-        // when & then
-        assertThatThrownBy(() -> skuService.createCompositions(completeProduct, List.of(new CompositionCreateReqDto(1L, 4, 0))))
-            .isInstanceOf(ServiceException.class)
-            .extracting(e -> ((ServiceException) e).getErrorCode())
-            .isEqualTo(ProductErrorCode.CHILD_SKU_ONLY_COMPONENT);
     }
 
 
@@ -205,6 +137,27 @@ class SkuServiceTest {
     }
 
 
+    // ========== SKU 삭제 ==========
+
+    @Test
+    @DisplayName("SKU 삭제 성공 - 모든 SKU ARCHIVED 처리")
+    void deleteSkusSuccess() {
+        // given
+        Product product = ProductFixture.componentWithId(1L, "Chair Leg");
+        ProductSku sku1 = ProductSkuFixture.skuWithId(1L, product);
+        ProductSku sku2 = ProductSkuFixture.skuWithId(2L, product);
+
+        given(productSkuRepository.findByProductId(product.getId())).willReturn(List.of(sku1, sku2));
+
+        // when
+        skuService.deleteSkus(product);
+
+        // then
+        assertThat(sku1.isArchived()).isTrue();
+        assertThat(sku2.isArchived()).isTrue();
+    }
+
+
     // ========== 구성품 조회 ==========
 
     @Test
@@ -238,8 +191,76 @@ class SkuServiceTest {
         assertThat(result).isEmpty();
     }
 
+
+    // ========== 구성품 생성 ==========
+
+    @Test
+    @DisplayName("Composition 생성 성공")
+    void createCompositionsSuccess() {
+        // given
+        Product completeProduct = ProductFixture.complete("A Desk");
+        Product componentProduct = ProductFixture.component("Chair Leg");
+        ProductSku componentSku = ProductSkuFixture.skuWithId(1L, componentProduct);
+
+        given(productSkuRepository.findById(1L)).willReturn(Optional.of(componentSku));
+
+        // when
+        skuService.createCompositions(completeProduct, List.of(new CompositionCreateReqDto(1L, 4, 0)));
+
+        // then
+        verify(compositionRepository, times(1)).save(any(ProductComposition.class));
+    }
+
+    @Test
+    @DisplayName("Composition 생성 실패 - SKU 없음")
+    void createCompositionsFail_skuNotFound() {
+        // given
+        Product product = ProductFixture.complete("A Desk");
+
+        given(productSkuRepository.findById(99L)).willReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> skuService.createCompositions(product, List.of(new CompositionCreateReqDto(99L, 4, 0))))
+            .isInstanceOf(ServiceException.class)
+            .extracting(e -> ((ServiceException) e).getErrorCode())
+            .isEqualTo(ProductErrorCode.NOT_FOUND_SKU);
+    }
+
+    @Test
+    @DisplayName("Composition 생성 실패 - ARCHIVED SKU")
+    void createCompositionsFail_skuArchived() {
+        // given
+        Product product = ProductFixture.complete("A Desk");
+        ProductSku archivedSku = ProductSkuFixture.skuWithId(1L, ProductFixture.component("Chair Leg"));
+        ReflectionTestUtils.setField(archivedSku, "status", SkuStatus.ARCHIVED);
+
+        given(productSkuRepository.findById(1L)).willReturn(Optional.of(archivedSku));
+
+        // when & then
+        assertThatThrownBy(() -> skuService.createCompositions(product, List.of(new CompositionCreateReqDto(1L, 4, 0))))
+            .isInstanceOf(ServiceException.class)
+            .extracting(e -> ((ServiceException) e).getErrorCode())
+            .isEqualTo(ProductErrorCode.ARCHIVED_SKU);
+    }
+
+    @Test
+    @DisplayName("Composition 생성 실패 - COMPLETE 상품의 SKU")
+    void createCompositionsFail_skuIsComplete() {
+        // given
+        Product completeProduct = ProductFixture.complete("A Desk");
+        ProductSku completeSku = ProductSkuFixture.skuWithId(1L, completeProduct);
+
+        given(productSkuRepository.findById(1L)).willReturn(Optional.of(completeSku));
+
+        // when & then
+        assertThatThrownBy(() -> skuService.createCompositions(completeProduct, List.of(new CompositionCreateReqDto(1L, 4, 0))))
+            .isInstanceOf(ServiceException.class)
+            .extracting(e -> ((ServiceException) e).getErrorCode())
+            .isEqualTo(ProductErrorCode.CHILD_SKU_ONLY_COMPONENT);
+    }
+
     
-    // ========== 상품 구성 수정 ==========
+    // ========== 구성품 수정 ==========
 
     @Test
     @DisplayName("상품 구성 수정 성공 - 기존 Composition 업데이트")
@@ -377,7 +398,23 @@ class SkuServiceTest {
     }
 
 
-    // ========== SKU 삭제 유효성 검사 ==========
+    // ========== 구성품 삭제 ==========
+
+    @Test
+    @DisplayName("구성품 삭제 성공 - 완제품 ID로 전체 삭제")
+    void deleteCompositionsSuccess() {
+        // given
+        Product completeProduct = ProductFixture.componentWithId(1L, "A Desk");
+
+        // when
+        skuService.deleteCompositions(completeProduct);
+
+        // then
+        verify(compositionRepository).deleteAllByParentProductId(completeProduct.getId());
+    }
+
+
+    // ========== 유효성 검사 - SKU 삭제 ==========
 
     @Test
     @DisplayName("SKU 삭제 유효성 검사 성공 - 완제품은 참조 체크 없이 통과")
@@ -412,39 +449,5 @@ class SkuServiceTest {
             .isInstanceOf(ServiceException.class)
             .extracting(e -> ((ServiceException) e).getErrorCode())
             .isEqualTo(ProductErrorCode.PRODUCT_SKU_REFERENCED_BY_OTHER);
-    }
-
-
-    // ========== SKU/구성품 삭제 ==========
-
-    @Test
-    @DisplayName("SKU 삭제 성공 - 모든 SKU ARCHIVED 처리")
-    void deleteSkusSuccess() {
-        // given
-        Product product = ProductFixture.componentWithId(1L, "Chair Leg");
-        ProductSku sku1 = ProductSkuFixture.skuWithId(1L, product);
-        ProductSku sku2 = ProductSkuFixture.skuWithId(2L, product);
-
-        given(productSkuRepository.findByProductId(product.getId())).willReturn(List.of(sku1, sku2));
-
-        // when
-        skuService.deleteSkus(product);
-
-        // then
-        assertThat(sku1.isArchived()).isTrue();
-        assertThat(sku2.isArchived()).isTrue();
-    }
-
-    @Test
-    @DisplayName("구성품 삭제 성공 - 완제품 ID로 전체 삭제")
-    void deleteCompositionsSuccess() {
-        // given
-        Product completeProduct = ProductFixture.componentWithId(1L, "A Desk");
-
-        // when
-        skuService.deleteCompositions(completeProduct);
-
-        // then
-        verify(compositionRepository).deleteAllByParentProductId(completeProduct.getId());
     }
 }
