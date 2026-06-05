@@ -81,6 +81,13 @@ public class SkuService {
         }
     }
 
+    public void soldOutSku(Long productId, Long skuId) {
+        validateSkuOwnedByProduct(productId, skuId);
+
+        ProductSku sku = getProductSku(skuId);
+        sku.soldOut();
+    }
+
     public void deleteSkus(Product product) {
         for (ProductSku productSku : getProductSkus(product.getId())) {
             productSku.archive();
@@ -168,11 +175,17 @@ public class SkuService {
         }
     }
 
+    public void validateSkuOwnedByProduct(Long productId, Long skuId) {
+        if (!productSkuRepository.existsByIdAndProductId(productId, skuId)) {
+            throw new ServiceException(ProductErrorCode.SKU_NOT_BELONGS_TO_PRODUCT);
+        }
+    }
+
 
     // ===== 헬퍼 메서드 ====
 
-    private ProductSku getProductSku(Long productSkuId) {
-        return productSkuRepository.findById(productSkuId)
+    private ProductSku getProductSku(Long skuId) {
+        return productSkuRepository.findById(skuId)
             .orElseThrow(() -> new ServiceException(ProductErrorCode.NOT_FOUND_SKU));
     }
 

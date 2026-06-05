@@ -92,6 +92,14 @@ public class ProductFacade {
     }
 
 
+    // ========== SKU ==========
+
+    @Transactional
+    public void soldOutSku(Long productId, Long skuId) {
+        skuService.soldOutSku(productId, skuId);
+    }
+
+
     // ========== 속성 ==========
 
     @Transactional(readOnly = true)

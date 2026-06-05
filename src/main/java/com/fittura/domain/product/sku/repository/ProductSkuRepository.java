@@ -16,4 +16,6 @@ public interface ProductSkuRepository extends JpaRepository<ProductSku, Long> {
         AND s.status != com.fittura.domain.product.sku.constant.SkuStatus.ARCHIVED
         """)
     List<ProductSku> findByProductId(@Param("productId") Long productId);
+
+    boolean existsByIdAndProductId(Long productId, Long skuId);
 }
