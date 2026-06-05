@@ -67,10 +67,15 @@ public class ProductFacade {
     }
 
     @Transactional
+    public void disableProduct(Long id) {
+        productService.disableProduct(id);
+    }
+
+    @Transactional
     public void deleteProduct(Long id) {
         Product product = productService.getProduct(id);
 
-        productService.validateDeletableProduct(product);
+        productService.validateModifiableProduct(product);
         skuService.validateDeletableSku(product);
 
         if (product.isComplete()) {

@@ -118,6 +118,13 @@ public class ProductService {
         product.syncBasePrice();
     }
 
+    public void disableProduct(Long id) {
+        Product product = getProduct(id);
+        validateModifiableProduct(product);
+
+        product.disable();
+    }
+
     public void deleteProduct(Product product) {
         product.archive();
     }
@@ -171,7 +178,7 @@ public class ProductService {
         }
     }
 
-    public void validateDeletableProduct(Product product) {
+    public void validateModifiableProduct(Product product) {
         // TODO: 진행 중인 주문(결제/배송)이 있는 경우 삭제, 비활성화 불가 (주문 도메인 구현 후)
     }
 
