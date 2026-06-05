@@ -12,6 +12,7 @@ public record ProductResDto(
     Long basePrice,
     ProductStatus status,
     ProductType productType,
-    @JsonIgnore LocalDateTime createdDate
+    @JsonIgnore LocalDateTime createdDate,
+    boolean isSoldOut
 ) {
 }

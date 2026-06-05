@@ -11,6 +11,7 @@ import com.fittura.domain.product.product.entity.ProductAttribute;
 import com.fittura.domain.product.product.error.ProductErrorCode;
 import com.fittura.domain.product.product.repository.ProductAttributeRepository;
 import com.fittura.domain.product.product.repository.ProductRepository;
+import com.fittura.domain.product.product.support.ProductFixture;
 import com.fittura.domain.product.sku.entity.ProductComposition;
 import com.fittura.domain.product.sku.entity.ProductSku;
 import com.fittura.domain.product.sku.repository.CompositionRepository;
@@ -246,6 +247,23 @@ class ProductControllerV1Test extends IntegrationTestBase {
             .andExpect(jsonPath("$.data.content[1].name").value("Expensive Desk"));
     }
 
+    @Test
+    @DisplayName("상품 목록 조회 성공 - SKU 전체 품절 시 isSoldOut true")
+    void getProductsSuccess_soldOut() throws Exception {
+        // given
+        Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Product product = productRepository.save(ProductFixture.component(category, "Chair"));
+        product.activate();
+        ProductSku sku = productSkuRepository.save(ProductSku.create(product, 5000L, 0, "White", "Wood"));
+        sku.soldOut();
+        productSkuRepository.save(sku);
+
+        // when & then
+        mockMvc.perform(get(PRODUCT_URL))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.content[0].isSoldOut").value(true));
+    }
+
 
     // ========== 상품 조회 ==========
 
@@ -267,6 +285,25 @@ class ProductControllerV1Test extends IntegrationTestBase {
             .andExpect(jsonPath("$.data.name").value("A Desk"))
             .andExpect(jsonPath("$.data.skus").isArray())
             .andExpect(jsonPath("$.data.skus[0].color").value("White"));
+    }
+
+    @Test
+    @DisplayName("상품 상세 조회 성공 - SKU 전체 품절 시 isSoldOut true")
+    void getProductSuccess_soldOut() throws Exception {
+        // given
+        Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Product product = ProductFixture.component(category, "Chair");
+        product.activate();
+        productRepository.save(product);
+
+        ProductSku sku = productSkuRepository.save(ProductSku.create(product, 5000L, 0, "White", "Wood"));
+        sku.soldOut();
+        productSkuRepository.save(sku);
+
+        // when & then
+        mockMvc.perform(get(PRODUCT_URL + "/" + product.getId()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.isSoldOut").value(true));
     }
 
     @Test

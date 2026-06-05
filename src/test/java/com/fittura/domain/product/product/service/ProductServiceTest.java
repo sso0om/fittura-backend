@@ -68,8 +68,8 @@ class ProductServiceTest {
         ProductSearchCondition condition = new ProductSearchCondition(List.of(ProductStatus.ACTIVE, ProductStatus.DISCONTINUED), null, null, null, null);
         Pageable pageable = PageRequest.of(0, 10);
         List<ProductResDto> content = List.of(
-            new ProductResDto(1L, "A Desk", 50000L, ProductStatus.ACTIVE, ProductType.COMPONENT, null),
-            new ProductResDto(2L, "A Chair", 30000L, ProductStatus.DISCONTINUED, ProductType.COMPONENT, null)
+            new ProductResDto(1L, "A Desk", 50000L, ProductStatus.ACTIVE, ProductType.COMPONENT, null, false),
+            new ProductResDto(2L, "A Chair", 30000L, ProductStatus.DISCONTINUED, ProductType.COMPONENT, null, false)
         );
         Page<ProductResDto> page = new PageImpl<>(content, pageable, 2);
 
@@ -113,7 +113,7 @@ class ProductServiceTest {
         );
         Pageable pageable = PageRequest.of(0, 10);
         List<ProductResDto> content = List.of(
-            new ProductResDto(1L, "Wood Desk", 50000L, ProductStatus.ACTIVE, ProductType.COMPONENT, null)
+            new ProductResDto(1L, "Wood Desk", 50000L, ProductStatus.ACTIVE, ProductType.COMPONENT, null, false)
         );
         Page<ProductResDto> page = new PageImpl<>(content, pageable, 1);
 
@@ -140,7 +140,7 @@ class ProductServiceTest {
         );
         ProductWithSkuResDto productWithSkuResDto = new ProductWithSkuResDto(
             1L, "A Desk", null, ProductType.COMPONENT, ProductStatus.ACTIVE,
-            50000L, 10.0, 100.0, 75.0, 50.0, skus
+            50000L, 10.0, 100.0, 75.0, 50.0, false, skus
         );
 
         given(productRepository.findWithSkuById(1L)).willReturn(Optional.of(productWithSkuResDto));
@@ -184,7 +184,7 @@ class ProductServiceTest {
         );
         ProductWithAllResDto productWithAllResDto = new ProductWithAllResDto(
             1L, "A Desk", null, ProductType.COMPLETE, ProductStatus.DISABLED,
-            100000L, 10.0, 100.0, 75.0, 50.0, skus, attributes, compositions
+            100000L, 10.0, 100.0, 75.0, 50.0, false, skus, attributes, compositions
         );
 
         given(productRepository.findWithAllById(1L)).willReturn(Optional.of(productWithAllResDto));
