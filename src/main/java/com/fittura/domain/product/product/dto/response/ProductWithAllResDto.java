@@ -19,6 +19,7 @@ public record ProductWithAllResDto(
     Double width,
     Double height,
     Double depth,
+    boolean isSoldOut,
     List<SkuWithStockResDto> skus,
     List<ProductAttributeResDto> attributes,
     List<CompositionResDto> compositions
@@ -28,10 +29,10 @@ public record ProductWithAllResDto(
         Long id, String name, String description,
         ProductType productType, ProductStatus status,
         Long basePrice, Double weight, Double width,
-        Double height, Double depth
+        Double height, Double depth, boolean isSoldOut
     ) {
         this(id, name, description, productType, status,
-            basePrice, weight, width, height, depth,
+            basePrice, weight, width, height, depth, isSoldOut,
             List.of(), List.of(), List.of());
     }
 }

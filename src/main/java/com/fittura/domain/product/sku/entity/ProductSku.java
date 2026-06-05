@@ -78,6 +78,14 @@ public class ProductSku extends BaseEntity {
         this.material = material;
     }
 
+    public void soldOut() {
+        this.status = SkuStatus.SOLDOUT;
+    }
+
+    public void discontinue() {
+        this.status = SkuStatus.DISCONTINUED;
+    }
+
     public void archive() {
         this.status = SkuStatus.ARCHIVED;
     }

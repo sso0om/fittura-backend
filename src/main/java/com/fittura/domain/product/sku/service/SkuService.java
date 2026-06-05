@@ -3,6 +3,7 @@ package com.fittura.domain.product.sku.service;
 import com.fittura.domain.product.product.dto.response.CompositionResDto;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.error.ProductErrorCode;
+import com.fittura.domain.product.sku.constant.SkuStatus;
 import com.fittura.domain.product.sku.dto.request.CompositionCreateReqDto;
 import com.fittura.domain.product.sku.dto.request.CompositionUpdateReqDto;
 import com.fittura.domain.product.sku.dto.request.SkuCreateReqDto;
@@ -81,6 +82,26 @@ public class SkuService {
         }
     }
 
+    public void soldOutSku(Long productId, Long skuId) {
+        validateSkuOwnedByProduct(productId, skuId);
+
+        ProductSku sku = getProductSku(skuId);
+        sku.soldOut();
+    }
+
+    public void discontinueSku(Long productId, Long skuId) {
+        validateSkuOwnedByProduct(productId, skuId);
+
+        ProductSku sku = getProductSku(skuId);
+        sku.discontinue();
+    }
+
+    public void deleteSkus(Product product) {
+        for (ProductSku productSku : getProductSkus(product.getId())) {
+            productSku.archive();
+        }
+    }
+
 
     // ========== 구성품 ==========
 
@@ -137,29 +158,43 @@ public class SkuService {
         }
     }
 
+    public void deleteCompositions(Product product) {
+        compositionRepository.deleteAllByParentProductId(product.getId());
+    }
+
 
     // ===== 유효성 검사 메서드 ====
 
-    private void validateProductSkuForComposition(ProductSku productSku) {
-        if (productSku.isArchived()) {
-            throw new ServiceException(ProductErrorCode.ARCHIVED_SKU);
-        }
+    public void validateDeletableSku(Product product) {
+        if (product.isComplete()) return;
 
+        if(compositionRepository.isAnySkuReferencedByOther(product.getId())) {
+            throw new ServiceException(ProductErrorCode.PRODUCT_SKU_REFERENCED_BY_OTHER);
+        }
+    }
+
+    private void validateProductSkuForComposition(ProductSku productSku) {
         if (productSku.getProduct().isComplete()) {
             throw new ServiceException(ProductErrorCode.CHILD_SKU_ONLY_COMPONENT);
+        }
+    }
+
+    public void validateSkuOwnedByProduct(Long productId, Long skuId) {
+        if (!productSkuRepository.existsByProductIdAndId(productId, skuId)) {
+            throw new ServiceException(ProductErrorCode.SKU_NOT_BELONGS_TO_PRODUCT);
         }
     }
 
 
     // ===== 헬퍼 메서드 ====
 
-    private ProductSku getProductSku(Long productSkuId) {
-        return productSkuRepository.findById(productSkuId)
+    private ProductSku getProductSku(Long skuId) {
+        return productSkuRepository.findByIdAndStatusNot(skuId, SkuStatus.ARCHIVED)
             .orElseThrow(() -> new ServiceException(ProductErrorCode.NOT_FOUND_SKU));
     }
 
     private List<ProductSku> getProductSkus(Long productId) {
-        return productSkuRepository.findByProductId(productId);
+        return productSkuRepository.findByProductIdAndStatusNot(productId, SkuStatus.ARCHIVED);
     }
 
     private List<ProductComposition> getProductCompositions(Long productId) {

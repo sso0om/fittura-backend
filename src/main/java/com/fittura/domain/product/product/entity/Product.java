@@ -124,8 +124,16 @@ public class Product extends BaseEntity {
         this.status = ProductStatus.ACTIVE;
     }
 
+    public void disable() {
+        this.status = ProductStatus.DISABLED;
+    }
+
     public void discontinue() {
         this.status = ProductStatus.DISCONTINUED;
+    }
+
+    public void archive() {
+        this.status = ProductStatus.ARCHIVED;
     }
 
 

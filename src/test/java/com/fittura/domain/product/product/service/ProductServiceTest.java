@@ -68,8 +68,8 @@ class ProductServiceTest {
         ProductSearchCondition condition = new ProductSearchCondition(List.of(ProductStatus.ACTIVE, ProductStatus.DISCONTINUED), null, null, null, null);
         Pageable pageable = PageRequest.of(0, 10);
         List<ProductResDto> content = List.of(
-            new ProductResDto(1L, "A Desk", 50000L, ProductStatus.ACTIVE, ProductType.COMPONENT, null),
-            new ProductResDto(2L, "A Chair", 30000L, ProductStatus.DISCONTINUED, ProductType.COMPONENT, null)
+            new ProductResDto(1L, "A Desk", 50000L, ProductStatus.ACTIVE, ProductType.COMPONENT, null, false),
+            new ProductResDto(2L, "A Chair", 30000L, ProductStatus.DISCONTINUED, ProductType.COMPONENT, null, false)
         );
         Page<ProductResDto> page = new PageImpl<>(content, pageable, 2);
 
@@ -113,7 +113,7 @@ class ProductServiceTest {
         );
         Pageable pageable = PageRequest.of(0, 10);
         List<ProductResDto> content = List.of(
-            new ProductResDto(1L, "Wood Desk", 50000L, ProductStatus.ACTIVE, ProductType.COMPONENT, null)
+            new ProductResDto(1L, "Wood Desk", 50000L, ProductStatus.ACTIVE, ProductType.COMPONENT, null, false)
         );
         Page<ProductResDto> page = new PageImpl<>(content, pageable, 1);
 
@@ -140,7 +140,7 @@ class ProductServiceTest {
         );
         ProductWithSkuResDto productWithSkuResDto = new ProductWithSkuResDto(
             1L, "A Desk", null, ProductType.COMPONENT, ProductStatus.ACTIVE,
-            50000L, 10.0, 100.0, 75.0, 50.0, skus
+            50000L, 10.0, 100.0, 75.0, 50.0, false, skus
         );
 
         given(productRepository.findWithSkuById(1L)).willReturn(Optional.of(productWithSkuResDto));
@@ -184,7 +184,7 @@ class ProductServiceTest {
         );
         ProductWithAllResDto productWithAllResDto = new ProductWithAllResDto(
             1L, "A Desk", null, ProductType.COMPLETE, ProductStatus.DISABLED,
-            100000L, 10.0, 100.0, 75.0, 50.0, skus, attributes, compositions
+            100000L, 10.0, 100.0, 75.0, 50.0, false, skus, attributes, compositions
         );
 
         given(productRepository.findWithAllById(1L)).willReturn(Optional.of(productWithAllResDto));
@@ -227,7 +227,7 @@ class ProductServiceTest {
             List.of(compositionDto())
         );
 
-        given(categoryRepository.findById(99L)).willReturn(Optional.empty());
+        givenCategoryNotFound(99L);
 
         // when & then
         assertThatThrownBy(() -> productService.createProduct(reqDto))
@@ -251,7 +251,7 @@ class ProductServiceTest {
             List.of(compositionDto())
         );
 
-        given(categoryRepository.findById(1L)).willReturn(Optional.of(archived));
+        givenCategoryFound(1L, archived);
 
         // when & then
         assertThatThrownBy(() -> productService.createProduct(reqDto))
@@ -275,7 +275,7 @@ class ProductServiceTest {
             List.of(compositionDto())
         );
 
-        given(categoryRepository.findById(1L)).willReturn(Optional.of(parent));
+        givenCategoryFound(1L, parent);
 
         // when & then
         assertThatThrownBy(() -> productService.createProduct(reqDto))
@@ -296,7 +296,7 @@ class ProductServiceTest {
             List.of()
         );
 
-        given(categoryRepository.findById(1L)).willReturn(Optional.of(CategoryFixture.rootActive()));
+        givenCategoryFound(1L, CategoryFixture.rootActive());
 
         // when & then
         assertThatThrownBy(() -> productService.createProduct(reqDto))
@@ -317,7 +317,7 @@ class ProductServiceTest {
             List.of(compositionDto())  // compositions 있음
         );
 
-        given(categoryRepository.findById(1L)).willReturn(Optional.of(CategoryFixture.rootActive()));
+        givenCategoryFound(1L, CategoryFixture.rootActive());
 
         // when & then
         assertThatThrownBy(() -> productService.createProduct(reqDto))
@@ -342,7 +342,7 @@ class ProductServiceTest {
             List.of(skuUpdateDto(null)), List.of(), List.of()
         );
 
-        given(categoryRepository.findById(1L)).willReturn(Optional.of(newCategory));
+        givenCategoryFound(1L, newCategory);
 
         // when
         productService.updateProduct(product, reqDto);
@@ -363,7 +363,7 @@ class ProductServiceTest {
             List.of(skuUpdateDto(null)), List.of(), List.of()
         );
 
-        given(categoryRepository.findById(99L)).willReturn(Optional.empty());
+        givenCategoryNotFound(99L);
 
         // when & then
         assertThatThrownBy(() -> productService.updateProduct(product, reqDto))
@@ -386,7 +386,7 @@ class ProductServiceTest {
             List.of(skuUpdateDto(null)), List.of(), List.of()
         );
 
-        given(categoryRepository.findById(1L)).willReturn(Optional.of(archived));
+        givenCategoryFound(1L, archived);
 
         // when & then
         assertThatThrownBy(() -> productService.updateProduct(product, reqDto))
@@ -409,7 +409,7 @@ class ProductServiceTest {
             List.of(skuUpdateDto(null)), List.of(), List.of()
         );
 
-        given(categoryRepository.findById(1L)).willReturn(Optional.of(parent));
+        givenCategoryFound(1L, parent);
 
         // when & then
         assertThatThrownBy(() -> productService.updateProduct(product, reqDto))
@@ -433,6 +433,72 @@ class ProductServiceTest {
 
         // then
         assertThat(product.getBasePrice()).isEqualTo(30000L);
+    }
+
+
+    // ========== 상품 비활성화 ==========
+
+    @Test
+    @DisplayName("상품 비활성화 성공 - DISABLED 상태로 변경")
+    void disableProductSuccess() {
+        // given
+        Product product = ProductFixture.component("A Desk");
+        ReflectionTestUtils.setField(product, "status", ProductStatus.ACTIVE);
+        given(productRepository.findByIdAndStatusNot(1L, ProductStatus.ARCHIVED))
+            .willReturn(Optional.of(product));
+
+        // when
+        productService.disableProduct(1L);
+
+        // then
+        assertThat(product.getStatus()).isEqualTo(ProductStatus.DISABLED);
+    }
+
+
+    // ========== 상품 단종 ==========
+
+    @Test
+    @DisplayName("상품 단종 성공 - DISCONTINUED 상태로 변경")
+    void discontinueProductSuccess() {
+        // given
+        Product product = ProductFixture.component("A Desk");
+        given(productRepository.findByIdAndStatusNot(1L, ProductStatus.ARCHIVED))
+            .willReturn(Optional.of(product));
+
+        // when
+        productService.discontinueProduct(1L);
+
+        // then
+        assertThat(product.getStatus()).isEqualTo(ProductStatus.DISCONTINUED);
+    }
+
+
+    // ========== 상품 삭제 ==========
+
+    @Test
+    @DisplayName("상품 삭제 성공 - ARCHIVED 상태로 변경")
+    void deleteProductSuccess() {
+        // given
+        Product product = ProductFixture.component("Chair Leg");
+
+        // when
+        productService.deleteProduct(product);
+
+        // then
+        assertThat(product.isArchived()).isTrue();
+    }
+
+    @Test
+    @DisplayName("속성 삭제 성공 - 상품 ID로 전체 삭제")
+    void deleteProductAttributesSuccess() {
+        // given
+        Product product = ProductFixture.componentWithId(1L, "A Desk");
+
+        // when
+        productService.deleteProductAttributes(product);
+
+        // then
+        verify(attributeRepository).deleteAllByProductId(product.getId());
     }
 
 
@@ -512,5 +578,13 @@ class ProductServiceTest {
 
     private SkuUpdateReqDto skuUpdateDto(Long id) {
         return new SkuUpdateReqDto(id, 10000L, 100, "White", "Wood");
+    }
+
+    private void givenCategoryNotFound(Long categoryId) {
+        given(categoryRepository.findById(categoryId)).willReturn(Optional.empty());
+    }
+
+    private void givenCategoryFound(Long categoryId, Category category) {
+        given(categoryRepository.findById(categoryId)).willReturn(Optional.of(category));
     }
 }

@@ -34,4 +34,16 @@ public class CompositionRepositoryImpl implements CompositionRepositoryCustom {
             .orderBy(productComposition.sortOrder.asc())
             .fetch();
     }
+
+    @Override
+    public boolean isAnySkuReferencedByOther(Long productId) {
+        return queryFactory
+            .selectOne()
+            .from(productComposition)
+            .where(
+                productComposition.childSku.product.id.eq(productId),
+                productComposition.parentProduct.id.ne(productId)
+            )
+            .fetchFirst() != null;
+    }
 }

@@ -66,6 +66,44 @@ public class ProductFacade {
         }
     }
 
+    @Transactional
+    public void disableProduct(Long id) {
+        productService.disableProduct(id);
+    }
+
+    @Transactional
+    public void discontinueProduct(Long id) {
+        productService.discontinueProduct(id);
+    }
+
+    @Transactional
+    public void deleteProduct(Long id) {
+        Product product = productService.getProduct(id);
+
+        productService.validateModifiableProduct(product);
+        skuService.validateDeletableSku(product);
+
+        if (product.isComplete()) {
+            skuService.deleteCompositions(product);
+        }
+        productService.deleteProductAttributes(product);
+        skuService.deleteSkus(product);
+        productService.deleteProduct(product);
+    }
+
+
+    // ========== SKU ==========
+
+    @Transactional
+    public void soldOutSku(Long productId, Long skuId) {
+        skuService.soldOutSku(productId, skuId);
+    }
+
+    @Transactional
+    public void discontinueSku(Long productId, Long skuId) {
+        skuService.discontinueSku(productId, skuId);
+    }
+
 
     // ========== 속성 ==========
 

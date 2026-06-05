@@ -8,11 +8,13 @@ import com.fittura.domain.product.product.entity.QProduct;
 import com.fittura.domain.product.sku.constant.SkuStatus;
 import com.fittura.domain.product.sku.dto.response.SkuResDto;
 import com.fittura.domain.product.sku.dto.response.SkuWithStockResDto;
+import com.fittura.domain.product.sku.entity.QProductSku;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.PathBuilder;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +42,8 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
         BooleanExpression materialCond = materialIn(condition.materials());
         boolean skuFilterExists = colorCond != null || materialCond != null;
 
+        BooleanExpression isSoldOut = isSoldOut();
+
         JPAQuery<ProductResDto> query = queryFactory
             .select(Projections.constructor(ProductResDto.class,
                 product.id,
@@ -47,7 +51,8 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
                 product.basePrice,
                 product.status,
                 product.productType,
-                product.createdDate
+                product.createdDate,
+                isSoldOut
             ))
             .distinct()
             .from(product);
@@ -92,6 +97,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
 
     @Override
     public Optional<ProductWithAllResDto> findWithAllById(Long id) {
+        BooleanExpression isSoldOut = isSoldOut();
 
         ProductWithAllResDto productRow = queryFactory
             .select(Projections.constructor(ProductWithAllResDto.class,
@@ -104,7 +110,8 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
                 product.dimension.weight,
                 product.dimension.width,
                 product.dimension.height,
-                product.dimension.depth
+                product.dimension.depth,
+                isSoldOut
             ))
             .from(product)
             .where(
@@ -169,6 +176,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             productRow.width(),
             productRow.height(),
             productRow.depth(),
+            productRow.isSoldOut(),
             skus,
             attributes,
             compositions
@@ -177,6 +185,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
 
     @Override
     public Optional<ProductWithSkuResDto> findWithSkuById(Long id) {
+        BooleanExpression isSoldOut = isSoldOut();
 
         ProductWithSkuResDto productRow = queryFactory
             .select(Projections.constructor(ProductWithSkuResDto.class,
@@ -189,7 +198,8 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
                 product.dimension.weight,
                 product.dimension.width,
                 product.dimension.height,
-                product.dimension.depth
+                product.dimension.depth,
+                isSoldOut
             ))
             .from(product)
             .where(
@@ -226,6 +236,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             productRow.width(),
             productRow.height(),
             productRow.depth(),
+            productRow.isSoldOut(),
             skus
         ));
     }
@@ -257,6 +268,18 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             : productSku.material.in(materials);
     }
 
+    private static BooleanExpression isSoldOut() {
+        QProductSku subSku = new QProductSku("subSku");
+
+        return JPAExpressions
+            .selectOne()
+            .from(subSku)
+            .where(
+                subSku.product.id.eq(product.id),
+                subSku.status.eq(SkuStatus.ACTIVE)
+            )
+            .notExists();
+    }
 
     // ========== OrderSpecifier ==========
 

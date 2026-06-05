@@ -92,4 +92,37 @@ public class AdminProductControllerV1 {
         return ResponseEntity
             .ok(RsData.success("제품이 수정되었습니다.", null));
     }
+
+    @PatchMapping("/{id}/disable")
+    @Operation(summary = "제품 비활성화", description = "제품 비활성화 API")
+    public ResponseEntity<RsData<Void>> disableProduct(
+        @PathVariable Long id
+    ) {
+        productFacade.disableProduct(id);
+
+        return ResponseEntity
+            .ok(RsData.success("제품이 비활성화되었습니다.", null));
+    }
+
+    @PatchMapping("/{id}/discontinue")
+    @Operation(summary = "제품 단종", description = "제품 단종 처리 API")
+    public ResponseEntity<RsData<Void>> discontinueProduct(
+        @PathVariable Long id
+    ) {
+        productFacade.discontinueProduct(id);
+
+        return ResponseEntity
+            .ok(RsData.success("제품이 단종되었습니다.", null));
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "제품 삭제", description = "제품 삭제 API")
+    public ResponseEntity<RsData<Void>> deleteProduct(
+        @PathVariable Long id
+    ) {
+        productFacade.deleteProduct(id);
+
+        return ResponseEntity
+            .ok(RsData.success("제품이 삭제되었습니다.", null));
+    }
 }

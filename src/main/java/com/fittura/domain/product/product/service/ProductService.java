@@ -118,6 +118,21 @@ public class ProductService {
         product.syncBasePrice();
     }
 
+    public void disableProduct(Long id) {
+        Product product = getProduct(id);
+        validateModifiableProduct(product);
+
+        product.disable();
+    }
+
+    public void discontinueProduct(Long id) {
+        Product product = getProduct(id);
+        product.discontinue();
+    }
+
+    public void deleteProduct(Product product) {
+        product.archive();
+    }
 
 
     // ========== 속성 ==========
@@ -155,6 +170,10 @@ public class ProductService {
         }
     }
 
+    public void deleteProductAttributes(Product product) {
+        attributeRepository.deleteAllByProductId(product.getId());
+    }
+
 
     // ===== 유효성 검사 메서드 ====
 
@@ -162,6 +181,10 @@ public class ProductService {
         if (!productRepository.existsById(productId)) {
             throw new ServiceException(ProductErrorCode.NOT_FOUND_PRODUCT);
         }
+    }
+
+    public void validateModifiableProduct(Product product) {
+        // TODO: 진행 중인 주문(결제/배송)이 있는 경우 삭제, 비활성화 불가 (주문 도메인 구현 후)
     }
 
     private void validateCategory(Category category) {
