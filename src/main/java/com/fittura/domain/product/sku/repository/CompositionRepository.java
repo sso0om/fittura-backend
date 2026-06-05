@@ -2,6 +2,9 @@ package com.fittura.domain.product.sku.repository;
 
 import com.fittura.domain.product.sku.entity.ProductComposition;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -10,5 +13,7 @@ import java.util.List;
 public interface CompositionRepository extends JpaRepository<ProductComposition, Long>, CompositionRepositoryCustom {
     List<ProductComposition> findByParentProductId(Long productId);
 
-    void deleteAllByParentProductId(Long parentProductId);
+    @Modifying
+    @Query("DELETE FROM ProductComposition c WHERE c.parentProduct.id = :productId")
+    void deleteAllByParentProductId(@Param("productId") Long parentProductId);
 }
