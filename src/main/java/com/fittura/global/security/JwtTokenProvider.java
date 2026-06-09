@@ -10,8 +10,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -19,7 +17,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -107,10 +104,11 @@ public class JwtTokenProvider {
         Collection<? extends GrantedAuthority> authorities = roles
                 .stream()
                 .map(SimpleGrantedAuthority::new)
-                .collect(Collectors.toList());
+                .toList();
 
         // 인증된 사용자
-        UserDetails principal = new User(claims.getSubject(), "", authorities);
+        Long userId = Long.parseLong(claims.getSubject());
+        CustomUserDetails principal = new CustomUserDetails(userId, authorities);
 
         return new UsernamePasswordAuthenticationToken(principal, null, authorities);
     }
