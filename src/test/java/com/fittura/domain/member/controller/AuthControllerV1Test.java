@@ -232,7 +232,7 @@ class AuthControllerV1Test extends IntegrationTestBase {
         );
         memberRepository.save(member);
 
-        String refreshToken = jwtTokenProvider.generateRefreshToken(member.getId().toString());
+        String refreshToken = jwtTokenProvider.generateRefreshToken(member.getId());
         String tokenName = appProperties.cookie().refreshTokenName();
         Cookie refreshTokenCookie = new Cookie(tokenName, refreshToken);
 
@@ -271,9 +271,8 @@ class AuthControllerV1Test extends IntegrationTestBase {
     @DisplayName("토큰 재발급 실패 - 유효하지 않은 리프레시 토큰")
     void reissueFail_invalidRefreshToken() throws Exception {
         // given
-        String invalidToken = jwtTokenProvider.generateRefreshToken("invalid.refresh.token");
         String tokenName = appProperties.cookie().refreshTokenName();
-        Cookie refreshTokenCookie = new Cookie(tokenName, invalidToken);
+        Cookie refreshTokenCookie = new Cookie(tokenName, "invalid.token.value");
 
         // when & then
         ResultActions resultActions = mockMvc
@@ -290,7 +289,7 @@ class AuthControllerV1Test extends IntegrationTestBase {
     @DisplayName("토큰 재발급 실패 - 존재하지 않는 회원의 토큰")
     void reissueFail_notExistingMember() throws Exception {
         // given
-        String invalidToken = jwtTokenProvider.generateRefreshToken("-1");
+        String invalidToken = jwtTokenProvider.generateRefreshToken(-1L);
         String tokenName = appProperties.cookie().refreshTokenName();
         Cookie refreshTokenCookie = new Cookie(tokenName, invalidToken);
 
@@ -317,7 +316,7 @@ class AuthControllerV1Test extends IntegrationTestBase {
         );
         memberRepository.save(member);
 
-        String accessToken = jwtTokenProvider.generateAccessToken(member.getId().toString(), Set.of("ROLE_USER"));
+        String accessToken = jwtTokenProvider.generateAccessToken(member.getId(), Set.of("ROLE_USER"));
         String tokenName = appProperties.cookie().refreshTokenName();
         Cookie refreshTokenCookie = new Cookie(tokenName, accessToken);
 

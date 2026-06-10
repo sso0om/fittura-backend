@@ -50,9 +50,9 @@ public class JwtTokenProvider {
         this.jwtParser = Jwts.parser().verifyWith(key).build();
     }
 
-    public String generateAccessToken(String memberId, Set<String> roles) {
+    public String generateAccessToken(Long memberId, Set<String> roles) {
         return Jwts.builder()
-            .subject(memberId)
+            .subject(memberId.toString())
             .claim(ROLES_CLAIM_KEY, roles)
             .claim(TOKEN_TYPE_CLAIM_KEY, TOKEN_TYPE_ACCESS)
             .issuedAt(new Date())
@@ -61,10 +61,10 @@ public class JwtTokenProvider {
             .compact();
     }
 
-    public String generateRefreshToken(String memberId) {
+    public String generateRefreshToken(Long memberId) {
         return Jwts.builder()
             .id(UUID.randomUUID().toString())
-            .subject(memberId)
+            .subject(memberId.toString())
             .claim(TOKEN_TYPE_CLAIM_KEY, TOKEN_TYPE_REFRESH)
             .issuedAt(new Date())
             .expiration(new Date(System.currentTimeMillis() + refreshTokenValidityInMilliseconds))
