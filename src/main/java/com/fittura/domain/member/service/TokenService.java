@@ -19,7 +19,7 @@ public class TokenService {
     private final JwtTokenProvider jwtTokenProvider;
 
     public TokenDto issueTokens(Member savedMember) {
-        String memberId = savedMember.getId().toString();
+        Long memberId = savedMember.getId();
 
         String accessToken = generateAccessToken(savedMember, memberId);
         String refreshToken = jwtTokenProvider.generateRefreshToken(memberId);
@@ -46,7 +46,7 @@ public class TokenService {
 
     // ========== 헬퍼 메서드 ==========
 
-    private String generateAccessToken(Member savedMember, String memberId) {
+    private String generateAccessToken(Member savedMember, Long memberId) {
         Set<String> roles = savedMember.getRoles()
             .stream()
             .map(Enum::name)

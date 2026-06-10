@@ -1,35 +1,33 @@
 package com.fittura.global.security;
 
-import com.fittura.domain.member.entity.Member;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 public class CustomUserDetails implements UserDetails {
 
-    private final Member member;
+    @Getter
+    private final Long userId;
+
+    private final Collection<? extends GrantedAuthority> authorities;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return member.getRoles()
-                .stream()
-                .map(role -> new SimpleGrantedAuthority(role.name()))
-                .collect(Collectors.toSet());
+        return authorities;
     }
 
     @Override
     public String getPassword() {
-        return member.getPassword();
+        return "";
     }
 
     @Override
     public String getUsername() {
-        return member.getEmail();
+        return userId.toString();
     }
 
     @Override
