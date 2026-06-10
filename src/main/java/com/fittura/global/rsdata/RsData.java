@@ -18,6 +18,10 @@ public record RsData<T>(
         return new RsData<>(DEFAULT_SUCCESS_CODE, message, data);
     }
 
+    public static <T> RsData<T> createSuccess(String message) {
+        return new RsData<>(DEFAULT_CREATE_SUCCESS_CODE, message, null);
+    }
+
     public static <T> RsData<T> createSuccess(String message, T data) {
         return new RsData<>(DEFAULT_CREATE_SUCCESS_CODE, message, data);
     }
