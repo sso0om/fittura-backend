@@ -3,10 +3,12 @@ package com.fittura.domain.order.cart.entity;
 import com.fittura.domain.product.sku.entity.ProductSku;
 import com.fittura.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import static lombok.AccessLevel.PROTECTED;
 
+@Getter
 @Entity
 @Table(
     name = "cart_items",
