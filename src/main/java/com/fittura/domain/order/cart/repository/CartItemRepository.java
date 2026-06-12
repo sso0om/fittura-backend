@@ -1,4 +1,4 @@
-package com.fittura.domain.order.cart.repository.CartItemRepostiory;
+package com.fittura.domain.order.cart.repository;
 
 import com.fittura.domain.order.cart.entity.Cart;
 import com.fittura.domain.order.cart.entity.CartItem;

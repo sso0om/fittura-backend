@@ -1,4 +1,4 @@
-package com.fittura.domain.order.cart.repository.CartRepository;
+package com.fittura.domain.order.cart.repository;
 
 import com.fittura.domain.order.cart.entity.Cart;
 import org.springframework.data.jpa.repository.JpaRepository;
