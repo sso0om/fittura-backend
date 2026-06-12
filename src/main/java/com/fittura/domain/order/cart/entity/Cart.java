@@ -8,6 +8,8 @@ import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.Objects;
+
 import static lombok.AccessLevel.PROTECTED;
 
 @Getter
@@ -28,6 +30,8 @@ public class Cart extends BaseEntity {
     private Long memberId;
 
     public static Cart create(Long memberId) {
+        Objects.requireNonNull(memberId, "member id must not be null");
+
         Cart cart = new Cart();
         cart.memberId = memberId;
         return cart;
