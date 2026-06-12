@@ -1,4 +1,4 @@
-package com.fittura.domain.order.cart.service.CartService;
+package com.fittura.domain.order.cart.service;
 
 import com.fittura.domain.order.cart.dto.request.CartItemCreateReqDto;
 import com.fittura.domain.order.cart.entity.Cart;

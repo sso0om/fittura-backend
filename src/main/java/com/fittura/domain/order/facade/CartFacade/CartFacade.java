@@ -1,7 +1,7 @@
 package com.fittura.domain.order.facade.CartFacade;
 
 import com.fittura.domain.order.cart.dto.request.CartItemCreateReqDto;
-import com.fittura.domain.order.cart.service.CartService.CartService;
+import com.fittura.domain.order.cart.service.CartService;
 import com.fittura.domain.product.sku.entity.ProductSku;
 import com.fittura.domain.product.sku.service.SkuService;
 import lombok.RequiredArgsConstructor;
