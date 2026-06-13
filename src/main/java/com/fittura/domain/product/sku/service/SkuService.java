@@ -29,6 +29,11 @@ public class SkuService {
     private final ProductSkuRepository productSkuRepository;
     private final CompositionRepository compositionRepository;
 
+    public ProductSku getProductSku(Long skuId) {
+        return productSkuRepository.findByIdAndStatusNot(skuId, SkuStatus.ARCHIVED)
+            .orElseThrow(() -> new ServiceException(ProductErrorCode.NOT_FOUND_SKU));
+    }
+
     public void createSkus(Product product, List<SkuCreateReqDto> skuDtos) {
         for (SkuCreateReqDto skuDto : skuDtos) {
 
@@ -187,11 +192,6 @@ public class SkuService {
 
 
     // ===== 헬퍼 메서드 ====
-
-    private ProductSku getProductSku(Long skuId) {
-        return productSkuRepository.findByIdAndStatusNot(skuId, SkuStatus.ARCHIVED)
-            .orElseThrow(() -> new ServiceException(ProductErrorCode.NOT_FOUND_SKU));
-    }
 
     private List<ProductSku> getProductSkus(Long productId) {
         return productSkuRepository.findByProductIdAndStatusNot(productId, SkuStatus.ARCHIVED);
