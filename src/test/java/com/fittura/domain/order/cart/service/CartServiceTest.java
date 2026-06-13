@@ -103,6 +103,7 @@ class CartServiceTest {
 
         // then
         assertThat(existingCartItem.getQuantity()).isEqualTo(5);
+        verify(cartRepository, never()).save(any(Cart.class));
         verify(cartItemRepository).save(existingCartItem);
     }
 }

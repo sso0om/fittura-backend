@@ -7,6 +7,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 public class CartItemFixture {
 
+    private CartItemFixture() {}
+
     public static CartItem cartItem(Cart cart, ProductSku sku, Integer quantity) {
         return CartItem.create(cart, sku, quantity);
     }

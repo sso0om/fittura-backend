@@ -103,6 +103,7 @@ class CartControllerV1Test extends IntegrationTestBase {
                 .content(reqBody))
             .andDo(print())
             .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.code").value("S201-01"))
             .andExpect(jsonPath("$.message").value("제품이 장바구니에 담겼습니다."));
 
         CartItem updatedItem = cartItemRepository.findByCartAndProductSku(cart, sku).orElseThrow();
