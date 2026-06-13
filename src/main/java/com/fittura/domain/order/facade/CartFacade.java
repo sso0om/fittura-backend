@@ -1,4 +1,4 @@
-package com.fittura.domain.order.facade.CartFacade;
+package com.fittura.domain.order.facade;
 
 import com.fittura.domain.order.cart.dto.request.CartItemCreateReqDto;
 import com.fittura.domain.order.cart.service.CartService;

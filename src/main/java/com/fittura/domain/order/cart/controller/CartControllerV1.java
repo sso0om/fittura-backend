@@ -1,7 +1,7 @@
 package com.fittura.domain.order.cart.controller;
 
 import com.fittura.domain.order.cart.dto.request.CartItemCreateReqDto;
-import com.fittura.domain.order.facade.CartFacade.CartFacade;
+import com.fittura.domain.order.facade.CartFacade;
 import com.fittura.global.rsdata.RsData;
 import com.fittura.global.security.LogInMemberId;
 import io.swagger.v3.oas.annotations.Operation;
