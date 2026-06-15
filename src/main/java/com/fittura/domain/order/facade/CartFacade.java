@@ -32,4 +32,9 @@ public class CartFacade {
     public void updateCartItem(Long memberId, Long itemId, CartItemUpdateReqDto reqDto) {
         cartService.updateCartItem(memberId, itemId, reqDto);
     }
+
+    @Transactional
+    public void deleteCartItem(Long memberId, Long itemId) {
+        cartService.deleteCartItem(memberId, itemId);
+    }
 }

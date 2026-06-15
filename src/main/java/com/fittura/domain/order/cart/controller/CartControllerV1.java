@@ -54,4 +54,15 @@ public class CartControllerV1 {
         return ResponseEntity
             .ok(RsData.createSuccess("제품의 수량이 수정되었습니다."));
     }
+
+    @DeleteMapping("/items/{itemId}")
+    @Operation(summary = "장바구니 제품 삭제", description = "장바구니 제품 삭제 API")
+    public ResponseEntity<RsData<Void>> deleteCartItem(
+        @LogInMemberId Long memberId,
+        @PathVariable Long itemId
+    ) {
+        cartFacade.deleteCartItem(memberId, itemId);
+        return ResponseEntity
+            .ok(RsData.createSuccess("장바구니에서 제품을 삭제하였습니다."));
+    }
 }

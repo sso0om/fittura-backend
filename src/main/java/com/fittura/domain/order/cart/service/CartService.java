@@ -57,6 +57,11 @@ public class CartService {
         cartitem.changeQuantity(reqDto.quantity());
     }
 
+    public void deleteCartItem(Long memberId, Long itemId) {
+        CartItem item = getItemByIdAndMember(itemId, memberId);
+        cartItemRepository.deleteById(item.getId());
+    }
+
 
     // ========== 헬퍼 메서드 ==========
 
