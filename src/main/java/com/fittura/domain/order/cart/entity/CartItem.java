@@ -58,6 +58,11 @@ public class CartItem extends BaseEntity {
         this.quantity += quantity;
     }
 
+    public void changeQuantity(Integer quantity) {
+        validateQuantity(quantity);
+        this.quantity = quantity;
+    }
+
     private void validateQuantity(Integer quantity) {
         if (quantity == null || quantity < 1) {
             throw new ServiceException(CartErrorCode.QUANTITY_MUST_BE_POSITIVE);
