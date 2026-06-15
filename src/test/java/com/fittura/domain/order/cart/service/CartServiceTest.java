@@ -1,6 +1,7 @@
 package com.fittura.domain.order.cart.service;
 
 import com.fittura.domain.order.cart.dto.request.CartItemCreateReqDto;
+import com.fittura.domain.order.cart.dto.request.CartItemUpdateReqDto;
 import com.fittura.domain.order.cart.dto.response.CartItemResDto;
 import com.fittura.domain.order.cart.dto.response.CartResDto;
 import com.fittura.domain.order.cart.entity.Cart;
@@ -15,6 +16,7 @@ import com.fittura.domain.product.product.support.ProductFixture;
 import com.fittura.domain.product.sku.constant.SkuStatus;
 import com.fittura.domain.product.sku.entity.ProductSku;
 import com.fittura.domain.product.sku.support.ProductSkuFixture;
+import com.fittura.global.exception.ServiceException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,6 +28,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
@@ -159,5 +162,81 @@ class CartServiceTest {
         assertThat(existingCartItem.getQuantity()).isEqualTo(5);
         verify(cartRepository, never()).save(any(Cart.class));
         verify(cartItemRepository).save(existingCartItem);
+    }
+
+
+    // ========== 장바구니 아이템 수량 수정 ==========
+
+    @Test
+    @DisplayName("장바구니 아이템 수량 수정 성공")
+    void updateCartItemSuccess() {
+        // given
+        Long memberId = 1L;
+        Long itemId = 10L;
+        Product product = ProductFixture.component("A Desk");
+        ProductSku sku = ProductSkuFixture.skuWithId(1L, product);
+        Cart cart = CartFixture.cartWithId(100L, memberId);
+        CartItem cartItem = CartItemFixture.cartItemWithId(itemId, cart, sku, 2);
+        CartItemUpdateReqDto reqDto = new CartItemUpdateReqDto(7);
+
+        given(cartItemRepository.findByIdAndCart_MemberId(itemId, memberId)).willReturn(Optional.of(cartItem));
+
+        // when
+        cartService.updateCartItem(memberId, itemId, reqDto);
+
+        // then
+        assertThat(cartItem.getQuantity()).isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("장바구니 아이템 수량 수정 실패 - 아이템 없음")
+    void updateCartItemFail_notFoundItem() {
+        // given
+        Long memberId = 1L;
+        Long itemId = 999L;
+        CartItemUpdateReqDto reqDto = new CartItemUpdateReqDto(5);
+
+        given(cartItemRepository.findByIdAndCart_MemberId(itemId, memberId)).willReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> cartService.updateCartItem(memberId, itemId, reqDto))
+            .isInstanceOf(ServiceException.class);
+    }
+
+
+    // ========== 장바구니 아이템 삭제 ==========
+
+    @Test
+    @DisplayName("장바구니 아이템 삭제 성공")
+    void deleteCartItemSuccess() {
+        // given
+        Long memberId = 1L;
+        Long itemId = 10L;
+        Product product = ProductFixture.component("A Desk");
+        ProductSku sku = ProductSkuFixture.skuWithId(1L, product);
+        Cart cart = CartFixture.cartWithId(100L, memberId);
+        CartItem cartItem = CartItemFixture.cartItemWithId(itemId, cart, sku, 2);
+
+        given(cartItemRepository.findByIdAndCart_MemberId(itemId, memberId)).willReturn(Optional.of(cartItem));
+
+        // when
+        cartService.deleteCartItem(memberId, itemId);
+
+        // then
+        verify(cartItemRepository).deleteById(itemId);
+    }
+
+    @Test
+    @DisplayName("장바구니 아이템 삭제 실패 - 아이템 없음")
+    void deleteCartItemFail_notFoundItem() {
+        // given
+        Long memberId = 1L;
+        Long itemId = 999L;
+
+        given(cartItemRepository.findByIdAndCart_MemberId(itemId, memberId)).willReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> cartService.deleteCartItem(memberId, itemId))
+            .isInstanceOf(ServiceException.class);
     }
 }

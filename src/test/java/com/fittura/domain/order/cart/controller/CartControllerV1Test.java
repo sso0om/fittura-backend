@@ -20,8 +20,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.fittura.domain.order.cart.error.CartErrorCode;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -202,6 +205,141 @@ class CartControllerV1Test extends IntegrationTestBase {
             .andDo(print())
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.code").value(ProductErrorCode.NOT_FOUND_SKU.getCode()));
+    }
+
+
+    // ========== 장바구니 아이템 수량 수정 ==========
+
+    @Test
+    @DisplayName("장바구니 아이템 수량 수정 성공")
+    void updateCartItemSuccess() throws Exception {
+        // given
+        Long memberId = 20L;
+        ProductSku sku = savedDefaultSku();
+        Cart cart = cartRepository.save(Cart.create(memberId));
+        CartItem cartItem = cartItemRepository.save(CartItem.create(cart, sku, 2));
+
+        String reqBody = """
+                {
+                    "quantity": 7
+                }
+                """;
+
+        // when & then
+        mockMvc.perform(patch(CART_URL + "/items/" + cartItem.getId())
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value("S201-01"))
+            .andExpect(jsonPath("$.message").value("제품의 수량이 수정되었습니다."));
+
+        CartItem updated = cartItemRepository.findById(cartItem.getId()).orElseThrow();
+        assertThat(updated.getQuantity()).isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("장바구니 아이템 수량 수정 실패 - 존재하지 않는 아이템")
+    void updateCartItemFail_notFoundItem() throws Exception {
+        // given
+        Long memberId = 21L;
+
+        String reqBody = """
+                {
+                    "quantity": 3
+                }
+                """;
+
+        // when & then
+        mockMvc.perform(patch(CART_URL + "/items/9999")
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value(CartErrorCode.NOT_FOUND_ITEM.getCode()));
+    }
+
+    @Test
+    @DisplayName("장바구니 아이템 수량 수정 실패 - 다른 회원의 아이템")
+    void updateCartItemFail_otherMembersItem() throws Exception {
+        // given
+        Long ownerMemberId = 22L;
+        Long otherMemberId = 23L;
+        ProductSku sku = savedDefaultSku();
+        Cart ownerCart = cartRepository.save(Cart.create(ownerMemberId));
+        CartItem cartItem = cartItemRepository.save(CartItem.create(ownerCart, sku, 2));
+
+        String reqBody = """
+                {
+                    "quantity": 5
+                }
+                """;
+
+        // when & then
+        mockMvc.perform(patch(CART_URL + "/items/" + cartItem.getId())
+                .header("Authorization", userBearerToken(otherMemberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value(CartErrorCode.NOT_FOUND_ITEM.getCode()));
+    }
+
+
+    // ========== 장바구니 아이템 삭제 ==========
+
+    @Test
+    @DisplayName("장바구니 아이템 삭제 성공")
+    void deleteCartItemSuccess() throws Exception {
+        // given
+        Long memberId = 30L;
+        ProductSku sku = savedDefaultSku();
+        Cart cart = cartRepository.save(Cart.create(memberId));
+        CartItem cartItem = cartItemRepository.save(CartItem.create(cart, sku, 2));
+
+        // when & then
+        mockMvc.perform(delete(CART_URL + "/items/" + cartItem.getId())
+                .header("Authorization", userBearerToken(memberId)))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value("S201-01"))
+            .andExpect(jsonPath("$.message").value("장바구니에서 제품을 삭제하였습니다."));
+
+        assertThat(cartItemRepository.findById(cartItem.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("장바구니 아이템 삭제 실패 - 존재하지 않는 아이템")
+    void deleteCartItemFail_notFoundItem() throws Exception {
+        // given
+        Long memberId = 31L;
+
+        // when & then
+        mockMvc.perform(delete(CART_URL + "/items/9999")
+                .header("Authorization", userBearerToken(memberId)))
+            .andDo(print())
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value(CartErrorCode.NOT_FOUND_ITEM.getCode()));
+    }
+
+    @Test
+    @DisplayName("장바구니 아이템 삭제 실패 - 다른 회원의 아이템")
+    void deleteCartItemFail_otherMembersItem() throws Exception {
+        // given
+        Long ownerMemberId = 32L;
+        Long otherMemberId = 33L;
+        ProductSku sku = savedDefaultSku();
+        Cart ownerCart = cartRepository.save(Cart.create(ownerMemberId));
+        CartItem cartItem = cartItemRepository.save(CartItem.create(ownerCart, sku, 2));
+
+        // when & then
+        mockMvc.perform(delete(CART_URL + "/items/" + cartItem.getId())
+                .header("Authorization", userBearerToken(otherMemberId)))
+            .andDo(print())
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value(CartErrorCode.NOT_FOUND_ITEM.getCode()));
     }
 
 
