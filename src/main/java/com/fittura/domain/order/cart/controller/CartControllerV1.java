@@ -52,7 +52,7 @@ public class CartControllerV1 {
     ) {
         cartFacade.updateCartItem(memberId, itemId, reqDto);
         return ResponseEntity
-            .ok(RsData.createSuccess("제품의 수량이 수정되었습니다."));
+            .ok(RsData.success("제품의 수량이 수정되었습니다.", null));
     }
 
     @DeleteMapping("/items/{itemId}")
@@ -63,6 +63,6 @@ public class CartControllerV1 {
     ) {
         cartFacade.deleteCartItem(memberId, itemId);
         return ResponseEntity
-            .ok(RsData.createSuccess("장바구니에서 제품을 삭제하였습니다."));
+            .ok(RsData.success("장바구니에서 제품을 삭제하였습니다.", null));
     }
 }

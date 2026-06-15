@@ -232,7 +232,7 @@ class CartControllerV1Test extends IntegrationTestBase {
                 .content(reqBody))
             .andDo(print())
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.code").value("S201-01"))
+            .andExpect(jsonPath("$.code").value("S200-01"))
             .andExpect(jsonPath("$.message").value("제품의 수량이 수정되었습니다."));
 
         CartItem updated = cartItemRepository.findById(cartItem.getId()).orElseThrow();
@@ -304,7 +304,7 @@ class CartControllerV1Test extends IntegrationTestBase {
                 .header("Authorization", userBearerToken(memberId)))
             .andDo(print())
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.code").value("S201-01"))
+            .andExpect(jsonPath("$.code").value("S200-01"))
             .andExpect(jsonPath("$.message").value("장바구니에서 제품을 삭제하였습니다."));
 
         assertThat(cartItemRepository.findById(cartItem.getId())).isEmpty();
