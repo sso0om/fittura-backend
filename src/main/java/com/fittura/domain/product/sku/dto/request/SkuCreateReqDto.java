@@ -9,13 +9,11 @@ import jakarta.validation.constraints.Size;
 public record SkuCreateReqDto(
 
     @Schema(example = "100000")
-    @NotNull
-    @PositiveOrZero
+    @NotNull @PositiveOrZero
     Long price,
 
     @Schema(example = "50")
-    @NotNull
-    @PositiveOrZero
+    @NotNull @PositiveOrZero
     Integer stockQuantity,
 
     @Schema(example = "화이트")

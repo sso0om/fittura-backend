@@ -10,8 +10,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -19,7 +17,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -53,9 +50,9 @@ public class JwtTokenProvider {
         this.jwtParser = Jwts.parser().verifyWith(key).build();
     }
 
-    public String generateAccessToken(String memberId, Set<String> roles) {
+    public String generateAccessToken(Long memberId, Set<String> roles) {
         return Jwts.builder()
-            .subject(memberId)
+            .subject(memberId.toString())
             .claim(ROLES_CLAIM_KEY, roles)
             .claim(TOKEN_TYPE_CLAIM_KEY, TOKEN_TYPE_ACCESS)
             .issuedAt(new Date())
@@ -64,10 +61,10 @@ public class JwtTokenProvider {
             .compact();
     }
 
-    public String generateRefreshToken(String memberId) {
+    public String generateRefreshToken(Long memberId) {
         return Jwts.builder()
             .id(UUID.randomUUID().toString())
-            .subject(memberId)
+            .subject(memberId.toString())
             .claim(TOKEN_TYPE_CLAIM_KEY, TOKEN_TYPE_REFRESH)
             .issuedAt(new Date())
             .expiration(new Date(System.currentTimeMillis() + refreshTokenValidityInMilliseconds))
@@ -107,10 +104,11 @@ public class JwtTokenProvider {
         Collection<? extends GrantedAuthority> authorities = roles
                 .stream()
                 .map(SimpleGrantedAuthority::new)
-                .collect(Collectors.toList());
+                .toList();
 
         // 인증된 사용자
-        UserDetails principal = new User(claims.getSubject(), "", authorities);
+        Long userId = Long.parseLong(claims.getSubject());
+        CustomUserDetails principal = new CustomUserDetails(userId, authorities);
 
         return new UsernamePasswordAuthenticationToken(principal, null, authorities);
     }
