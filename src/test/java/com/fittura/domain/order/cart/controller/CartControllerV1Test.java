@@ -21,6 +21,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -47,6 +48,76 @@ class CartControllerV1Test extends IntegrationTestBase {
     private ProductSkuRepository productSkuRepository;
 
     private static final String CART_URL = "/api/v1/cart";
+
+    // ========== 장바구니 조회 ==========
+
+    @Test
+    @DisplayName("장바구니 조회 성공 - 장바구니 없음: 빈 응답 반환")
+    void getCartSuccess_noCart() throws Exception {
+        // given
+        Long memberId = 10L;
+
+        // when & then
+        mockMvc.perform(get(CART_URL)
+                .header("Authorization", userBearerToken(memberId)))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value("S200-01"))
+            .andExpect(jsonPath("$.message").value("장바구니가 조회되었습니다."))
+            .andExpect(jsonPath("$.data.cartId").value((Object) null))
+            .andExpect(jsonPath("$.data.items").isArray())
+            .andExpect(jsonPath("$.data.items").isEmpty())
+            .andExpect(jsonPath("$.data.totalPrice").value(0));
+    }
+
+    @Test
+    @DisplayName("장바구니 조회 성공 - 아이템 포함: 상품 정보 및 총 금액 반환")
+    void getCartSuccess_withItems() throws Exception {
+        // given
+        Long memberId = 11L;
+        ProductSku sku = savedDefaultSku();  // price: 10000
+
+        Cart cart = cartRepository.save(Cart.create(memberId));
+        cartItemRepository.save(CartItem.create(cart, sku, 3));
+
+        // when & then
+        mockMvc.perform(get(CART_URL)
+                .header("Authorization", userBearerToken(memberId)))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value("S200-01"))
+            .andExpect(jsonPath("$.message").value("장바구니가 조회되었습니다."))
+            .andExpect(jsonPath("$.data.cartId").isNumber())
+            .andExpect(jsonPath("$.data.items").isArray())
+            .andExpect(jsonPath("$.data.items[0].productName").value("A Desk"))
+            .andExpect(jsonPath("$.data.items[0].unitPrice").value(10000))
+            .andExpect(jsonPath("$.data.items[0].quantity").value(3))
+            .andExpect(jsonPath("$.data.items[0].itemTotalPrice").value(30000))
+            .andExpect(jsonPath("$.data.totalPrice").value(30000));
+    }
+
+    @Test
+    @DisplayName("장바구니 조회 성공 - ARCHIVED SKU 아이템은 결과에서 제외")
+    void getCartSuccess_archivedSkuExcluded() throws Exception {
+        // given
+        Long memberId = 12L;
+        ProductSku sku = savedDefaultSku();
+        sku.archive();
+        productSkuRepository.save(sku);
+
+        Cart cart = cartRepository.save(Cart.create(memberId));
+        cartItemRepository.save(CartItem.create(cart, sku, 2));
+
+        // when & then
+        mockMvc.perform(get(CART_URL)
+                .header("Authorization", userBearerToken(memberId)))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.cartId").isNumber())
+            .andExpect(jsonPath("$.data.items").isEmpty())
+            .andExpect(jsonPath("$.data.totalPrice").value(0));
+    }
+
 
     // ========== 장바구니 담기 ==========
 

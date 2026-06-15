@@ -1,14 +1,18 @@
 package com.fittura.domain.order.cart.service;
 
 import com.fittura.domain.order.cart.dto.request.CartItemCreateReqDto;
+import com.fittura.domain.order.cart.dto.response.CartItemResDto;
+import com.fittura.domain.order.cart.dto.response.CartResDto;
 import com.fittura.domain.order.cart.entity.Cart;
 import com.fittura.domain.order.cart.entity.CartItem;
 import com.fittura.domain.order.cart.repository.CartItemRepository;
 import com.fittura.domain.order.cart.repository.CartRepository;
 import com.fittura.domain.order.cart.support.CartFixture;
 import com.fittura.domain.order.cart.support.CartItemFixture;
+import com.fittura.domain.product.product.constant.ProductStatus;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.support.ProductFixture;
+import com.fittura.domain.product.sku.constant.SkuStatus;
 import com.fittura.domain.product.sku.entity.ProductSku;
 import com.fittura.domain.product.sku.support.ProductSkuFixture;
 import org.junit.jupiter.api.DisplayName;
@@ -18,10 +22,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -37,6 +43,54 @@ class CartServiceTest {
 
     @InjectMocks
     private CartService cartService;
+
+    // ========== 장바구니 조회 ==========
+
+    @Test
+    @DisplayName("빈 장바구니 조회 성공")
+    void getCartSuccess_noCart() {
+        // given
+        Long memberId = 1L;
+        given(cartRepository.findByMemberId(memberId)).willReturn(Optional.empty());
+
+        // when
+        CartResDto result = cartService.getCart(memberId);
+
+        // then
+        assertThat(result.cartId()).isNull();
+        assertThat(result.items()).isEmpty();
+        assertThat(result.totalPrice()).isEqualTo(0L);
+        verify(cartItemRepository, never()).findCartItemDtosByCart(anyLong());
+    }
+
+    @Test
+    @DisplayName("장바구니 조회 성공 - 총 금액 합산 반환")
+    void getCartSuccess_withItems() {
+        // given
+        Long memberId = 1L;
+        Cart cart = CartFixture.cartWithId(10L, memberId);
+
+        CartItemResDto item1 = new CartItemResDto(
+            1L, 1L, "Desk", 1L, "White", "Wood", 10000L, 2, 20000L,
+            ProductStatus.ACTIVE, SkuStatus.ACTIVE
+        );
+        CartItemResDto item2 = new CartItemResDto(
+            2L, 2L, "Chair", 2L, "Black", "Metal", 15000L, 1, 15000L,
+            ProductStatus.ACTIVE, SkuStatus.ACTIVE
+        );
+
+        given(cartRepository.findByMemberId(memberId)).willReturn(Optional.of(cart));
+        given(cartItemRepository.findCartItemDtosByCart(cart.getId())).willReturn(List.of(item1, item2));
+
+        // when
+        CartResDto result = cartService.getCart(memberId);
+
+        // then
+        assertThat(result.cartId()).isEqualTo(10L);
+        assertThat(result.items()).hasSize(2);
+        assertThat(result.totalPrice()).isEqualTo(35000L);
+    }
+
 
     // ========== 장바구니 아이템 생성 ==========
 
