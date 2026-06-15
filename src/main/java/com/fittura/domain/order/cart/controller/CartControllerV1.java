@@ -1,6 +1,7 @@
 package com.fittura.domain.order.cart.controller;
 
 import com.fittura.domain.order.cart.dto.request.CartItemCreateReqDto;
+import com.fittura.domain.order.cart.dto.request.CartItemUpdateReqDto;
 import com.fittura.domain.order.cart.dto.response.CartResDto;
 import com.fittura.domain.order.facade.CartFacade;
 import com.fittura.global.rsdata.RsData;
@@ -40,5 +41,17 @@ public class CartControllerV1 {
         return ResponseEntity
             .status(HttpStatus.CREATED)
             .body(RsData.createSuccess("제품이 장바구니에 담겼습니다."));
+    }
+
+    @PatchMapping("/items/{itemId}")
+    @Operation(summary = "장바구니 제품 수량 수정", description = "장바구니 제품 수량 수정 API")
+    public ResponseEntity<RsData<Void>> updateCartItem(
+        @LogInMemberId Long memberId,
+        @PathVariable Long itemId,
+        @RequestBody CartItemUpdateReqDto reqDto
+    ) {
+        cartFacade.updateCartItem(memberId, itemId, reqDto);
+        return ResponseEntity
+            .ok(RsData.createSuccess("제품의 수량이 수정되었습니다."));
     }
 }
