@@ -1,6 +1,8 @@
 package com.fittura.domain.order.order.entity;
 
 import com.fittura.domain.order.order.constant.OrderStatus;
+import com.fittura.domain.order.order.error.OrderErrorCode;
+import com.fittura.global.exception.ServiceException;
 import com.fittura.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -63,6 +65,7 @@ public class Order extends BaseEntity {
 
     public static Order create(Long memberId, Long pointUsedAmount) {
         Objects.requireNonNull(memberId, "memberId must not be null");
+        validateAmount(pointUsedAmount);
 
         LocalDateTime now = LocalDateTime.now();
         String orderNumber = now.format(DateTimeFormatter.ofPattern("yyyyMMdd"))
@@ -88,8 +91,18 @@ public class Order extends BaseEntity {
         discountAmount += item.getDiscountAmount();
     }
 
-    public Long calcFinalAmount() {
+    public void calcDiscountAmount(Long discountAmount) {
+        // TODO: promotion 기능 때 반영 예정
+        this.discountAmount = discountAmount;
+    }
+
+    public void calcFinalAmount() {
         finalAmount = totalAmount - discountAmount - pointUsedAmount + deliveryFee;
-        return finalAmount;
+    }
+
+    private static void validateAmount(Long amount) {
+        if (amount == null || amount < 0) {
+            throw new ServiceException(OrderErrorCode.AMOUNT_MUST_BE_POSITIVE);
+        }
     }
 }

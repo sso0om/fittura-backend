@@ -1,7 +1,9 @@
 package com.fittura.domain.order.order.entity;
 
 import com.fittura.domain.order.order.constant.OrderItemStatus;
+import com.fittura.domain.order.order.error.OrderErrorCode;
 import com.fittura.domain.product.sku.entity.ProductSku;
+import com.fittura.global.exception.ServiceException;
 import com.fittura.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -23,6 +25,8 @@ import static lombok.AccessLevel.PROTECTED;
 @AllArgsConstructor(access = PRIVATE)
 @Builder(access = PRIVATE)
 public class OrderItem extends BaseEntity {
+
+    private static final int MAX_QUANTITY = 999;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)
@@ -59,11 +63,11 @@ public class OrderItem extends BaseEntity {
     public static OrderItem create(
         Order order,
         ProductSku sku,
-        Integer quantity,
-        Long discountAmount
+        Integer quantity
     ) {
         Objects.requireNonNull(order, "order must not be null");
         Objects.requireNonNull(sku, "sku must not be null");
+        validateQuantity(quantity);
 
         String skuIdentifier = Stream.of(sku.getColor(), sku.getMaterial())
             .filter(s -> s != null && !s.isEmpty())
@@ -77,9 +81,24 @@ public class OrderItem extends BaseEntity {
             .skuIdentifier(skuIdentifier)
             .unitPrice(sku.getPrice())
             .quantity(quantity)
-            .discountAmount(discountAmount)
-            .itemTotalAmount(sku.getPrice() * quantity - discountAmount)
+            .discountAmount(0L)
+            .itemTotalAmount(sku.getPrice() * quantity)
             .status(OrderItemStatus.ORDERED)
             .build();
+    }
+
+    public void calcDiscountAmount(Long discountAmount) {
+        // TODO: promotion 기능 때 반영 예정
+        this.discountAmount = discountAmount;
+        this.itemTotalAmount = itemTotalAmount - discountAmount;
+    }
+
+    private static void validateQuantity(Integer quantity) {
+        if (quantity == null || quantity < 1) {
+            throw new ServiceException(OrderErrorCode.QUANTITY_MUST_BE_POSITIVE);
+        }
+        if (quantity > MAX_QUANTITY) {
+            throw new ServiceException(OrderErrorCode.QUANTITY_EXCEEDED);
+        }
     }
 }
