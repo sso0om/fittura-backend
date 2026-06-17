@@ -4,6 +4,7 @@ import com.fittura.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.Objects;
@@ -11,6 +12,7 @@ import java.util.Objects;
 import static lombok.AccessLevel.PRIVATE;
 import static lombok.AccessLevel.PROTECTED;
 
+@Getter
 @Entity
 @Table(name = "order_shipping_address")
 @NoArgsConstructor(access = PROTECTED)
