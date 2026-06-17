@@ -1,0 +1,85 @@
+package com.fittura.domain.order.order.entity;
+
+import com.fittura.domain.order.order.constant.OrderItemStatus;
+import com.fittura.domain.product.sku.entity.ProductSku;
+import com.fittura.global.jpa.entity.BaseEntity;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static lombok.AccessLevel.PRIVATE;
+import static lombok.AccessLevel.PROTECTED;
+
+@Getter
+@Entity
+@Table(name = "order_items")
+@NoArgsConstructor(access = PROTECTED)
+@AllArgsConstructor(access = PRIVATE)
+@Builder(access = PRIVATE)
+public class OrderItem extends BaseEntity {
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id", nullable = false)
+    private Order order;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sku_id", nullable = false)
+    private ProductSku sku;
+
+    @Column(nullable = false)
+    private String productName;
+
+    @Column(nullable = false, length = 100)
+    private String skuIdentifier;
+
+    @Column(nullable = false)
+    private Long unitPrice;
+
+    @Column(nullable = false)
+    private Integer quantity;
+
+    @Column(nullable = false)
+    private Long discountAmount;
+
+    @Column(nullable = false)
+    private Long itemTotalAmount;
+
+    @Column(nullable = false)
+    private OrderItemStatus status;
+
+
+    // ===== 생성 =====
+
+    public static OrderItem create(
+        Order order,
+        ProductSku sku,
+        Integer quantity,
+        Long discountAmount
+    ) {
+        Objects.requireNonNull(order, "order must not be null");
+        Objects.requireNonNull(sku, "sku must not be null");
+
+        String skuIdentifier = Stream.of(sku.getColor(), sku.getMaterial())
+            .filter(s -> s != null && !s.isEmpty())
+            .collect(Collectors.joining(" / "));
+
+
+        return OrderItem.builder()
+            .order(order)
+            .sku(sku)
+            .productName(sku.getProduct().getName())
+            .skuIdentifier(skuIdentifier)
+            .unitPrice(sku.getPrice())
+            .quantity(quantity)
+            .discountAmount(discountAmount)
+            .itemTotalAmount(sku.getPrice() * quantity - discountAmount)
+            .status(OrderItemStatus.ORDERED)
+            .build();
+    }
+}
