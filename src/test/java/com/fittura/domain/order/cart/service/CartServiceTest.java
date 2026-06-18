@@ -95,6 +95,66 @@ class CartServiceTest {
     }
 
 
+    // ========== 장바구니 아이템 다건 조회 ==========
+
+    @Test
+    @DisplayName("장바구니 아이템 다건 조회 성공")
+    void getItemsByIdAndMemberSuccess() {
+        // given
+        Long memberId = 1L;
+        List<Long> itemIds = List.of(1L, 2L);
+        Product product = ProductFixture.component("A Desk");
+        ProductSku sku = ProductSkuFixture.skuWithId(1L, product);
+        Cart cart = CartFixture.cartWithId(10L, memberId);
+        CartItem item1 = CartItemFixture.cartItemWithId(1L, cart, sku, 2);
+        CartItem item2 = CartItemFixture.cartItemWithId(2L, cart, sku, 1);
+
+        given(cartItemRepository.findAllByIdInAndCart_MemberId(itemIds, memberId))
+            .willReturn(List.of(item1, item2));
+
+        // when
+        List<CartItem> result = cartService.getItemsByIdAndMember(itemIds, memberId);
+
+        // then
+        assertThat(result).hasSize(2);
+        assertThat(result).containsExactlyInAnyOrder(item1, item2);
+    }
+
+    @Test
+    @DisplayName("장바구니 아이템 다건 조회 실패 - 일부 아이템이 해당 회원 것이 아님")
+    void getItemsByIdAndMemberFail_partialMatch() {
+        // given
+        Long memberId = 1L;
+        List<Long> itemIds = List.of(1L, 2L);
+        Product product = ProductFixture.component("A Desk");
+        ProductSku sku = ProductSkuFixture.skuWithId(1L, product);
+        Cart cart = CartFixture.cartWithId(10L, memberId);
+        CartItem item1 = CartItemFixture.cartItemWithId(1L, cart, sku, 2);
+
+        given(cartItemRepository.findAllByIdInAndCart_MemberId(itemIds, memberId))
+            .willReturn(List.of(item1));
+
+        // when & then
+        assertThatThrownBy(() -> cartService.getItemsByIdAndMember(itemIds, memberId))
+            .isInstanceOf(ServiceException.class);
+    }
+
+    @Test
+    @DisplayName("장바구니 아이템 다건 조회 실패 - 아이템 없음")
+    void getItemsByIdAndMemberFail_notFound() {
+        // given
+        Long memberId = 1L;
+        List<Long> itemIds = List.of(999L);
+
+        given(cartItemRepository.findAllByIdInAndCart_MemberId(itemIds, memberId))
+            .willReturn(List.of());
+
+        // when & then
+        assertThatThrownBy(() -> cartService.getItemsByIdAndMember(itemIds, memberId))
+            .isInstanceOf(ServiceException.class);
+    }
+
+
     // ========== 장바구니 아이템 생성 ==========
 
     @Test

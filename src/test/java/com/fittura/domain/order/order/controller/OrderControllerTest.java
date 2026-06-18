@@ -146,6 +146,41 @@ class OrderControllerTest extends IntegrationTestBase {
     }
 
     @Test
+    @DisplayName("주문 생성 실패 - 다른 회원의 장바구니 아이템으로 주문 시도")
+    void createOrderFail_cartItemNotOwnedByMember() throws Exception {
+        // given
+        Long ownerMemberId = 20L;
+        Long attackerMemberId = 21L;
+        ProductSku sku = savedDefaultSku();
+        Cart ownerCart = cartRepository.save(Cart.create(ownerMemberId));
+        CartItem ownerItem = cartItemRepository.save(CartItem.create(ownerCart, sku, 1));
+
+        String reqBody = """
+                {
+                    "cartItems": [%d],
+                    "pointUsedAmount": 0,
+                    "orderAddress": {
+                        "receiverName": "홍길동",
+                        "phoneNumber": "01012341234",
+                        "zipCode": "12345",
+                        "address": "서울특별시 중구 서소문로 127",
+                        "sido": "서울특별시",
+                        "sigungu": "중구"
+                    }
+                }
+                """.formatted(ownerItem.getId());
+
+        // when & then
+        mockMvc.perform(post(ORDER_URL)
+                .header("Authorization", userBearerToken(attackerMemberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value(CartErrorCode.NOT_FOUND_ITEM.getCode()));
+    }
+
+    @Test
     @DisplayName("주문 생성 실패 - 존재하지 않는 장바구니 아이템")
     void createOrderFail_cartItemNotFound() throws Exception {
         // given

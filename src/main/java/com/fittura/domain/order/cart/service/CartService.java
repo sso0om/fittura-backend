@@ -43,9 +43,12 @@ public class CartService {
 
     // ========== 장바구니 제품 ==========
 
-    public CartItem getItemByIdAndMember(Long itemId, Long memberId) {
-        return cartItemRepository.findByIdAndCart_MemberId(itemId, memberId)
-            .orElseThrow(() -> new ServiceException(CartErrorCode.NOT_FOUND_ITEM));
+    public List<CartItem> getItemsByIdAndMember(List<Long> itemIds, Long memberId) {
+        List<CartItem> cartItems = cartItemRepository.findAllByIdInAndCart_MemberId(itemIds, memberId);
+        if (cartItems.size() != itemIds.size()) {
+            throw new ServiceException(CartErrorCode.NOT_FOUND_ITEM);
+        }
+        return cartItems;
     }
 
     public void createCartItem(Long memberId, ProductSku sku, CartItemCreateReqDto reqDto) {
@@ -90,5 +93,10 @@ public class CartService {
 
     private Optional<CartItem> getOpItemByCartAndSku(Cart cart, ProductSku sku) {
         return cartItemRepository.findByCartAndProductSku(cart, sku);
+    }
+
+    private CartItem getItemByIdAndMember(Long itemId, Long memberId) {
+        return cartItemRepository.findByIdAndCart_MemberId(itemId, memberId)
+            .orElseThrow(() -> new ServiceException(CartErrorCode.NOT_FOUND_ITEM));
     }
 }

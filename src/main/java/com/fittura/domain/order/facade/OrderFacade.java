@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Component
 @RequiredArgsConstructor
 public class OrderFacade {
@@ -19,13 +21,14 @@ public class OrderFacade {
     @Transactional
     public Long createOrder(Long memberId, OrderCreateReqDto reqDto) {
         Order order = orderService.createOrder(memberId, reqDto);
-        for(Long cartItemId : reqDto.cartItems()) {
-            CartItem cartItem = cartService.getItemByIdAndMember(cartItemId, memberId);
+
+        List<CartItem> cartItems = cartService.getItemsByIdAndMember(reqDto.cartItems(), memberId);
+        for(CartItem cartItem : cartItems) {
             orderService.createOrderItem(cartItem, order);
         }
         cartService.deleteCartItems(reqDto.cartItems());
-        orderService.calcAmount(order);
         orderService.createOrderAddress(order, reqDto.orderAddress());
+        orderService.calcAmount(order);
 
         return order.getId();
     }
