@@ -1,7 +1,9 @@
 package com.fittura.domain.product.sku.entity;
 
 import com.fittura.domain.product.product.entity.Product;
+import com.fittura.domain.product.product.error.ProductErrorCode;
 import com.fittura.domain.product.sku.constant.SkuStatus;
+import com.fittura.global.exception.ServiceException;
 import com.fittura.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -81,7 +83,9 @@ public class ProductSku extends BaseEntity {
     }
 
     public void reserveQuantity(Integer quantity) {
-        isStockValid(quantity);
+        if(!isStockValid(quantity)) {
+            throw new ServiceException(ProductErrorCode.STOCK_NOT_VALID);
+        }
         this.reservedQuantity += quantity;
     }
 
@@ -98,6 +102,9 @@ public class ProductSku extends BaseEntity {
     }
 
     public boolean isStockValid(Integer orderQuantity) {
+        if (orderQuantity == null || orderQuantity < 1) {
+            return false;
+        }
         return this.stockQuantity - reservedQuantity - orderQuantity >= 0;
     }
 

@@ -68,7 +68,7 @@ public class OrderService {
             throw new ServiceException(OrderErrorCode.SKU_MUST_ACTIVE, productName);
         }
         if (!sku.isStockValid(cartItem.getQuantity())) {
-            throw new ServiceException(OrderErrorCode.STOCK_NOT_VALID, productName);
+            throw new ServiceException(OrderErrorCode.STOCK_NOT_VALID);
         }
     }
 }
