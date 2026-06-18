@@ -67,6 +67,10 @@ public class CartService {
         cartitem.changeQuantity(reqDto.quantity());
     }
 
+    public void deleteCartItems(List<Long> cartItemIds) {
+        cartItemRepository.deleteAllById(cartItemIds);
+    }
+
     public void deleteCartItem(Long memberId, Long itemId) {
         CartItem item = getItemByIdAndMember(itemId, memberId);
         cartItemRepository.deleteById(item.getId());
@@ -86,9 +90,5 @@ public class CartService {
 
     private Optional<CartItem> getOpItemByCartAndSku(Cart cart, ProductSku sku) {
         return cartItemRepository.findByCartAndProductSku(cart, sku);
-    }
-
-    public void deleteCartItems(List<Long> cartItemIds) {
-        cartItemRepository.deleteAllById(cartItemIds);
     }
 }

@@ -207,6 +207,19 @@ class CartServiceTest {
     // ========== 장바구니 아이템 삭제 ==========
 
     @Test
+    @DisplayName("장바구니 아이템 일괄 삭제 성공")
+    void deleteCartItemsSuccess() {
+        // given
+        List<Long> itemIds = List.of(1L, 2L, 3L);
+
+        // when
+        cartService.deleteCartItems(itemIds);
+
+        // then
+        verify(cartItemRepository).deleteAllById(itemIds);
+    }
+
+    @Test
     @DisplayName("장바구니 아이템 삭제 성공")
     void deleteCartItemSuccess() {
         // given
