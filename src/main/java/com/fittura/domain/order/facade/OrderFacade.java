@@ -25,7 +25,7 @@ public class OrderFacade {
         }
         cartService.deleteCartItems(reqDto.cartItems());
         orderService.calcAmount(order);
-        orderService.createOrderShippingAddress(order, reqDto.shippingAddress());
+        orderService.createOrderAddress(order, reqDto.orderAddress());
 
         return order.getId();
     }

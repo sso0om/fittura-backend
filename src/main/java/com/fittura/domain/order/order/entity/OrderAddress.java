@@ -14,11 +14,11 @@ import static lombok.AccessLevel.PROTECTED;
 
 @Getter
 @Entity
-@Table(name = "order_shipping_address")
+@Table(name = "order_address")
 @NoArgsConstructor(access = PROTECTED)
 @AllArgsConstructor(access = PRIVATE)
 @Builder(access = PRIVATE)
-public class OrderShippingAddress extends BaseEntity {
+public class OrderAddress extends BaseEntity {
 
     @OneToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "order_id", nullable = false)
@@ -49,7 +49,7 @@ public class OrderShippingAddress extends BaseEntity {
     private String deliveryMemo;
 
 
-    public static OrderShippingAddress create(
+    public static OrderAddress create(
         Order order,
         String receiverName,
         String phoneNumber,
@@ -62,7 +62,7 @@ public class OrderShippingAddress extends BaseEntity {
     ) {
         Objects.requireNonNull(order, "order must not be null");
 
-        return OrderShippingAddress.builder()
+        return OrderAddress.builder()
             .order(order)
             .receiverName(receiverName)
             .phoneNumber(phoneNumber)

@@ -21,6 +21,6 @@ public record OrderCreateReqDto(
     // TODO: Promotion 추가 시 적용 쿠폰 정보 추가 필요
 
     @Valid @NotNull
-    AddressCreateReqDto shippingAddress
+    AddressCreateReqDto orderAddress
 ) {
 }

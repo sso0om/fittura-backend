@@ -5,11 +5,11 @@ import com.fittura.domain.order.order.dto.request.AddressCreateReqDto;
 import com.fittura.domain.order.order.dto.request.OrderCreateReqDto;
 import com.fittura.domain.order.order.entity.Order;
 import com.fittura.domain.order.order.entity.OrderItem;
-import com.fittura.domain.order.order.entity.OrderShippingAddress;
+import com.fittura.domain.order.order.entity.OrderAddress;
 import com.fittura.domain.order.order.error.OrderErrorCode;
 import com.fittura.domain.order.order.repository.OrderItemRepository;
 import com.fittura.domain.order.order.repository.OrderRepository;
-import com.fittura.domain.order.order.repository.OrderShippingAddressRepository;
+import com.fittura.domain.order.order.repository.OrderAddressRepository;
 import com.fittura.domain.product.sku.entity.ProductSku;
 import com.fittura.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,7 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
-    private final OrderShippingAddressRepository addressRepository;
+    private final OrderAddressRepository addressRepository;
 
     // ========== 주문 ==========
 
@@ -52,13 +52,13 @@ public class OrderService {
 
     // ========== 주문 주소 ==========
 
-    public void createOrderShippingAddress(Order order, AddressCreateReqDto reqDto) {
-        OrderShippingAddress orderShippingAddress = OrderShippingAddress.create(
+    public void createOrderAddress(Order order, AddressCreateReqDto reqDto) {
+        OrderAddress orderAddress = OrderAddress.create(
             order, reqDto.receiverName(), reqDto.phoneNumber(),
             reqDto.zipCode(), reqDto.address(), reqDto.addressDetail(),
             reqDto.sido(), reqDto.sigungu(), reqDto.deliveryMemo()
         );
-        addressRepository.save(orderShippingAddress);
+        addressRepository.save(orderAddress);
     }
 
     private void validateSku(CartItem cartItem, ProductSku sku) {
