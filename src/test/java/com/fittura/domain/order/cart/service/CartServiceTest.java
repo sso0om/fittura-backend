@@ -270,13 +270,18 @@ class CartServiceTest {
     @DisplayName("장바구니 아이템 일괄 삭제 성공")
     void deleteCartItemsSuccess() {
         // given
-        List<Long> itemIds = List.of(1L, 2L, 3L);
+        Product product = ProductFixture.component("A Desk");
+        ProductSku sku = ProductSkuFixture.sku(product, 10000L, 10);
+        Cart cart = CartFixture.cart(1L);
+        CartItem cartItem1 = CartItemFixture.cartItem(cart, sku, 1);
+        CartItem cartItem2 = CartItemFixture.cartItem(cart, sku, 2);
+        List<CartItem> cartItems = List.of(cartItem1, cartItem2);
 
         // when
-        cartService.deleteCartItems(itemIds);
+        cartService.deleteCartItems(cartItems);
 
         // then
-        verify(cartItemRepository).deleteAllById(itemIds);
+        verify(cartItemRepository).deleteAll(cartItems);
     }
 
     @Test

@@ -44,8 +44,10 @@ public class CartService {
     // ========== 장바구니 제품 ==========
 
     public List<CartItem> getItemsByIdAndMember(List<Long> itemIds, Long memberId) {
-        List<CartItem> cartItems = cartItemRepository.findAllByIdInAndCart_MemberId(itemIds, memberId);
-        if (cartItems.size() != itemIds.size()) {
+        List<Long> distinctIds = itemIds.stream().distinct().toList();
+        List<CartItem> cartItems = cartItemRepository.findAllByIdInAndCart_MemberId(distinctIds, memberId);
+
+        if (cartItems.size() != distinctIds.size()) {
             throw new ServiceException(CartErrorCode.NOT_FOUND_ITEM);
         }
         return cartItems;
@@ -70,8 +72,8 @@ public class CartService {
         cartitem.changeQuantity(reqDto.quantity());
     }
 
-    public void deleteCartItems(List<Long> cartItemIds) {
-        cartItemRepository.deleteAllById(cartItemIds);
+    public void deleteCartItems(List<CartItem> cartItems) {
+        cartItemRepository.deleteAll(cartItems);
     }
 
     public void deleteCartItem(Long memberId, Long itemId) {

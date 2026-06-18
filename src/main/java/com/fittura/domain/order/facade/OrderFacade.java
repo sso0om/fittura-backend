@@ -22,12 +22,11 @@ public class OrderFacade {
     public Long createOrder(Long memberId, OrderCreateReqDto reqDto) {
         Order order = orderService.createOrder(memberId, reqDto);
 
-        List<Long> cartItemIds = reqDto.cartItems().stream().distinct().toList();
-        List<CartItem> cartItems = cartService.getItemsByIdAndMember(cartItemIds, memberId);
+        List<CartItem> cartItems = cartService.getItemsByIdAndMember(reqDto.cartItems(), memberId);
         for(CartItem cartItem : cartItems) {
             orderService.createOrderItem(cartItem, order);
         }
-        cartService.deleteCartItems(cartItemIds);
+        cartService.deleteCartItems(cartItems);
         orderService.createOrderAddress(order, reqDto.orderAddress());
         orderService.calcAmount(order);
 
