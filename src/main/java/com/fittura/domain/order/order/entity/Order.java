@@ -98,6 +98,10 @@ public class Order extends BaseEntity {
         this.discountAmount = discountAmount;
     }
 
+    public void calcDeliveryFee() {
+        // TODO: delivery 기능 때 반영 예정
+    }
+
     public void calcFinalAmount() {
         finalAmount = totalAmount - discountAmount - pointUsedAmount + deliveryFee;
     }

@@ -12,8 +12,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static lombok.AccessLevel.PRIVATE;
 import static lombok.AccessLevel.PROTECTED;
@@ -69,22 +67,21 @@ public class OrderItem extends BaseEntity {
         Objects.requireNonNull(sku, "sku must not be null");
         validateQuantity(quantity);
 
-        String skuIdentifier = Stream.of(sku.getColor(), sku.getMaterial())
-            .filter(s -> s != null && !s.isEmpty())
-            .collect(Collectors.joining(" / "));
-
-
-        return OrderItem.builder()
+        OrderItem orderItem = OrderItem.builder()
             .order(order)
             .sku(sku)
             .productName(sku.getProduct().getName())
-            .skuIdentifier(skuIdentifier)
+            .skuIdentifier(sku.getSkuIdentifier())
             .unitPrice(sku.getPrice())
             .quantity(quantity)
             .discountAmount(0L)
             .itemTotalAmount(sku.getPrice() * quantity)
             .status(OrderItemStatus.ORDERED)
             .build();
+
+        order.addItem(orderItem);
+
+        return orderItem;
     }
 
     public void calcDiscountAmount(Long discountAmount) {

@@ -24,6 +24,8 @@ public class CartService {
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
 
+    // ========== 장바구니 ==========
+
     public CartResDto getCart(Long memberId) {
         Optional<Cart> cart = getOpCart(memberId);
         if (cart.isEmpty()) {
@@ -36,6 +38,14 @@ public class CartService {
             .sum();
 
         return CartResDto.from(cart.get(), items, totalPrice);
+    }
+
+
+    // ========== 장바구니 제품 ==========
+
+    public CartItem getItemByIdAndMember(Long itemId, Long memberId) {
+        return cartItemRepository.findByIdAndCart_MemberId(itemId, memberId)
+            .orElseThrow(() -> new ServiceException(CartErrorCode.NOT_FOUND_ITEM));
     }
 
     public void createCartItem(Long memberId, ProductSku sku, CartItemCreateReqDto reqDto) {
@@ -78,8 +88,7 @@ public class CartService {
         return cartItemRepository.findByCartAndProductSku(cart, sku);
     }
 
-    private CartItem getItemByIdAndMember(Long itemId, Long memberId) {
-        return cartItemRepository.findByIdAndCart_MemberId(itemId, memberId)
-            .orElseThrow(() -> new ServiceException(CartErrorCode.NOT_FOUND_ITEM));
+    public void deleteCartItems(List<Long> cartItemIds) {
+        cartItemRepository.deleteAllById(cartItemIds);
     }
 }

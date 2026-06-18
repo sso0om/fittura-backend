@@ -10,6 +10,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static lombok.AccessLevel.PRIVATE;
 import static lombok.AccessLevel.PROTECTED;
@@ -78,6 +80,11 @@ public class ProductSku extends BaseEntity {
         this.material = material;
     }
 
+    public void reserveQuantity(Integer quantity) {
+        isStockValid(quantity);
+        this.reservedQuantity += quantity;
+    }
+
     public void soldOut() {
         this.status = SkuStatus.SOLDOUT;
     }
@@ -90,7 +97,21 @@ public class ProductSku extends BaseEntity {
         this.status = SkuStatus.ARCHIVED;
     }
 
+    public boolean isStockValid(Integer orderQuantity) {
+        return this.stockQuantity - reservedQuantity - orderQuantity >= 0;
+    }
+
+    public boolean isActive() {
+        return this.status == SkuStatus.ACTIVE;
+    }
+
     public boolean isArchived() {
         return status == SkuStatus.ARCHIVED;
+    }
+
+    public String getSkuIdentifier() {
+        return Stream.of(color, material)
+            .filter(s -> s != null && !s.isEmpty())
+            .collect(Collectors.joining(" / "));
     }
 }

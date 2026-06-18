@@ -30,7 +30,7 @@ public class OrderShippingAddress extends BaseEntity {
     @Column(nullable = false, length = 20)
     private String phoneNumber;
 
-    @Column(nullable = false, length = 10)
+    @Column(nullable = false, length = 5)
     private String zipCode;
 
     @Column(nullable = false)

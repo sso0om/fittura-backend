@@ -12,7 +12,9 @@ public enum OrderErrorCode implements ErrorCode {
     // 400
     QUANTITY_MUST_BE_POSITIVE(HttpStatus.BAD_REQUEST, "OR400-01", "수량은 1개 이상 선택해야 합니다."),
     QUANTITY_EXCEEDED(HttpStatus.BAD_REQUEST, "OR400-02", "수량은 999개 이하 선택해야 합니다."),
-    AMOUNT_MUST_BE_POSITIVE(HttpStatus.BAD_REQUEST, "OR400-03", "금액은 0원 이상이어야 합니다.");
+    AMOUNT_MUST_BE_POSITIVE(HttpStatus.BAD_REQUEST, "OR400-03", "금액은 0원 이상이어야 합니다."),
+    SKU_MUST_ACTIVE(HttpStatus.BAD_REQUEST, "OR400-04", "판매중인 상품이 아닙니다."),
+    STOCK_NOT_VALID(HttpStatus.BAD_REQUEST, "OR400-05" , "재고가 부족합니다." );
 
     private final HttpStatus status;
     private final String code;
