@@ -209,6 +209,10 @@ class OrderControllerTest extends IntegrationTestBase {
             .andDo(print())
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.code").value(CartErrorCode.NOT_FOUND_ITEM.getCode()));
+
+        assertThat(orderRepository.count()).isEqualTo(0);
+        assertThat(orderItemRepository.count()).isEqualTo(0);
+        assertThat(addressRepository.count()).isEqualTo(0);
     }
 
     @Test
@@ -246,6 +250,11 @@ class OrderControllerTest extends IntegrationTestBase {
             .andDo(print())
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.code").value(OrderErrorCode.SKU_MUST_ACTIVE.getCode()));
+
+        assertThat(orderRepository.count()).isEqualTo(0);
+        assertThat(orderItemRepository.count()).isEqualTo(0);
+        assertThat(addressRepository.count()).isEqualTo(0);
+        assertThat(cartItemRepository.findById(cartItem.getId())).isPresent();
     }
 
     @Test
@@ -283,6 +292,11 @@ class OrderControllerTest extends IntegrationTestBase {
             .andDo(print())
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.code").value(OrderErrorCode.STOCK_NOT_VALID.getCode()));
+
+        assertThat(orderRepository.count()).isEqualTo(0);
+        assertThat(orderItemRepository.count()).isEqualTo(0);
+        assertThat(addressRepository.count()).isEqualTo(0);
+        assertThat(cartItemRepository.findById(cartItem.getId())).isPresent();
     }
 
 
