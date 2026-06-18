@@ -10,9 +10,9 @@ import java.util.List;
 
 public record OrderCreateReqDto(
 
-    @Schema(example = "1")
+    @Schema(example = "[1, 2, 3]")
     @NotNull @Size(min = 1)
-    List<Long> cartItems,
+    List<@NotNull Long> cartItems,
 
     @Schema(example = "5000")
     @NotNull @PositiveOrZero
