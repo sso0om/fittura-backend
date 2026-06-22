@@ -7,6 +7,7 @@ import com.fittura.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
@@ -19,6 +20,7 @@ import java.util.UUID;
 import static lombok.AccessLevel.PRIVATE;
 import static lombok.AccessLevel.PROTECTED;
 
+@Getter
 @Entity
 @Table(name = "orders")
 @NoArgsConstructor(access = PROTECTED)
@@ -94,6 +96,10 @@ public class Order extends BaseEntity {
     public void calcDiscountAmount(Long discountAmount) {
         // TODO: promotion 기능 때 반영 예정
         this.discountAmount = discountAmount;
+    }
+
+    public void calcDeliveryFee() {
+        // TODO: delivery 기능 때 반영 예정
     }
 
     public void calcFinalAmount() {

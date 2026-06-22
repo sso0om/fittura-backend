@@ -19,6 +19,7 @@ public enum ProductErrorCode implements ErrorCode {
     PRODUCT_HAVA_SKU(HttpStatus.BAD_REQUEST, "P400-07", "상품의 SKU가 한 개 이상이어야 합니다."),
     PRODUCT_SKU_REFERENCED_BY_OTHER(HttpStatus.BAD_REQUEST, "P400-08", "다른 상품에서 SKU를 구성품으로 사용하고 있습니다."),
     SKU_NOT_BELONGS_TO_PRODUCT(HttpStatus.BAD_REQUEST, "P400-09", "해당 SKU가 상품에 속하지 않습니다."),
+    STOCK_NOT_VALID(HttpStatus.BAD_REQUEST, "P400-10", "재고가 부족합니다." ),
 
     // 404
     NOT_FOUND_PRODUCT(HttpStatus.NOT_FOUND, "P404-01", "존재하지 않는 상품입니다."),

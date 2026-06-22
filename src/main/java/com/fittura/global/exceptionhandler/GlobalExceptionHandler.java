@@ -104,12 +104,13 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ServiceException.class)
-    public ResponseEntity<RsData<Void>> handle(ServiceException e) {
+    public ResponseEntity<RsData<?>> handle(ServiceException e) {
         ErrorCode errorCode = e.getErrorCode();
 
         return new ResponseEntity<>(
                 RsData.error(
-                        errorCode
+                        errorCode,
+                        e.getDetail()
                 ),
                 errorCode.httpStatus()
         );

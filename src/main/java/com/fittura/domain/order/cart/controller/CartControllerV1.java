@@ -8,6 +8,7 @@ import com.fittura.global.rsdata.RsData;
 import com.fittura.global.security.LogInMemberId;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,7 +36,7 @@ public class CartControllerV1 {
     @Operation(summary = "장바구니 담기", description = "장바구니 제품 담기 API")
     public ResponseEntity<RsData<Void>> createCartItem(
         @LogInMemberId Long memberId,
-        @RequestBody CartItemCreateReqDto reqDto
+        @RequestBody @Valid CartItemCreateReqDto reqDto
     ) {
         cartFacade.createCartItem(memberId, reqDto);
         return ResponseEntity
@@ -48,7 +49,7 @@ public class CartControllerV1 {
     public ResponseEntity<RsData<Void>> updateCartItem(
         @LogInMemberId Long memberId,
         @PathVariable Long itemId,
-        @RequestBody CartItemUpdateReqDto reqDto
+        @RequestBody @Valid CartItemUpdateReqDto reqDto
     ) {
         cartFacade.updateCartItem(memberId, itemId, reqDto);
         return ResponseEntity
