@@ -33,6 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -127,6 +128,9 @@ class OrderServiceTest {
             .isInstanceOf(ServiceException.class)
             .extracting(e -> ((ServiceException) e).getErrorCode())
             .isEqualTo(OrderErrorCode.SKU_MUST_ACTIVE);
+
+        assertThat(sku.getReservedQuantity()).isEqualTo(0);
+        verify(itemRepository, never()).save(any(OrderItem.class));
     }
 
     @Test
@@ -145,6 +149,9 @@ class OrderServiceTest {
             .isInstanceOf(ServiceException.class)
             .extracting(e -> ((ServiceException) e).getErrorCode())
             .isEqualTo(OrderErrorCode.STOCK_NOT_VALID);
+
+        assertThat(sku.getReservedQuantity()).isEqualTo(0);
+        verify(itemRepository, never()).save(any(OrderItem.class));
     }
 
 
