@@ -5,9 +5,11 @@ import com.fittura.domain.category.repository.CategoryRepository;
 import com.fittura.domain.category.support.CategoryFixture;
 import com.fittura.domain.order.cart.entity.Cart;
 import com.fittura.domain.order.cart.entity.CartItem;
+import com.fittura.domain.order.cart.error.CartErrorCode;
 import com.fittura.domain.order.cart.repository.CartItemRepository;
 import com.fittura.domain.order.cart.repository.CartRepository;
-import com.fittura.domain.order.cart.error.CartErrorCode;
+import com.fittura.domain.order.cart.support.CartFixture;
+import com.fittura.domain.order.cart.support.CartItemFixture;
 import com.fittura.domain.order.order.error.OrderErrorCode;
 import com.fittura.domain.order.order.repository.OrderAddressRepository;
 import com.fittura.domain.order.order.repository.OrderItemRepository;
@@ -17,6 +19,7 @@ import com.fittura.domain.product.product.repository.ProductRepository;
 import com.fittura.domain.product.product.support.ProductFixture;
 import com.fittura.domain.product.sku.entity.ProductSku;
 import com.fittura.domain.product.sku.repository.ProductSkuRepository;
+import com.fittura.domain.product.sku.support.ProductSkuFixture;
 import com.fittura.global.IntegrationTestBase;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -220,7 +223,7 @@ class OrderControllerTest extends IntegrationTestBase {
     void createOrderFail_skuNotActive() throws Exception {
         // given
         Long memberId = 11L;
-        ProductSku sku = savedDefaultSku();
+        ProductSku sku = savedDefaultSku(10);
         sku.soldOut();
         productSkuRepository.save(sku);
 
@@ -262,12 +265,11 @@ class OrderControllerTest extends IntegrationTestBase {
     void createOrderFail_stockNotValid() throws Exception {
         // given
         Long memberId = 12L;
-        Category category = categoryRepository.save(CategoryFixture.rootActive());
-        Product product = productRepository.save(ProductFixture.component(category, "A Desk"));
-        ProductSku sku = productSkuRepository.save(ProductSku.create(product, 10000L, 2, "White", "Wood"));
+        ProductSku sku = savedDefaultSku(2);
 
-        Cart cart = cartRepository.save(Cart.create(memberId));
-        CartItem cartItem = cartItemRepository.save(CartItem.create(cart, sku, 5));
+
+        Cart cart = cartRepository.save(CartFixture.cart(memberId));
+        CartItem cartItem = cartItemRepository.save(CartItemFixture.cartItem(cart, sku, 5));
 
         String reqBody = """
                 {
@@ -303,8 +305,12 @@ class OrderControllerTest extends IntegrationTestBase {
     // ========== 헬퍼 메서드 ==========
 
     private ProductSku savedDefaultSku() {
+        return savedDefaultSku(100);
+    }
+
+    private ProductSku savedDefaultSku(Integer stock) {
         Category category = categoryRepository.save(CategoryFixture.rootActive());
         Product product = productRepository.save(ProductFixture.component(category, "A Desk"));
-        return productSkuRepository.save(ProductSku.create(product, 10000L, 100, "White", "Wood"));
+        return productSkuRepository.save(ProductSkuFixture.sku(product, 10000L, stock));
     }
 }
