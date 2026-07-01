@@ -15,6 +15,7 @@ import com.fittura.domain.product.product.entity.ProductAttribute;
 import com.fittura.domain.product.product.error.ProductErrorCode;
 import com.fittura.domain.product.product.repository.ProductAttributeRepository;
 import com.fittura.domain.product.product.repository.ProductRepository;
+import com.fittura.domain.product.product.support.ProductAttributeFixture;
 import com.fittura.domain.product.product.support.ProductFixture;
 import com.fittura.domain.product.sku.constant.SkuStatus;
 import com.fittura.domain.product.sku.dto.request.CompositionCreateReqDto;
@@ -509,7 +510,7 @@ class ProductServiceTest {
     void updateProductAttributeSuccess_updateExisting() {
         // given
         Product product = ProductFixture.component("A Desk");
-        ProductAttribute existing = ProductAttribute.create(product, AttributeKey.SIZE_LABEL, "M");
+        ProductAttribute existing = ProductAttributeFixture.productAttribute(product, AttributeKey.SIZE_LABEL, "M");
         ReflectionTestUtils.setField(existing, "id", 1L);
 
         given(attributeRepository.findByProductId(product.getId())).willReturn(List.of(existing));
@@ -550,7 +551,7 @@ class ProductServiceTest {
     void updateProductAttributeSuccess_deleteRemoved() {
         // given
         Product product = ProductFixture.component("A Desk");
-        ProductAttribute toDelete = ProductAttribute.create(product, AttributeKey.SIZE_LABEL, "M");
+        ProductAttribute toDelete = ProductAttributeFixture.productAttribute(product, AttributeKey.SIZE_LABEL, "M");
 
         given(attributeRepository.findByProductId(product.getId())).willReturn(List.of(toDelete));
 

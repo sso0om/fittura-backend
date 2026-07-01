@@ -18,6 +18,16 @@ public class ProductSkuFixture {
         );
     }
 
+    public static ProductSku sku(Product product, Long price, Integer stock, String color, String material) {
+        return ProductSku.create(
+            product,
+            price,
+            stock,
+            color,
+            material
+        );
+    }
+
     public static ProductSku skuWithOption(Product product, String color, String material) {
         return ProductSku.create(
             product,

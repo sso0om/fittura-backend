@@ -15,6 +15,7 @@ import com.fittura.domain.product.product.repository.ProductRepository;
 import com.fittura.domain.product.product.support.ProductFixture;
 import com.fittura.domain.product.sku.entity.ProductSku;
 import com.fittura.domain.product.sku.repository.ProductSkuRepository;
+import com.fittura.domain.product.sku.support.ProductSkuFixture;
 import com.fittura.global.IntegrationTestBase;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -350,6 +351,6 @@ class CartControllerV1Test extends IntegrationTestBase {
     private ProductSku savedDefaultSku() {
         Category category = categoryRepository.save(CategoryFixture.rootActive());
         Product product = productRepository.save(ProductFixture.component(category, "A Desk"));
-        return productSkuRepository.save(ProductSku.create(product, 10000L, 100, "White", "Wood"));
+        return productSkuRepository.save(ProductSkuFixture.sku(product, 10000L, 100));
     }
 }

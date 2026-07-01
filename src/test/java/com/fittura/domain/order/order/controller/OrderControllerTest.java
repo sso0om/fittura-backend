@@ -74,8 +74,8 @@ class OrderControllerTest extends IntegrationTestBase {
         // given
         Long memberId = 1L;
         ProductSku sku = savedDefaultSku();
-        Cart cart = cartRepository.save(Cart.create(memberId));
-        CartItem cartItem = cartItemRepository.save(CartItem.create(cart, sku, 2));
+        Cart cart = cartRepository.save(CartFixture.cart(memberId));
+        CartItem cartItem = cartItemRepository.save(CartItemFixture.cartItem(cart, sku, 2));
 
         String reqBody = """
                 {
@@ -117,9 +117,9 @@ class OrderControllerTest extends IntegrationTestBase {
         Long memberId = 2L;
         ProductSku sku1 = savedDefaultSku();
         ProductSku sku2 = savedDefaultSku();
-        Cart cart = cartRepository.save(Cart.create(memberId));
-        CartItem cartItem1 = cartItemRepository.save(CartItem.create(cart, sku1, 1));
-        CartItem cartItem2 = cartItemRepository.save(CartItem.create(cart, sku2, 3));
+        Cart cart = cartRepository.save(CartFixture.cart(memberId));
+        CartItem cartItem1 = cartItemRepository.save(CartItemFixture.cartItem(cart, sku1, 1));
+        CartItem cartItem2 = cartItemRepository.save(CartItemFixture.cartItem(cart, sku2, 3));
 
         String reqBody = """
                 {
@@ -156,8 +156,8 @@ class OrderControllerTest extends IntegrationTestBase {
         Long ownerMemberId = 20L;
         Long attackerMemberId = 21L;
         ProductSku sku = savedDefaultSku();
-        Cart ownerCart = cartRepository.save(Cart.create(ownerMemberId));
-        CartItem ownerItem = cartItemRepository.save(CartItem.create(ownerCart, sku, 1));
+        Cart ownerCart = cartRepository.save(CartFixture.cart(ownerMemberId));
+        CartItem ownerItem = cartItemRepository.save(CartItemFixture.cartItem(ownerCart, sku, 1));
 
         String reqBody = """
                 {
@@ -228,8 +228,8 @@ class OrderControllerTest extends IntegrationTestBase {
         sku.soldOut();
         productSkuRepository.save(sku);
 
-        Cart cart = cartRepository.save(Cart.create(memberId));
-        CartItem cartItem = cartItemRepository.save(CartItem.create(cart, sku, 1));
+        Cart cart = cartRepository.save(CartFixture.cart(memberId));
+        CartItem cartItem = cartItemRepository.save(CartItemFixture.cartItem(cart, sku, 1));
 
         String reqBody = """
                 {

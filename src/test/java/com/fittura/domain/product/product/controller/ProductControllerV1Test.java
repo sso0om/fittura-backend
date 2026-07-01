@@ -4,18 +4,17 @@ import com.fittura.domain.category.entity.Category;
 import com.fittura.domain.category.repository.CategoryRepository;
 import com.fittura.domain.category.support.CategoryFixture;
 import com.fittura.domain.product.product.constant.AttributeKey;
-import com.fittura.domain.product.product.constant.ProductType;
-import com.fittura.domain.product.product.entity.Dimension;
 import com.fittura.domain.product.product.entity.Product;
-import com.fittura.domain.product.product.entity.ProductAttribute;
 import com.fittura.domain.product.product.error.ProductErrorCode;
 import com.fittura.domain.product.product.repository.ProductAttributeRepository;
 import com.fittura.domain.product.product.repository.ProductRepository;
+import com.fittura.domain.product.product.support.ProductAttributeFixture;
 import com.fittura.domain.product.product.support.ProductFixture;
-import com.fittura.domain.product.sku.entity.ProductComposition;
 import com.fittura.domain.product.sku.entity.ProductSku;
 import com.fittura.domain.product.sku.repository.CompositionRepository;
 import com.fittura.domain.product.sku.repository.ProductSkuRepository;
+import com.fittura.domain.product.sku.support.ProductCompositionFixture;
+import com.fittura.domain.product.sku.support.ProductSkuFixture;
 import com.fittura.global.IntegrationTestBase;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -57,13 +56,12 @@ class ProductControllerV1Test extends IntegrationTestBase {
     void getProductsSuccess() throws Exception {
         // given
         Category category = categoryRepository.save(CategoryFixture.rootActive());
-        Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
 
-        Product activeProduct = Product.create(category, "Active Desk", null, ProductType.COMPONENT, dimension);
+        Product activeProduct = ProductFixture.component(category, "Active Desk");
         activeProduct.activate();
         productRepository.save(activeProduct);
 
-        Product discontinuedProduct = Product.create(category, "Discontinued Chair", null, ProductType.COMPONENT, dimension);
+        Product discontinuedProduct = ProductFixture.component(category, "Discontinued Chair");
         discontinuedProduct.discontinue();
         productRepository.save(discontinuedProduct);
 
@@ -80,13 +78,12 @@ class ProductControllerV1Test extends IntegrationTestBase {
     void getProducts_excludesDiscontinued() throws Exception {
         // given
         Category category = categoryRepository.save(CategoryFixture.rootActive());
-        Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
 
-        Product activeProduct = Product.create(category, "Active Desk", null, ProductType.COMPONENT, dimension);
+        Product activeProduct = ProductFixture.component(category, "Active Desk");
         activeProduct.activate();
         productRepository.save(activeProduct);
 
-        Product discontinuedProduct = Product.create(category, "Discontinued Chair", null, ProductType.COMPONENT, dimension);
+        Product discontinuedProduct = ProductFixture.component(category, "Discontinued Chair");
         discontinuedProduct.discontinue();
         productRepository.save(discontinuedProduct);
 
@@ -103,13 +100,12 @@ class ProductControllerV1Test extends IntegrationTestBase {
     void getProducts_keyword() throws Exception {
         // given
         Category category = categoryRepository.save(CategoryFixture.rootActive());
-        Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
 
-        Product desk = Product.create(category, "A Desk", null, ProductType.COMPONENT, dimension);
+        Product desk = ProductFixture.component(category, "A Desk");
         desk.activate();
         productRepository.save(desk);
 
-        Product chair = Product.create(category, "A Chair", null, ProductType.COMPONENT, dimension);
+        Product chair = ProductFixture.component(category, "A Chair");
         chair.activate();
         productRepository.save(chair);
 
@@ -127,13 +123,12 @@ class ProductControllerV1Test extends IntegrationTestBase {
         // given
         Category category1 = categoryRepository.save(CategoryFixture.rootActive());
         Category category2 = categoryRepository.save(CategoryFixture.rootActive());
-        Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
 
-        Product product1 = Product.create(category1, "A Desk", null, ProductType.COMPONENT, dimension);
+        Product product1 = ProductFixture.component(category1, "A Desk");
         product1.activate();
         productRepository.save(product1);
 
-        Product product2 = Product.create(category2, "A Chair", null, ProductType.COMPONENT, dimension);
+        Product product2 = ProductFixture.component(category2, "A Chair");
         product2.activate();
         productRepository.save(product2);
 
@@ -150,22 +145,21 @@ class ProductControllerV1Test extends IntegrationTestBase {
     void getProducts_colorsAndMaterials() throws Exception {
         // given
         Category category = categoryRepository.save(CategoryFixture.rootActive());
-        Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
 
-        Product woodProduct = Product.create(category, "Wood White Desk", null, ProductType.COMPONENT, dimension);
+        Product woodProduct = ProductFixture.component(category, "Wood White Desk");
         woodProduct.activate();
         productRepository.save(woodProduct);
-        productSkuRepository.save(ProductSku.create(woodProduct, 50000L, 100, "White", "Wood"));
+        productSkuRepository.save(ProductSkuFixture.sku(woodProduct, 50000L, 100, "White", "Wood"));
 
-        Product woodBrownProduct = Product.create(category, "Wood Brown Desk", null, ProductType.COMPONENT, dimension);
+        Product woodBrownProduct = ProductFixture.component(category, "Wood Brown Desk");
         woodBrownProduct.activate();
         productRepository.save(woodBrownProduct);
-        productSkuRepository.save(ProductSku.create(woodBrownProduct, 60000L, 100, "Brown", "Wood"));
+        productSkuRepository.save(ProductSkuFixture.sku(woodBrownProduct, 60000L, 100, "Brown", "Wood"));
 
-        Product metalProduct = Product.create(category, "Metal Black Chair", null, ProductType.COMPONENT, dimension);
+        Product metalProduct = ProductFixture.component(category, "Metal Black Chair");
         metalProduct.activate();
         productRepository.save(metalProduct);
-        productSkuRepository.save(ProductSku.create(metalProduct, 70000L, 100, "Black", "Metal"));
+        productSkuRepository.save(ProductSkuFixture.sku(metalProduct, 70000L, 100, "Black", "Metal"));
 
         // when & then
         mockMvc.perform(get(PRODUCT_URL)
@@ -183,10 +177,9 @@ class ProductControllerV1Test extends IntegrationTestBase {
     void getProducts_excludesDisabled() throws Exception {
         // given
         Category category = categoryRepository.save(CategoryFixture.rootActive());
-        Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
 
         // DISABLED는 Product.create()의 기본 상태
-        productRepository.save(Product.create(category, "Hidden Desk", null, ProductType.COMPONENT, dimension));
+        productRepository.save(ProductFixture.component(category, "Hidden Desk"));
 
         // when & then
         mockMvc.perform(get(PRODUCT_URL))
@@ -200,13 +193,12 @@ class ProductControllerV1Test extends IntegrationTestBase {
     void getProducts_defaultSortByLatest() throws Exception {
         // given
         Category category = categoryRepository.save(CategoryFixture.rootActive());
-        Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
 
-        Product first = Product.create(category, "First Desk", null, ProductType.COMPONENT, dimension);
+        Product first = ProductFixture.component(category, "First Desk");
         first.activate();
         productRepository.save(first);
 
-        Product second = Product.create(category, "Second Chair", null, ProductType.COMPONENT, dimension);
+        Product second = ProductFixture.component(category, "Second Chair");
         second.activate();
         productRepository.save(second);
 
@@ -223,18 +215,17 @@ class ProductControllerV1Test extends IntegrationTestBase {
     void getProducts_sortByPriceAsc() throws Exception {
         // given
         Category category = categoryRepository.save(CategoryFixture.rootActive());
-        Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
 
-        Product expensive = Product.create(category, "Expensive Desk", null, ProductType.COMPONENT, dimension);
+        Product expensive = ProductFixture.component(category, "Expensive Desk");
         expensive.activate();
-        ProductSku.create(expensive, 100000L, 100, "White", "Wood");
+        ProductSkuFixture.sku(expensive, 100000L, 100);
         expensive.syncBasePrice();
         productRepository.save(expensive);
         productSkuRepository.save(expensive.getProductSkus().get(0));
 
-        Product cheap = Product.create(category, "Cheap Chair", null, ProductType.COMPONENT, dimension);
+        Product cheap = ProductFixture.component(category, "Cheap Chair");
         cheap.activate();
-        ProductSku.create(cheap, 45000L, 100, "White", "Wood");
+        ProductSkuFixture.sku(cheap, 45000L, 100);
         cheap.syncBasePrice();
         productRepository.save(cheap);
         productSkuRepository.save(cheap.getProductSkus().get(0));
@@ -254,7 +245,7 @@ class ProductControllerV1Test extends IntegrationTestBase {
         Category category = categoryRepository.save(CategoryFixture.rootActive());
         Product product = productRepository.save(ProductFixture.component(category, "Chair"));
         product.activate();
-        ProductSku sku = productSkuRepository.save(ProductSku.create(product, 5000L, 0, "White", "Wood"));
+        ProductSku sku = productSkuRepository.save(ProductSkuFixture.sku(product, 5000L, 0));
         sku.soldOut();
         productSkuRepository.save(sku);
 
@@ -272,11 +263,10 @@ class ProductControllerV1Test extends IntegrationTestBase {
     void getProductSuccess() throws Exception {
         // given
         Category category = categoryRepository.save(CategoryFixture.rootActive());
-        Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
-        Product product = Product.create(category, "A Desk", "책상입니다.", ProductType.COMPONENT, dimension);
+        Product product = ProductFixture.component(category, "A Desk");
         product.activate();
         productRepository.save(product);
-        productSkuRepository.save(ProductSku.create(product, 45000L, 100, "White", "Wood"));
+        productSkuRepository.save(ProductSkuFixture.sku(product, 45000L, 100));
 
         // when & then
         mockMvc.perform(get(PRODUCT_URL + "/" + product.getId()))
@@ -296,7 +286,7 @@ class ProductControllerV1Test extends IntegrationTestBase {
         product.activate();
         productRepository.save(product);
 
-        ProductSku sku = productSkuRepository.save(ProductSku.create(product, 5000L, 0, "White", "Wood"));
+        ProductSku sku = productSkuRepository.save(ProductSkuFixture.sku(product, 5000L, 0));
         sku.soldOut();
         productSkuRepository.save(sku);
 
@@ -321,9 +311,8 @@ class ProductControllerV1Test extends IntegrationTestBase {
     void getProductFail_disabled() throws Exception {
         // given
         Category category = categoryRepository.save(CategoryFixture.rootActive());
-        Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
         Product product = productRepository.save(
-            Product.create(category, "A Desk", "책상입니다.", ProductType.COMPONENT, dimension)
+            ProductFixture.component(category, "A Desk")
         );
 
         // when & then
@@ -340,11 +329,10 @@ class ProductControllerV1Test extends IntegrationTestBase {
     void getProductAttributesSuccess() throws Exception {
         // given
         Category category = categoryRepository.save(CategoryFixture.rootActive());
-        Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
-        Product product = Product.create(category, "A Desk", "책상입니다.", ProductType.COMPONENT, dimension);
+        Product product = ProductFixture.component(category, "A Desk");
         product.activate();
         productRepository.save(product);
-        ProductAttribute.create(product, AttributeKey.SIZE_LABEL, "XL");
+        ProductAttributeFixture.productAttribute(product, AttributeKey.SIZE_LABEL, "XL");
         attributeRepository.save(product.getAttributes().get(0));
 
         // when & then
@@ -361,8 +349,7 @@ class ProductControllerV1Test extends IntegrationTestBase {
     void getProductAttributesSuccess_empty() throws Exception {
         // given
         Category category = categoryRepository.save(CategoryFixture.rootActive());
-        Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
-        Product product = Product.create(category, "A Desk", "책상입니다.", ProductType.COMPONENT, dimension);
+        Product product = ProductFixture.component(category, "A Desk");
         product.activate();
         productRepository.save(product);
 
@@ -391,20 +378,19 @@ class ProductControllerV1Test extends IntegrationTestBase {
     void getProductCompositionsSuccess() throws Exception {
         // given
         Category category = categoryRepository.save(CategoryFixture.rootActive());
-        Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
 
-        Product childProduct = Product.create(category, "의자 다리", null, ProductType.COMPONENT, dimension);
+        Product childProduct = ProductFixture.component(category, "의자 다리");
         childProduct.activate();
         productRepository.save(childProduct);
 
-        ProductSku childSku = ProductSku.create(childProduct, 10000L, 100, null, null);
+        ProductSku childSku = ProductSkuFixture.skuWithNoOption(childProduct);
         productSkuRepository.save(childSku);
 
-        Product parentProduct = Product.create(category, "완제품 의자", null, ProductType.COMPLETE, dimension);
+        Product parentProduct = ProductFixture.complete(category, "완제품 의자");
         parentProduct.activate();
         productRepository.save(parentProduct);
 
-        compositionRepository.save(ProductComposition.create(parentProduct, childSku, 4, 0));
+        compositionRepository.save(ProductCompositionFixture.composition(parentProduct, childSku, 4, 0));
 
         // when & then
         mockMvc.perform(get(PRODUCT_URL + "/" + parentProduct.getId() + "/compositions"))
@@ -420,8 +406,7 @@ class ProductControllerV1Test extends IntegrationTestBase {
     void getProductCompositionsSuccess_empty() throws Exception {
         // given
         Category category = categoryRepository.save(CategoryFixture.rootActive());
-        Dimension dimension = Dimension.of(40.5, 150.0, 100.0, 50.0);
-        Product product = Product.create(category, "완제품 의자", null, ProductType.COMPLETE, dimension);
+        Product product = ProductFixture.complete(category, "완제품 의자");
         product.activate();
         productRepository.save(product);
 
