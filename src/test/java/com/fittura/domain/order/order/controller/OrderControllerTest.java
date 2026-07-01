@@ -5,9 +5,11 @@ import com.fittura.domain.category.repository.CategoryRepository;
 import com.fittura.domain.category.support.CategoryFixture;
 import com.fittura.domain.order.cart.entity.Cart;
 import com.fittura.domain.order.cart.entity.CartItem;
+import com.fittura.domain.order.cart.error.CartErrorCode;
 import com.fittura.domain.order.cart.repository.CartItemRepository;
 import com.fittura.domain.order.cart.repository.CartRepository;
-import com.fittura.domain.order.cart.error.CartErrorCode;
+import com.fittura.domain.order.cart.support.CartFixture;
+import com.fittura.domain.order.cart.support.CartItemFixture;
 import com.fittura.domain.order.order.error.OrderErrorCode;
 import com.fittura.domain.order.order.repository.OrderAddressRepository;
 import com.fittura.domain.order.order.repository.OrderItemRepository;
@@ -17,6 +19,7 @@ import com.fittura.domain.product.product.repository.ProductRepository;
 import com.fittura.domain.product.product.support.ProductFixture;
 import com.fittura.domain.product.sku.entity.ProductSku;
 import com.fittura.domain.product.sku.repository.ProductSkuRepository;
+import com.fittura.domain.product.sku.support.ProductSkuFixture;
 import com.fittura.global.IntegrationTestBase;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,6 +28,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -70,8 +74,8 @@ class OrderControllerTest extends IntegrationTestBase {
         // given
         Long memberId = 1L;
         ProductSku sku = savedDefaultSku();
-        Cart cart = cartRepository.save(Cart.create(memberId));
-        CartItem cartItem = cartItemRepository.save(CartItem.create(cart, sku, 2));
+        Cart cart = cartRepository.save(CartFixture.cart(memberId));
+        CartItem cartItem = cartItemRepository.save(CartItemFixture.cartItem(cart, sku, 2));
 
         String reqBody = """
                 {
@@ -113,9 +117,9 @@ class OrderControllerTest extends IntegrationTestBase {
         Long memberId = 2L;
         ProductSku sku1 = savedDefaultSku();
         ProductSku sku2 = savedDefaultSku();
-        Cart cart = cartRepository.save(Cart.create(memberId));
-        CartItem cartItem1 = cartItemRepository.save(CartItem.create(cart, sku1, 1));
-        CartItem cartItem2 = cartItemRepository.save(CartItem.create(cart, sku2, 3));
+        Cart cart = cartRepository.save(CartFixture.cart(memberId));
+        CartItem cartItem1 = cartItemRepository.save(CartItemFixture.cartItem(cart, sku1, 1));
+        CartItem cartItem2 = cartItemRepository.save(CartItemFixture.cartItem(cart, sku2, 3));
 
         String reqBody = """
                 {
@@ -152,8 +156,8 @@ class OrderControllerTest extends IntegrationTestBase {
         Long ownerMemberId = 20L;
         Long attackerMemberId = 21L;
         ProductSku sku = savedDefaultSku();
-        Cart ownerCart = cartRepository.save(Cart.create(ownerMemberId));
-        CartItem ownerItem = cartItemRepository.save(CartItem.create(ownerCart, sku, 1));
+        Cart ownerCart = cartRepository.save(CartFixture.cart(ownerMemberId));
+        CartItem ownerItem = cartItemRepository.save(CartItemFixture.cartItem(ownerCart, sku, 1));
 
         String reqBody = """
                 {
@@ -220,12 +224,12 @@ class OrderControllerTest extends IntegrationTestBase {
     void createOrderFail_skuNotActive() throws Exception {
         // given
         Long memberId = 11L;
-        ProductSku sku = savedDefaultSku();
+        ProductSku sku = savedDefaultSku(10);
         sku.soldOut();
         productSkuRepository.save(sku);
 
-        Cart cart = cartRepository.save(Cart.create(memberId));
-        CartItem cartItem = cartItemRepository.save(CartItem.create(cart, sku, 1));
+        Cart cart = cartRepository.save(CartFixture.cart(memberId));
+        CartItem cartItem = cartItemRepository.save(CartItemFixture.cartItem(cart, sku, 1));
 
         String reqBody = """
                 {
@@ -249,7 +253,9 @@ class OrderControllerTest extends IntegrationTestBase {
                 .content(reqBody))
             .andDo(print())
             .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.code").value(OrderErrorCode.SKU_MUST_ACTIVE.getCode()));
+            .andExpect(jsonPath("$.code").value(OrderErrorCode.CART_ITEMS_NOT_VALID.getCode()))
+            .andExpect(jsonPath("$.data.length()").value(1))
+            .andExpect(jsonPath("$.data[0].code").value(OrderErrorCode.SKU_MUST_ACTIVE.getCode()));
 
         assertThat(orderRepository.count()).isEqualTo(0);
         assertThat(orderItemRepository.count()).isEqualTo(0);
@@ -262,12 +268,11 @@ class OrderControllerTest extends IntegrationTestBase {
     void createOrderFail_stockNotValid() throws Exception {
         // given
         Long memberId = 12L;
-        Category category = categoryRepository.save(CategoryFixture.rootActive());
-        Product product = productRepository.save(ProductFixture.component(category, "A Desk"));
-        ProductSku sku = productSkuRepository.save(ProductSku.create(product, 10000L, 2, "White", "Wood"));
+        ProductSku sku = savedDefaultSku(2);
 
-        Cart cart = cartRepository.save(Cart.create(memberId));
-        CartItem cartItem = cartItemRepository.save(CartItem.create(cart, sku, 5));
+
+        Cart cart = cartRepository.save(CartFixture.cart(memberId));
+        CartItem cartItem = cartItemRepository.save(CartItemFixture.cartItem(cart, sku, 5));
 
         String reqBody = """
                 {
@@ -291,7 +296,9 @@ class OrderControllerTest extends IntegrationTestBase {
                 .content(reqBody))
             .andDo(print())
             .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.code").value(OrderErrorCode.STOCK_NOT_VALID.getCode()));
+            .andExpect(jsonPath("$.code").value(OrderErrorCode.CART_ITEMS_NOT_VALID.getCode()))
+            .andExpect(jsonPath("$.data.length()").value(1))
+            .andExpect(jsonPath("$.data[0].code").value(OrderErrorCode.STOCK_NOT_VALID.getCode()));
 
         assertThat(orderRepository.count()).isEqualTo(0);
         assertThat(orderItemRepository.count()).isEqualTo(0);
@@ -299,12 +306,62 @@ class OrderControllerTest extends IntegrationTestBase {
         assertThat(cartItemRepository.findById(cartItem.getId())).isPresent();
     }
 
+    @Test
+    @DisplayName("주문 생성 실패 - 여러 항목이 각각의 사유로 실패")
+    void createOrderFail_multipleInvalidItems() throws Exception {
+        // given
+        Long memberId = 13L;
+        ProductSku soldOutSku = savedDefaultSku(10);
+        soldOutSku.soldOut();
+        productSkuRepository.save(soldOutSku);
+        ProductSku lowStockSku = savedDefaultSku(2);
+
+        Cart cart = cartRepository.save(CartFixture.cart(memberId));
+        CartItem item1 = cartItemRepository.save(CartItemFixture.cartItem(cart, soldOutSku, 1));
+        CartItem item2 = cartItemRepository.save(CartItemFixture.cartItem(cart, lowStockSku, 5));
+
+        String reqBody = """
+            {
+                "cartItems": [%d, %d],
+                "pointUsedAmount": 0,
+                "orderAddress": {
+                    "receiverName": "홍길동",
+                    "phoneNumber": "01012341234",
+                    "zipCode": "12345",
+                    "address": "서울특별시 중구 서소문로 127",
+                    "sido": "서울특별시",
+                    "sigungu": "중구"
+                }
+            }
+            """.formatted(item1.getId(), item2.getId());
+
+        // when & then
+        mockMvc.perform(post(ORDER_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value(OrderErrorCode.CART_ITEMS_NOT_VALID.getCode()))
+            .andExpect(jsonPath("$.data.length()").value(2))
+            .andExpect(jsonPath("$.data[*].code",
+                containsInAnyOrder(
+                    OrderErrorCode.SKU_MUST_ACTIVE.getCode(),
+                    OrderErrorCode.STOCK_NOT_VALID.getCode())));
+
+        assertThat(orderRepository.count()).isEqualTo(0);
+    }
+
 
     // ========== 헬퍼 메서드 ==========
 
     private ProductSku savedDefaultSku() {
+        return savedDefaultSku(100);
+    }
+
+    private ProductSku savedDefaultSku(Integer stock) {
         Category category = categoryRepository.save(CategoryFixture.rootActive());
         Product product = productRepository.save(ProductFixture.component(category, "A Desk"));
-        return productSkuRepository.save(ProductSku.create(product, 10000L, 100, "White", "Wood"));
+        return productSkuRepository.save(ProductSkuFixture.sku(product, 10000L, stock));
     }
 }

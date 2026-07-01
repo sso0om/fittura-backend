@@ -4,16 +4,20 @@ import com.fittura.domain.order.cart.entity.CartItem;
 import com.fittura.domain.order.order.dto.request.AddressCreateReqDto;
 import com.fittura.domain.order.order.dto.request.OrderCreateReqDto;
 import com.fittura.domain.order.order.entity.Order;
-import com.fittura.domain.order.order.entity.OrderItem;
 import com.fittura.domain.order.order.entity.OrderAddress;
+import com.fittura.domain.order.order.entity.OrderItem;
 import com.fittura.domain.order.order.error.OrderErrorCode;
+import com.fittura.domain.order.order.repository.OrderAddressRepository;
 import com.fittura.domain.order.order.repository.OrderItemRepository;
 import com.fittura.domain.order.order.repository.OrderRepository;
-import com.fittura.domain.order.order.repository.OrderAddressRepository;
 import com.fittura.domain.product.sku.entity.ProductSku;
+import com.fittura.global.error.ItemError;
 import com.fittura.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -42,8 +46,6 @@ public class OrderService {
 
     public void createOrderItem(CartItem cartItem, Order order) {
         ProductSku sku = cartItem.getProductSku();
-        validateSku(cartItem, sku);
-
         OrderItem orderItem = OrderItem.create(order, sku, cartItem.getQuantity());
         sku.reserveQuantity(cartItem.getQuantity());
         orderItemRepository.save(orderItem);
@@ -61,14 +63,25 @@ public class OrderService {
         addressRepository.save(orderAddress);
     }
 
-    private void validateSku(CartItem cartItem, ProductSku sku) {
-        String productName = sku.getProduct().getName() + "(" + sku.getSkuIdentifier() + ")";
 
-        if (!sku.isActive()) {
-            throw new ServiceException(OrderErrorCode.SKU_MUST_ACTIVE, productName);
+    // ========== 유효성 검사 ==========
+
+    public void validateCartItems(List<CartItem> cartItems) {
+        List<ItemError> errors = new ArrayList<>();
+
+        for (CartItem cartItem : cartItems) {
+            ProductSku sku = cartItem.getProductSku();
+            String productName = sku.getProduct().getName() + "(" + sku.getSkuIdentifier() + ")";
+
+            if (!sku.isActive()) {
+                errors.add(ItemError.of(productName, OrderErrorCode.SKU_MUST_ACTIVE));
+            } else if (!sku.isStockValid(cartItem.getQuantity())) {
+                errors.add(ItemError.of(productName, OrderErrorCode.STOCK_NOT_VALID));
+            }
         }
-        if (!sku.isStockValid(cartItem.getQuantity())) {
-            throw new ServiceException(OrderErrorCode.STOCK_NOT_VALID);
+
+        if (!errors.isEmpty()) {
+            throw new ServiceException(OrderErrorCode.CART_ITEMS_NOT_VALID, errors);
         }
     }
 }
