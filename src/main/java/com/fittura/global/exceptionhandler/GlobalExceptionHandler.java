@@ -120,7 +120,6 @@ public class GlobalExceptionHandler {
     public ResponseEntity<RsData<Map<String, String>>> handle(Exception e) {
         String traceId = UUID.randomUUID().toString();
 
-        // traceId를 포함하여 에러 로그 상세히 기록
         log.error("Unhandled server error occurred. traceId={}", traceId, e);
 
         // 클라이언트에게 traceId와 간단한 메시지만 전달
