@@ -9,7 +9,6 @@ import com.fittura.domain.order.order.dto.request.OrderCreateReqDto;
 import com.fittura.domain.order.order.entity.Order;
 import com.fittura.domain.order.order.entity.OrderAddress;
 import com.fittura.domain.order.order.entity.OrderItem;
-import com.fittura.domain.order.order.error.OrderErrorCode;
 import com.fittura.domain.order.order.repository.OrderAddressRepository;
 import com.fittura.domain.order.order.repository.OrderItemRepository;
 import com.fittura.domain.order.order.repository.OrderRepository;
@@ -19,7 +18,6 @@ import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.support.ProductFixture;
 import com.fittura.domain.product.sku.entity.ProductSku;
 import com.fittura.domain.product.sku.support.ProductSkuFixture;
-import com.fittura.global.exception.ServiceException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,10 +28,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -109,49 +105,6 @@ class OrderServiceTest {
         // then
         assertThat(sku.getReservedQuantity()).isEqualTo(3);
         verify(itemRepository).save(any(OrderItem.class));
-    }
-
-    @Test
-    @DisplayName("주문 아이템 생성 실패 - 비활성 SKU")
-    void createOrderItemFail_skuNotActive() {
-        // given
-        Long memberId = 1L;
-        Product product = ProductFixture.component("A Desk");
-        ProductSku sku = ProductSkuFixture.sku(product, 20000L, 10);
-        sku.soldOut();
-        Order order = OrderFixture.order(memberId);
-        Cart cart = CartFixture.cart(memberId);
-        CartItem cartItem = CartItemFixture.cartItem(cart, sku, 3);
-
-        // when & then
-        assertThatThrownBy(() -> orderService.createOrderItem(cartItem, order))
-            .isInstanceOf(ServiceException.class)
-            .extracting(e -> ((ServiceException) e).getErrorCode())
-            .isEqualTo(OrderErrorCode.SKU_MUST_ACTIVE);
-
-        assertThat(sku.getReservedQuantity()).isEqualTo(0);
-        verify(itemRepository, never()).save(any(OrderItem.class));
-    }
-
-    @Test
-    @DisplayName("주문 아이템 생성 실패 - 재고 부족")
-    void createOrderItemFail_stockNotValid() {
-        // given
-        Long memberId = 1L;
-        Product product = ProductFixture.component("A Desk");
-        ProductSku sku = ProductSkuFixture.sku(product, 20000L, 2);
-        Cart cart = CartFixture.cart(memberId);
-        CartItem cartItem = CartItemFixture.cartItem(cart, sku, 5);
-        Order order = OrderFixture.order(memberId);
-
-        // when & then
-        assertThatThrownBy(() -> orderService.createOrderItem(cartItem, order))
-            .isInstanceOf(ServiceException.class)
-            .extracting(e -> ((ServiceException) e).getErrorCode())
-            .isEqualTo(OrderErrorCode.STOCK_NOT_VALID);
-
-        assertThat(sku.getReservedQuantity()).isEqualTo(0);
-        verify(itemRepository, never()).save(any(OrderItem.class));
     }
 
 

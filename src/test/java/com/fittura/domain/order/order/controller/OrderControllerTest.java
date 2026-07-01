@@ -28,6 +28,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -252,7 +253,9 @@ class OrderControllerTest extends IntegrationTestBase {
                 .content(reqBody))
             .andDo(print())
             .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.code").value(OrderErrorCode.CART_ITEMS_NOT_VALID.getCode()));
+            .andExpect(jsonPath("$.code").value(OrderErrorCode.CART_ITEMS_NOT_VALID.getCode()))
+            .andExpect(jsonPath("$.data.length()").value(1))
+            .andExpect(jsonPath("$.data[0].code").value(OrderErrorCode.SKU_MUST_ACTIVE.getCode()));
 
         assertThat(orderRepository.count()).isEqualTo(0);
         assertThat(orderItemRepository.count()).isEqualTo(0);
@@ -293,12 +296,60 @@ class OrderControllerTest extends IntegrationTestBase {
                 .content(reqBody))
             .andDo(print())
             .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.code").value(OrderErrorCode.CART_ITEMS_NOT_VALID.getCode()));
+            .andExpect(jsonPath("$.code").value(OrderErrorCode.CART_ITEMS_NOT_VALID.getCode()))
+            .andExpect(jsonPath("$.data.length()").value(1))
+            .andExpect(jsonPath("$.data[0].code").value(OrderErrorCode.STOCK_NOT_VALID.getCode()));
 
         assertThat(orderRepository.count()).isEqualTo(0);
         assertThat(orderItemRepository.count()).isEqualTo(0);
         assertThat(addressRepository.count()).isEqualTo(0);
         assertThat(cartItemRepository.findById(cartItem.getId())).isPresent();
+    }
+
+    @Test
+    @DisplayName("주문 생성 실패 - 여러 항목이 각각의 사유로 실패")
+    void createOrderFail_multipleInvalidItems() throws Exception {
+        // given
+        Long memberId = 13L;
+        ProductSku soldOutSku = savedDefaultSku(10);
+        soldOutSku.soldOut();
+        productSkuRepository.save(soldOutSku);
+        ProductSku lowStockSku = savedDefaultSku(2);
+
+        Cart cart = cartRepository.save(CartFixture.cart(memberId));
+        CartItem item1 = cartItemRepository.save(CartItemFixture.cartItem(cart, soldOutSku, 1));
+        CartItem item2 = cartItemRepository.save(CartItemFixture.cartItem(cart, lowStockSku, 5));
+
+        String reqBody = """
+            {
+                "cartItems": [%d, %d],
+                "pointUsedAmount": 0,
+                "orderAddress": {
+                    "receiverName": "홍길동",
+                    "phoneNumber": "01012341234",
+                    "zipCode": "12345",
+                    "address": "서울특별시 중구 서소문로 127",
+                    "sido": "서울특별시",
+                    "sigungu": "중구"
+                }
+            }
+            """.formatted(item1.getId(), item2.getId());
+
+        // when & then
+        mockMvc.perform(post(ORDER_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value(OrderErrorCode.CART_ITEMS_NOT_VALID.getCode()))
+            .andExpect(jsonPath("$.data.length()").value(2))
+            .andExpect(jsonPath("$.data[*].code",
+                containsInAnyOrder(
+                    OrderErrorCode.SKU_MUST_ACTIVE.getCode(),
+                    OrderErrorCode.STOCK_NOT_VALID.getCode())));
+
+        assertThat(orderRepository.count()).isEqualTo(0);
     }
 
 
