@@ -252,7 +252,7 @@ class OrderControllerTest extends IntegrationTestBase {
                 .content(reqBody))
             .andDo(print())
             .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.code").value(OrderErrorCode.SKU_MUST_ACTIVE.getCode()));
+            .andExpect(jsonPath("$.code").value(OrderErrorCode.CART_ITEMS_NOT_VALID.getCode()));
 
         assertThat(orderRepository.count()).isEqualTo(0);
         assertThat(orderItemRepository.count()).isEqualTo(0);
@@ -293,7 +293,7 @@ class OrderControllerTest extends IntegrationTestBase {
                 .content(reqBody))
             .andDo(print())
             .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.code").value(OrderErrorCode.STOCK_NOT_VALID.getCode()));
+            .andExpect(jsonPath("$.code").value(OrderErrorCode.CART_ITEMS_NOT_VALID.getCode()));
 
         assertThat(orderRepository.count()).isEqualTo(0);
         assertThat(orderItemRepository.count()).isEqualTo(0);
