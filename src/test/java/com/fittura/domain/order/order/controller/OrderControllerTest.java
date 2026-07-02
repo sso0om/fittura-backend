@@ -362,6 +362,7 @@ class OrderControllerTest extends IntegrationTestBase {
     private ProductSku savedDefaultSku(Integer stock) {
         Category category = categoryRepository.save(CategoryFixture.rootActive());
         Product product = productRepository.save(ProductFixture.component(category, "A Desk"));
+        product.activate();
         return productSkuRepository.save(ProductSkuFixture.sku(product, 10000L, stock));
     }
 }
