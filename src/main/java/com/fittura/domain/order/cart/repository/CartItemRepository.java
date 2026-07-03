@@ -6,13 +6,10 @@ import com.fittura.domain.product.sku.entity.ProductSku;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface CartItemRepository extends JpaRepository<CartItem,Long>, CartItemRepositoryCustom {
-
-    List<CartItem> findAllByIdInAndCart_MemberId(List<Long> itemIds, Long memberId);
 
     Optional<CartItem> findByCartAndProductSku(Cart cart, ProductSku sku);
 

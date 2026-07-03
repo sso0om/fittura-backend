@@ -109,7 +109,7 @@ class CartServiceTest {
         CartItem item1 = CartItemFixture.cartItemWithId(1L, cart, sku, 2);
         CartItem item2 = CartItemFixture.cartItemWithId(2L, cart, sku, 1);
 
-        given(cartItemRepository.findAllByIdInAndCart_MemberId(itemIds, memberId))
+        given(cartItemRepository.findAllWithSkuForUpdate(itemIds, memberId))
             .willReturn(List.of(item1, item2));
 
         // when
@@ -131,7 +131,7 @@ class CartServiceTest {
         Cart cart = CartFixture.cartWithId(10L, memberId);
         CartItem item1 = CartItemFixture.cartItemWithId(1L, cart, sku, 2);
 
-        given(cartItemRepository.findAllByIdInAndCart_MemberId(itemIds, memberId))
+        given(cartItemRepository.findAllWithSkuForUpdate(itemIds, memberId))
             .willReturn(List.of(item1));
 
         // when & then
@@ -146,7 +146,7 @@ class CartServiceTest {
         Long memberId = 1L;
         List<Long> itemIds = List.of(999L);
 
-        given(cartItemRepository.findAllByIdInAndCart_MemberId(itemIds, memberId))
+        given(cartItemRepository.findAllWithSkuForUpdate(itemIds, memberId))
             .willReturn(List.of());
 
         // when & then

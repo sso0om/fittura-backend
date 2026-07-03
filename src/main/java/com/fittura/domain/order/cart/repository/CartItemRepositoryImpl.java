@@ -1,6 +1,7 @@
 package com.fittura.domain.order.cart.repository;
 
 import com.fittura.domain.order.cart.dto.response.CartItemResDto;
+import com.fittura.domain.order.cart.entity.CartItem;
 import com.fittura.domain.product.product.constant.ProductStatus;
 import com.fittura.domain.product.sku.constant.SkuStatus;
 import com.querydsl.core.types.Projections;
@@ -18,6 +19,22 @@ import static com.fittura.domain.product.sku.entity.QProductSku.productSku;
 public class CartItemRepositoryImpl implements CartItemRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
+
+    @Override
+    public List<CartItem> findAllWithSkuForUpdate(List<Long> itemIds, Long memberId) {
+        return queryFactory
+            .selectFrom(cartItem)
+            .join(cartItem.productSku, productSku).fetchJoin()
+            .join(productSku.product, product).fetchJoin()
+            .where(
+                cartItem.id.in(itemIds),
+                cartItem.cart.memberId.eq(memberId),
+                productSku.status.ne(SkuStatus.ARCHIVED),
+                product.status.ne(ProductStatus.ARCHIVED)
+            )
+            .orderBy(cartItem.id.asc())
+            .fetch();
+    }
 
     @Override
     public List<CartItemResDto> findCartItemDtosByCart(Long cartId) {
