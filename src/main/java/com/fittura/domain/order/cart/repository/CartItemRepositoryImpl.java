@@ -7,6 +7,7 @@ import com.fittura.domain.product.sku.constant.SkuStatus;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
@@ -32,7 +33,8 @@ public class CartItemRepositoryImpl implements CartItemRepositoryCustom {
                 productSku.status.ne(SkuStatus.ARCHIVED),
                 product.status.ne(ProductStatus.ARCHIVED)
             )
-            .orderBy(cartItem.id.asc())
+            .orderBy(productSku.id.asc())
+            .setLockMode(LockModeType.PESSIMISTIC_WRITE)
             .fetch();
     }
 
