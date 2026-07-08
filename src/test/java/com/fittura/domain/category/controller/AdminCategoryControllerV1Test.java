@@ -23,11 +23,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WithMockUser(roles = "ADMIN")
 class AdminCategoryControllerV1Test extends IntegrationTestBase {
-    @Autowired
-    private MockMvc mockMvc;
 
-    @Autowired
-    private CategoryRepository categoryRepository;
+    @Autowired private MockMvc mockMvc;
+    @Autowired private CategoryRepository categoryRepository;
 
     private static final String CATEGORY_ADMIN_URL = "/api/admin/v1/categories";
     private static final String CATEGORY_USER_URL = "/api/v1/categories";

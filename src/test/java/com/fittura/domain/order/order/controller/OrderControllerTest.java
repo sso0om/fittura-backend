@@ -36,32 +36,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class OrderControllerTest extends IntegrationTestBase {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private OrderRepository orderRepository;
-
-    @Autowired
-    private OrderItemRepository orderItemRepository;
-
-    @Autowired
-    private OrderAddressRepository addressRepository;
-
-    @Autowired
-    private CartRepository cartRepository;
-
-    @Autowired
-    private CartItemRepository cartItemRepository;
-
-    @Autowired
-    private CategoryRepository categoryRepository;
-
-    @Autowired
-    private ProductRepository productRepository;
-
-    @Autowired
-    private ProductSkuRepository productSkuRepository;
+    @Autowired private MockMvc mockMvc;
+    @Autowired private OrderRepository orderRepository;
+    @Autowired private OrderItemRepository orderItemRepository;
+    @Autowired private OrderAddressRepository addressRepository;
+    @Autowired private CartRepository cartRepository;
+    @Autowired private CartItemRepository cartItemRepository;
+    @Autowired private CategoryRepository categoryRepository;
+    @Autowired private ProductRepository productRepository;
+    @Autowired private ProductSkuRepository productSkuRepository;
 
     private static final String ORDER_URL = "/api/v1/orders";
 

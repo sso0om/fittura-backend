@@ -40,23 +40,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WithMockUser(roles = "ADMIN")
 class AdminProductControllerV1Test extends IntegrationTestBase {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private CategoryRepository categoryRepository;
-
-    @Autowired
-    private ProductRepository productRepository;
-
-    @Autowired
-    private ProductSkuRepository productSkuRepository;
-
-    @Autowired
-    private CompositionRepository compositionRepository;
-
-    @Autowired
-    private ProductAttributeRepository productAttributeRepository;
+    @Autowired private MockMvc mockMvc;
+    @Autowired private CategoryRepository categoryRepository;
+    @Autowired private ProductRepository productRepository;
+    @Autowired private ProductSkuRepository productSkuRepository;
+    @Autowired private CompositionRepository compositionRepository;
+    @Autowired private ProductAttributeRepository productAttributeRepository;
 
     private static final String PRODUCT_ADMIN_URL = "/api/admin/v1/products";
 

@@ -28,23 +28,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class ProductControllerV1Test extends IntegrationTestBase {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private CategoryRepository categoryRepository;
-
-    @Autowired
-    private ProductRepository productRepository;
-
-    @Autowired
-    private ProductSkuRepository productSkuRepository;
-
-    @Autowired
-    private ProductAttributeRepository attributeRepository;
-
-    @Autowired
-    private CompositionRepository compositionRepository;
+    @Autowired private MockMvc mockMvc;
+    @Autowired private CategoryRepository categoryRepository;
+    @Autowired private ProductRepository productRepository;
+    @Autowired private ProductSkuRepository productSkuRepository;
+    @Autowired private ProductAttributeRepository attributeRepository;
+    @Autowired private CompositionRepository compositionRepository;
 
     private static final String PRODUCT_URL = "/api/v1/products";
 
