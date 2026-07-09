@@ -27,6 +27,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -85,11 +86,7 @@ public class OrderConcurrencyTest extends IntegrationTestBase {
         int initialStock = 3;
         int memberCnt = 5;
 
-        Product chair = ProductFixture.complete(category, "의자");
-        chair.activate();
-        productRepository.save(chair);
-        ProductSku chairSku = ProductSkuFixture.sku(chair, 100_000L, initialStock, "RED", null);
-        skuRepository.save(chairSku);
+        ProductSku chairSku = getProductSku("의자", initialStock);
 
         List<Long> memberIds = LongStream.rangeClosed(1, memberCnt)
             .map(i -> 90000L + i)
@@ -154,10 +151,108 @@ public class OrderConcurrencyTest extends IntegrationTestBase {
         assertThat(failures).hasSize(memberCnt - initialStock);
     }
 
+    @Test
+    @DisplayName("서로 다른 순서로 담긴 카트를 동시 주문해도 데드락이 발생하지 않는다")
+    void concurrentOrdersWithReversedCartOrderDoNotDeadlock() throws InterruptedException {
+        int stockEach = 5;
+
+        ProductSku skuA = getProductSku("의자A", stockEach);
+        ProductSku skuB = getProductSku("의자B", stockEach);
+
+        Long memberX = 91001L;
+        Long memberY = 91002L;
+
+        // 회원 X: 카트에 [skuA, skuB] 순서로 담음
+        Cart cartX = Cart.create(memberX);
+        cartRepository.save(cartX);
+        CartItem itemXA = CartItem.create(cartX, skuA, 1);
+        cartItemRepository.save(itemXA);
+        CartItem itemXB = CartItem.create(cartX, skuB, 1);
+        cartItemRepository.save(itemXB);
+        List<Long> cartItemIdsX = List.of(itemXA.getId(), itemXB.getId());
+
+        // 회원 Y: 카트에 [skuB, skuA] 순서로 담음 (역순)
+        Cart cartY = Cart.create(memberY);
+        cartRepository.save(cartY);
+        CartItem itemYB = CartItem.create(cartY, skuB, 1);
+        cartItemRepository.save(itemYB);
+        CartItem itemYA = CartItem.create(cartY, skuA, 1);
+        cartItemRepository.save(itemYA);
+        List<Long> cartItemIdsY = List.of(itemYB.getId(), itemYA.getId());
+
+        List<OrderTask> tasks = List.of(
+            new OrderTask(memberX, cartItemIdsX),
+            new OrderTask(memberY, cartItemIdsY)
+        );
+        AddressCreateReqDto address = addressDto();
+
+        // ===== 동시 실행 =====
+        ExecutorService executor = Executors.newFixedThreadPool(tasks.size());
+        CountDownLatch readyLatch = new CountDownLatch(tasks.size());
+        CountDownLatch startLatch = new CountDownLatch(1);
+        CountDownLatch doneLatch = new CountDownLatch(tasks.size());
+        List<Throwable> failures = Collections.synchronizedList(new ArrayList<>());
+
+        for (OrderTask task : tasks) {
+            executor.submit(() -> {
+                try {
+                    readyLatch.countDown();
+                    startLatch.await();
+                    orderFacade.createOrder(task.memberId(), new OrderCreateReqDto(task.cartItemIds(), 0L, address));
+                } catch (Throwable e) {
+                    failures.add(e);
+                } finally {
+                    doneLatch.countDown();
+                }
+            });
+        }
+
+        readyLatch.await();
+        startLatch.countDown();
+        boolean finished = doneLatch.await(10, TimeUnit.SECONDS);
+        executor.shutdown();
+
+        // ===== 검증 =====
+        assertThat(finished).isTrue();
+
+        if (!failures.isEmpty()) {
+            failures.forEach(e -> System.out.println(
+                "failure type: " + e.getClass().getName()
+                    + (e.getCause() != null ? " / cause: " + e.getCause().getClass().getName() : "")
+            ));
+        }
+
+        boolean hasDeadlock = failures.stream().anyMatch(this::isDeadlockRelated);
+        assertThat(hasDeadlock).isFalse();
+    }
+
+
+    // ========== 헬퍼 메서드 ==========
+
+    private record OrderTask(Long memberId, List<Long> cartItemIds) {}
+
     private AddressCreateReqDto addressDto() {
         return new AddressCreateReqDto(
             "홍길동", "01012341234", "12345",
             "서울특별시 중구 서소문로 127", null, "서울특별시", "중구", null
         );
+    }
+
+    private ProductSku getProductSku(String productName, int stockEach) {
+        Product product = ProductFixture.complete(category, productName);
+        product.activate();
+        productRepository.save(product);
+        ProductSku sku = ProductSkuFixture.sku(product, 100_000L, stockEach);
+        skuRepository.save(sku);
+        return sku;
+    }
+
+    private boolean isDeadlockRelated(Throwable e) {
+        for (Throwable t = e; t != null; t = t.getCause()) {
+            if (t instanceof PessimisticLockingFailureException) {
+                return true;
+            }
+        }
+        return false;
     }
 }
