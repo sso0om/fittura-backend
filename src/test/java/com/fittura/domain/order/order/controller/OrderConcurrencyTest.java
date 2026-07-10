@@ -29,16 +29,15 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.LongStream;
 
@@ -59,6 +58,7 @@ public class OrderConcurrencyTest extends IntegrationTestBase {
     @Autowired private ProductSkuRepository skuRepository;
     @Autowired private CartRepository cartRepository;
     @Autowired private CartItemRepository cartItemRepository;
+    @Autowired private PlatformTransactionManager transactionManager;
 
     private Category category;
 
@@ -152,7 +152,7 @@ public class OrderConcurrencyTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("서로 다른 순서로 담긴 카트를 동시 주문해도 데드락이 발생하지 않는다")
+    @DisplayName("서로 다른 순서로 담긴 카트를 동시 주문해도 데드락이 발생하지 않음")
     void concurrentOrdersWithReversedCartOrderDoNotDeadlock() throws InterruptedException {
         int stockEach = 5;
 
@@ -198,7 +198,10 @@ public class OrderConcurrencyTest extends IntegrationTestBase {
                 try {
                     readyLatch.countDown();
                     startLatch.await();
-                    orderFacade.createOrder(task.memberId(), new OrderCreateReqDto(task.cartItemIds(), 0L, address));
+                    orderFacade.createOrder(
+                        task.memberId(),
+                        new OrderCreateReqDto(task.cartItemIds(), 0L, address)
+                    );
                 } catch (Throwable e) {
                     failures.add(e);
                 } finally {
@@ -226,6 +229,68 @@ public class OrderConcurrencyTest extends IntegrationTestBase {
         assertThat(hasDeadlock).isFalse();
     }
 
+    @Test
+    @DisplayName("같은 상품의 다른 SKU를 동시 주문하면 Product row 락 경합으로 직렬화됨")
+    void concurrentOrdersOnSameProductDifferentSkuAreSerialized() throws Exception {
+        long holdMillis = 2000L;
+
+        Product chair = createActiveProduct("의자");
+        ProductSku chairRed = createSku(chair, 5, "red");
+        ProductSku chairBlue = createSku(chair, 5, "blue");
+
+        Long memberX = 92001L;
+        Long memberY = 92002L;
+
+        Cart cartX = Cart.create(memberX);
+        cartRepository.save(cartX);
+        CartItem itemXRed = CartItem.create(cartX, chairRed, 1);
+        cartItemRepository.save(itemXRed);
+
+        Cart cartY = Cart.create(memberY);
+        cartRepository.save(cartY);
+        CartItem itemYBlue = CartItem.create(cartY, chairBlue, 1);
+        cartItemRepository.save(itemYBlue);
+
+        AddressCreateReqDto address = addressDto();
+        TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        CountDownLatch lockAcquiredLatch = new CountDownLatch(1);
+
+        // 스레드 A: chairRed 락을 잡고 holdMillis 동안 트랜잭션을 붙잡고 있음
+        Future<?> threadA = executor.submit(() -> {
+            transactionTemplate.execute(status -> {
+                cartItemRepository.findAllWithSkuForUpdate(List.of(itemXRed.getId()), memberX);
+                lockAcquiredLatch.countDown();
+                try {
+                    Thread.sleep(holdMillis);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                return null;
+            }); // execute()가 리턴하는 시점 = 트랜잭션 커밋 완료 = 락 해제
+            return null;
+        });
+
+        // B: A가 락을 잡은 직후, 같은 Product의 다른 SKU(blue) 주문 시도 + 실행 시간 측정
+        Future<Long> threadB = executor.submit(() -> {
+            lockAcquiredLatch.await();
+            long start = System.nanoTime();
+            orderFacade.createOrder(memberY, new OrderCreateReqDto(List.of(itemYBlue.getId()), 0L, address));
+            return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
+        });
+
+        // 안 끝나는 상황만 막는 안전장치
+        Long executionTimeB = threadB.get(3, TimeUnit.SECONDS);
+
+        // 실제 검증: B의 실행 시간이 A의 락 점유 시간(holdMillis)보다 확실히 짧아야 함
+        // 지금(FOR UPDATE + JOIN 구조)은 Product row 경합 때문에 holdMillis 근처까지 걸려 실패하는 게 정상
+        // FOR UPDATE를 SKU 단위로 좁히는 리팩토링 후에는 이 assertion이 통과해야 함
+        assertThat(executionTimeB).isLessThan(holdMillis - 500L);
+
+        threadA.get(10, TimeUnit.SECONDS);
+        executor.shutdown();
+    }
+
 
     // ========== 헬퍼 메서드 ==========
 
@@ -238,13 +303,21 @@ public class OrderConcurrencyTest extends IntegrationTestBase {
         );
     }
 
-    private ProductSku getProductSku(String productName, int stockEach) {
-        Product product = ProductFixture.complete(category, productName);
+    private Product createActiveProduct(String name) {
+        Product product = ProductFixture.complete(category, name);
         product.activate();
         productRepository.save(product);
-        ProductSku sku = ProductSkuFixture.sku(product, 100_000L, stockEach);
+        return product;
+    }
+
+    private ProductSku createSku(Product product, int stock, String color) {
+        ProductSku sku = ProductSkuFixture.sku(product, 100_000L, stock, color, null);
         skuRepository.save(sku);
         return sku;
+    }
+
+    private ProductSku getProductSku(String productName, int stock) {
+        return createSku(createActiveProduct(productName), stock, null);
     }
 
     private boolean isDeadlockRelated(Throwable e) {
