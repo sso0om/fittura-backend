@@ -23,6 +23,30 @@ public class CartItemRepositoryImpl implements CartItemRepositoryCustom {
 
     @Override
     public List<CartItem> findAllWithSkuForUpdate(List<Long> itemIds, Long memberId) {
+        List<Long> skuIds = queryFactory
+            .select(cartItem.productSku.id)
+            .from(cartItem)
+            .where(
+                cartItem.id.in(itemIds),
+                cartItem.cart.memberId.eq(memberId)
+            )
+            .fetch();
+
+        if (skuIds.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> sortedSkuIds = skuIds.stream().distinct().sorted().toList();
+
+        // 이 시점에 ProductSku를 처음 로딩 → 락 걸린 채로 최신 데이터가 세션에 캐싱됨
+        queryFactory
+            .selectFrom(productSku)
+            .where(productSku.id.in(sortedSkuIds))
+            .orderBy(productSku.id.asc())
+            .setLockMode(LockModeType.PESSIMISTIC_WRITE)
+            .fetch();
+
+        // productSku는 이미 세션에 락 걸린 최신 상태로 있음 (인스턴스 재사용)
         return queryFactory
             .selectFrom(cartItem)
             .join(cartItem.productSku, productSku).fetchJoin()
@@ -34,7 +58,6 @@ public class CartItemRepositoryImpl implements CartItemRepositoryCustom {
                 product.status.ne(ProductStatus.ARCHIVED)
             )
             .orderBy(productSku.id.asc())
-            .setLockMode(LockModeType.PESSIMISTIC_WRITE)
             .fetch();
     }
 
