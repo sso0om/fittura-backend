@@ -24,6 +24,8 @@ public class CartService {
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
 
+    // ========== 장바구니 ==========
+
     public CartResDto getCart(Long memberId) {
         Optional<Cart> cart = getOpCart(memberId);
         if (cart.isEmpty()) {
@@ -36,6 +38,19 @@ public class CartService {
             .sum();
 
         return CartResDto.from(cart.get(), items, totalPrice);
+    }
+
+
+    // ========== 장바구니 제품 ==========
+
+    public List<CartItem> getItemsByIdAndMember(List<Long> itemIds, Long memberId) {
+        List<Long> distinctIds = itemIds.stream().distinct().toList();
+        List<CartItem> cartItems = cartItemRepository.findAllWithSkuForUpdate(distinctIds, memberId);
+
+        if (cartItems.size() != distinctIds.size()) {
+            throw new ServiceException(CartErrorCode.NOT_FOUND_ITEM);
+        }
+        return cartItems;
     }
 
     public void createCartItem(Long memberId, ProductSku sku, CartItemCreateReqDto reqDto) {
@@ -55,6 +70,10 @@ public class CartService {
     public void updateCartItem(Long memberId, Long itemId, CartItemUpdateReqDto reqDto) {
         CartItem cartitem = getItemByIdAndMember(itemId, memberId);
         cartitem.changeQuantity(reqDto.quantity());
+    }
+
+    public void deleteCartItems(List<CartItem> cartItems) {
+        cartItemRepository.deleteAll(cartItems);
     }
 
     public void deleteCartItem(Long memberId, Long itemId) {

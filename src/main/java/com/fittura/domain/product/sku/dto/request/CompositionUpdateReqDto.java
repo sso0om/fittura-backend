@@ -7,7 +7,7 @@ import jakarta.validation.constraints.PositiveOrZero;
 
 public record CompositionUpdateReqDto(
 
-    @Schema(example = "1L")
+    @Schema(example = "1")
     @Positive
     Long id,
 

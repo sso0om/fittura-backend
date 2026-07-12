@@ -31,20 +31,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class AuthControllerV1Test extends IntegrationTestBase {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private AppProperties appProperties;
-
-    @Autowired
-    private JwtTokenProvider jwtTokenProvider;
-
-    @Autowired
-    private MemberRepository memberRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    @Autowired private MockMvc mockMvc;
+    @Autowired private AppProperties appProperties;
+    @Autowired private JwtTokenProvider jwtTokenProvider;
+    @Autowired private MemberRepository memberRepository;
+    @Autowired private PasswordEncoder passwordEncoder;
 
     private static final String SIGN_UP_URL = "/api/v1/auth/signup";
     private static final String SIGN_IN_URL = "/api/v1/auth/signin";

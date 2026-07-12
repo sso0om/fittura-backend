@@ -7,12 +7,15 @@ import com.fittura.domain.order.cart.entity.Cart;
 import com.fittura.domain.order.cart.entity.CartItem;
 import com.fittura.domain.order.cart.repository.CartItemRepository;
 import com.fittura.domain.order.cart.repository.CartRepository;
+import com.fittura.domain.order.cart.support.CartFixture;
+import com.fittura.domain.order.cart.support.CartItemFixture;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.error.ProductErrorCode;
 import com.fittura.domain.product.product.repository.ProductRepository;
 import com.fittura.domain.product.product.support.ProductFixture;
 import com.fittura.domain.product.sku.entity.ProductSku;
 import com.fittura.domain.product.sku.repository.ProductSkuRepository;
+import com.fittura.domain.product.sku.support.ProductSkuFixture;
 import com.fittura.global.IntegrationTestBase;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,23 +35,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class CartControllerV1Test extends IntegrationTestBase {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private CartRepository cartRepository;
-
-    @Autowired
-    private CartItemRepository cartItemRepository;
-
-    @Autowired
-    private CategoryRepository categoryRepository;
-
-    @Autowired
-    private ProductRepository productRepository;
-
-    @Autowired
-    private ProductSkuRepository productSkuRepository;
+    @Autowired private MockMvc mockMvc;
+    @Autowired private CartRepository cartRepository;
+    @Autowired private CartItemRepository cartItemRepository;
+    @Autowired private CategoryRepository categoryRepository;
+    @Autowired private ProductRepository productRepository;
+    @Autowired private ProductSkuRepository productSkuRepository;
 
     private static final String CART_URL = "/api/v1/cart";
 
@@ -80,8 +72,8 @@ class CartControllerV1Test extends IntegrationTestBase {
         Long memberId = 11L;
         ProductSku sku = savedDefaultSku();  // price: 10000
 
-        Cart cart = cartRepository.save(Cart.create(memberId));
-        cartItemRepository.save(CartItem.create(cart, sku, 3));
+        Cart cart = cartRepository.save(CartFixture.cart(memberId));
+        cartItemRepository.save(CartItemFixture.cartItem(cart, sku, 3));
 
         // when & then
         mockMvc.perform(get(CART_URL)
@@ -108,8 +100,8 @@ class CartControllerV1Test extends IntegrationTestBase {
         sku.archive();
         productSkuRepository.save(sku);
 
-        Cart cart = cartRepository.save(Cart.create(memberId));
-        cartItemRepository.save(CartItem.create(cart, sku, 2));
+        Cart cart = cartRepository.save(CartFixture.cart(memberId));
+        cartItemRepository.save(CartItemFixture.cartItem(cart, sku, 2));
 
         // when & then
         mockMvc.perform(get(CART_URL)
@@ -160,8 +152,8 @@ class CartControllerV1Test extends IntegrationTestBase {
         Long memberId = 2L;
         ProductSku sku = savedDefaultSku();
 
-        Cart cart = cartRepository.save(Cart.create(memberId));
-        cartItemRepository.save(CartItem.create(cart, sku, 2));
+        Cart cart = cartRepository.save(CartFixture.cart(memberId));
+        cartItemRepository.save(CartItemFixture.cartItem(cart, sku, 2));
 
         String reqBody = """
                 {
@@ -216,8 +208,8 @@ class CartControllerV1Test extends IntegrationTestBase {
         // given
         Long memberId = 20L;
         ProductSku sku = savedDefaultSku();
-        Cart cart = cartRepository.save(Cart.create(memberId));
-        CartItem cartItem = cartItemRepository.save(CartItem.create(cart, sku, 2));
+        Cart cart = cartRepository.save(CartFixture.cart(memberId));
+        CartItem cartItem = cartItemRepository.save(CartItemFixture.cartItem(cart, sku, 2));
 
         String reqBody = """
                 {
@@ -268,8 +260,8 @@ class CartControllerV1Test extends IntegrationTestBase {
         Long ownerMemberId = 22L;
         Long otherMemberId = 23L;
         ProductSku sku = savedDefaultSku();
-        Cart ownerCart = cartRepository.save(Cart.create(ownerMemberId));
-        CartItem cartItem = cartItemRepository.save(CartItem.create(ownerCart, sku, 2));
+        Cart ownerCart = cartRepository.save(CartFixture.cart(ownerMemberId));
+        CartItem cartItem = cartItemRepository.save(CartItemFixture.cartItem(ownerCart, sku, 2));
 
         String reqBody = """
                 {
@@ -296,8 +288,8 @@ class CartControllerV1Test extends IntegrationTestBase {
         // given
         Long memberId = 30L;
         ProductSku sku = savedDefaultSku();
-        Cart cart = cartRepository.save(Cart.create(memberId));
-        CartItem cartItem = cartItemRepository.save(CartItem.create(cart, sku, 2));
+        Cart cart = cartRepository.save(CartFixture.cart(memberId));
+        CartItem cartItem = cartItemRepository.save(CartItemFixture.cartItem(cart, sku, 2));
 
         // when & then
         mockMvc.perform(delete(CART_URL + "/items/" + cartItem.getId())
@@ -331,8 +323,8 @@ class CartControllerV1Test extends IntegrationTestBase {
         Long ownerMemberId = 32L;
         Long otherMemberId = 33L;
         ProductSku sku = savedDefaultSku();
-        Cart ownerCart = cartRepository.save(Cart.create(ownerMemberId));
-        CartItem cartItem = cartItemRepository.save(CartItem.create(ownerCart, sku, 2));
+        Cart ownerCart = cartRepository.save(CartFixture.cart(ownerMemberId));
+        CartItem cartItem = cartItemRepository.save(CartItemFixture.cartItem(ownerCart, sku, 2));
 
         // when & then
         mockMvc.perform(delete(CART_URL + "/items/" + cartItem.getId())
@@ -348,6 +340,6 @@ class CartControllerV1Test extends IntegrationTestBase {
     private ProductSku savedDefaultSku() {
         Category category = categoryRepository.save(CategoryFixture.rootActive());
         Product product = productRepository.save(ProductFixture.component(category, "A Desk"));
-        return productSkuRepository.save(ProductSku.create(product, 10000L, 100, "White", "Wood"));
+        return productSkuRepository.save(ProductSkuFixture.sku(product, 10000L, 100));
     }
 }

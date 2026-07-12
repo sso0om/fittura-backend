@@ -9,7 +9,7 @@ import jakarta.validation.constraints.Size;
 @Schema(description = "SKU 수정 요청 DTO")
 public record SkuUpdateReqDto(
 
-    @Schema(example = "1L")
+    @Schema(example = "1")
     @Positive
     Long id,
 
