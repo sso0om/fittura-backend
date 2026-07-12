@@ -3,6 +3,7 @@ package com.fittura.domain.order.facade;
 import com.fittura.domain.order.cart.entity.CartItem;
 import com.fittura.domain.order.cart.service.CartService;
 import com.fittura.domain.order.order.dto.request.OrderCreateReqDto;
+import com.fittura.domain.order.order.dto.response.OrderWithAllResDto;
 import com.fittura.domain.order.order.entity.Order;
 import com.fittura.domain.order.order.service.OrderService;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,11 @@ public class OrderFacade {
 
     private final OrderService orderService;
     private final CartService cartService;
+
+    @Transactional(readOnly = true)
+    public OrderWithAllResDto getOrderByIdAndMember(Long orderId, Long memberId) {
+        return orderService.getOrderByIdAndMember(orderId, memberId);
+    }
 
     @Transactional
     public Long createOrder(Long memberId, OrderCreateReqDto reqDto) {

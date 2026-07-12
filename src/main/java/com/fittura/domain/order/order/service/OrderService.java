@@ -3,6 +3,7 @@ package com.fittura.domain.order.order.service;
 import com.fittura.domain.order.cart.entity.CartItem;
 import com.fittura.domain.order.order.dto.request.AddressCreateReqDto;
 import com.fittura.domain.order.order.dto.request.OrderCreateReqDto;
+import com.fittura.domain.order.order.dto.response.OrderWithAllResDto;
 import com.fittura.domain.order.order.entity.Order;
 import com.fittura.domain.order.order.entity.OrderAddress;
 import com.fittura.domain.order.order.entity.OrderItem;
@@ -28,6 +29,11 @@ public class OrderService {
     private final OrderAddressRepository addressRepository;
 
     // ========== 주문 ==========
+
+    public OrderWithAllResDto getOrderByIdAndMember(Long orderId, Long memberId) {
+        return orderRepository.findWithAllByIdAndMemberId(orderId, memberId)
+            .orElseThrow(() -> new ServiceException(OrderErrorCode.NOT_FOUND_ORDER));
+    }
 
     public Order createOrder(Long memberId, OrderCreateReqDto reqDto) {
         Order order = Order.create(memberId, reqDto.pointUsedAmount());
