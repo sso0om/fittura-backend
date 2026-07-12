@@ -271,7 +271,13 @@ public class OrderConcurrencyTest extends IntegrationTestBase {
 
         // B: A가 락을 잡은 직후, 같은 Product의 다른 SKU(blue) 주문 시도 + 실행 시간 측정
         Future<Long> threadB = executor.submit(() -> {
-            lockAcquiredLatch.await();
+            if (!lockAcquiredLatch.await(2, TimeUnit.SECONDS)) {
+                // A가 신호를 못 줬다면, lockAcquiredLatch.countDown() 전에 예외로 끝났을 가능성이 높음
+                if (threadA.isDone()) {
+                    threadA.get();
+                }
+                throw new AssertionError("스레드 A가 락을 획득하지 못했습니다 (A가 아직 실행 중)");
+            }
             long start = System.nanoTime();
             orderFacade.createOrder(memberY, new OrderCreateReqDto(List.of(itemYBlue.getId()), 0L, address));
             return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
