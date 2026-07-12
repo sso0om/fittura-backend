@@ -25,7 +25,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.test.context.ActiveProfiles;
@@ -44,7 +43,6 @@ import java.util.stream.LongStream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
-@AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
 public class OrderConcurrencyTest extends IntegrationTestBase {
@@ -230,7 +228,7 @@ public class OrderConcurrencyTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("같은 상품의 다른 SKU를 동시 주문하면 Product row 락 경합으로 직렬화됨")
+    @DisplayName("같은 상품의 다른 SKU를 동시 주문해도 Product 락 경합 없이 독립적으로 처리됨")
     void concurrentOrdersOnSameProductDifferentSkuAreSerialized() throws Exception {
         long holdMillis = 2000L;
 
@@ -282,9 +280,7 @@ public class OrderConcurrencyTest extends IntegrationTestBase {
         // 안 끝나는 상황만 막는 안전장치
         Long executionTimeB = threadB.get(3, TimeUnit.SECONDS);
 
-        // 실제 검증: B의 실행 시간이 A의 락 점유 시간(holdMillis)보다 확실히 짧아야 함
-        // 지금(FOR UPDATE + JOIN 구조)은 Product row 경합 때문에 holdMillis 근처까지 걸려 실패하는 게 정상
-        // FOR UPDATE를 SKU 단위로 좁히는 리팩토링 후에는 이 assertion이 통과해야 함
+        // 락이 SKU 단위로 좁혀졌으므로, A가 다른 SKU의 락을 잡고 있어도 B는 대기 없이 완료해야 함
         assertThat(executionTimeB).isLessThan(holdMillis - 500L);
 
         threadA.get(10, TimeUnit.SECONDS);
