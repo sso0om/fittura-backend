@@ -75,6 +75,8 @@ public class OrderService {
 
             if (!sku.isActive()) {
                 errors.add(ItemError.of(productName, OrderErrorCode.SKU_MUST_ACTIVE));
+            } else if (!sku.getProduct().isActive()) {
+                errors.add(ItemError.of(productName, OrderErrorCode.PRODUCT_MUST_ACTIVE));
             } else if (!sku.isStockValid(cartItem.getQuantity())) {
                 errors.add(ItemError.of(productName, OrderErrorCode.STOCK_NOT_VALID));
             }

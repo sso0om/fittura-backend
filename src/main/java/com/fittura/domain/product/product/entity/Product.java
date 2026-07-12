@@ -143,6 +143,10 @@ public class Product extends BaseEntity {
         return productType == ProductType.COMPLETE;
     }
 
+    public boolean isActive() {
+        return status == ProductStatus.ACTIVE;
+    }
+
     public boolean isArchived() {
         return status == ProductStatus.ARCHIVED;
     }

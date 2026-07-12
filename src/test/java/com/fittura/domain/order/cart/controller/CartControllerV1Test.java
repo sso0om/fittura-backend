@@ -35,23 +35,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class CartControllerV1Test extends IntegrationTestBase {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private CartRepository cartRepository;
-
-    @Autowired
-    private CartItemRepository cartItemRepository;
-
-    @Autowired
-    private CategoryRepository categoryRepository;
-
-    @Autowired
-    private ProductRepository productRepository;
-
-    @Autowired
-    private ProductSkuRepository productSkuRepository;
+    @Autowired private MockMvc mockMvc;
+    @Autowired private CartRepository cartRepository;
+    @Autowired private CartItemRepository cartItemRepository;
+    @Autowired private CategoryRepository categoryRepository;
+    @Autowired private ProductRepository productRepository;
+    @Autowired private ProductSkuRepository productSkuRepository;
 
     private static final String CART_URL = "/api/v1/cart";
 

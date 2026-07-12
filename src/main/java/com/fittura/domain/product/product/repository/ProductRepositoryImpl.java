@@ -268,7 +268,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             : productSku.material.in(materials);
     }
 
-    private static BooleanExpression isSoldOut() {
+    private BooleanExpression isSoldOut() {
         QProductSku subSku = new QProductSku("subSku");
 
         return JPAExpressions

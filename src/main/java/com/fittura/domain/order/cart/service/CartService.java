@@ -45,7 +45,7 @@ public class CartService {
 
     public List<CartItem> getItemsByIdAndMember(List<Long> itemIds, Long memberId) {
         List<Long> distinctIds = itemIds.stream().distinct().toList();
-        List<CartItem> cartItems = cartItemRepository.findAllByIdInAndCart_MemberId(distinctIds, memberId);
+        List<CartItem> cartItems = cartItemRepository.findAllWithSkuForUpdate(distinctIds, memberId);
 
         if (cartItems.size() != distinctIds.size()) {
             throw new ServiceException(CartErrorCode.NOT_FOUND_ITEM);
