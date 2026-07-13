@@ -10,10 +10,15 @@ import com.fittura.domain.order.cart.repository.CartItemRepository;
 import com.fittura.domain.order.cart.repository.CartRepository;
 import com.fittura.domain.order.cart.support.CartFixture;
 import com.fittura.domain.order.cart.support.CartItemFixture;
+import com.fittura.domain.order.order.entity.Order;
+import com.fittura.domain.order.order.entity.OrderAddress;
 import com.fittura.domain.order.order.error.OrderErrorCode;
 import com.fittura.domain.order.order.repository.OrderAddressRepository;
 import com.fittura.domain.order.order.repository.OrderItemRepository;
 import com.fittura.domain.order.order.repository.OrderRepository;
+import com.fittura.domain.order.order.support.OrderAddressFixture;
+import com.fittura.domain.order.order.support.OrderFixture;
+import com.fittura.domain.order.order.support.OrderItemFixture;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.repository.ProductRepository;
 import com.fittura.domain.product.product.support.ProductFixture;
@@ -29,6 +34,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -47,6 +53,62 @@ class OrderControllerTest extends IntegrationTestBase {
     @Autowired private ProductSkuRepository productSkuRepository;
 
     private static final String ORDER_URL = "/api/v1/orders";
+
+// ========== 주문 조회 ==========
+
+    @Test
+    @DisplayName("주문 조회 성공")
+    void getOrderSuccess() throws Exception {
+        // given
+        Long memberId = 30L;
+        ProductSku sku = savedDefaultSku();
+        Order order = createOrderWithItem(memberId, sku, 2);
+
+        // when & then
+        mockMvc.perform(get(ORDER_URL + "/{id}", order.getId())
+                .header("Authorization", userBearerToken(memberId)))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.message").value("주문이 조회되었습니다."))
+            .andExpect(jsonPath("$.data.orderId").value(order.getId()))
+            .andExpect(jsonPath("$.data.orderNumber").value(order.getOrderNumber()))
+            .andExpect(jsonPath("$.data.status").value(order.getStatus().name()))
+            .andExpect(jsonPath("$.data.address.receiverName").value("홍길동"))
+            .andExpect(jsonPath("$.data.address.sido").value("서울특별시"))
+            .andExpect(jsonPath("$.data.items.length()").value(1))
+            .andExpect(jsonPath("$.data.items[0].quantity").value(2));
+    }
+
+    @Test
+    @DisplayName("주문 조회 실패 - 존재하지 않는 주문")
+    void getOrderFail_notFound() throws Exception {
+        // given
+        Long memberId = 31L;
+
+        // when & then
+        mockMvc.perform(get(ORDER_URL + "/{id}", 999999L)
+                .header("Authorization", userBearerToken(memberId)))
+            .andDo(print())
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value(OrderErrorCode.NOT_FOUND_ORDER.getCode()));
+    }
+
+    @Test
+    @DisplayName("주문 조회 실패 - 다른 회원의 주문 조회 시도")
+    void getOrderFail_orderNotOwnedByMember() throws Exception {
+        // given
+        Long ownerMemberId = 32L;
+        Long attackerMemberId = 33L;
+        ProductSku sku = savedDefaultSku();
+        Order order = createOrderWithItem(ownerMemberId, sku, 1);
+
+        // when & then
+        mockMvc.perform(get(ORDER_URL + "/{id}", order.getId())
+                .header("Authorization", userBearerToken(attackerMemberId)))
+            .andDo(print())
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value(OrderErrorCode.NOT_FOUND_ORDER.getCode()));
+    }
 
 
     // ========== 주문 생성 ==========
@@ -347,5 +409,17 @@ class OrderControllerTest extends IntegrationTestBase {
         Product product = productRepository.save(ProductFixture.component(category, "A Desk"));
         product.activate();
         return productSkuRepository.save(ProductSkuFixture.sku(product, 10000L, stock));
+    }
+
+    private Order createOrderWithItem(Long memberId, ProductSku sku, Integer quantity) {
+        Order order = OrderFixture.order(memberId, 1000L);
+        OrderItemFixture.orderItem(order, sku, quantity);
+        order.calcFinalAmount();
+        orderRepository.save(order);
+
+        OrderAddress address = OrderAddressFixture.address(order);
+        addressRepository.save(address);
+
+        return order;
     }
 }
