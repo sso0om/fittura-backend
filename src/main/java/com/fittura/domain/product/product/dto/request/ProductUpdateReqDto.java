@@ -1,5 +1,6 @@
 package com.fittura.domain.product.product.dto.request;
 
+import com.fittura.domain.product.product.constant.DeliveryType;
 import com.fittura.domain.product.sku.dto.request.CompositionUpdateReqDto;
 import com.fittura.domain.product.sku.dto.request.SkuUpdateReqDto;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -21,6 +22,9 @@ public record ProductUpdateReqDto(
 
     @Schema(example = "북유럽 스타일의 원목 의자입니다.")
     String description,
+
+    @Schema(example = "PARCEL")
+    DeliveryType deliveryType,
 
     @Schema(example = "40.5")
     @NotNull @Positive

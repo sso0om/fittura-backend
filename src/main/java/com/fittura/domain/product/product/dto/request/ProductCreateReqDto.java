@@ -1,5 +1,6 @@
 package com.fittura.domain.product.product.dto.request;
 
+import com.fittura.domain.product.product.constant.DeliveryType;
 import com.fittura.domain.product.product.constant.ProductType;
 import com.fittura.domain.product.sku.dto.request.CompositionCreateReqDto;
 import com.fittura.domain.product.sku.dto.request.SkuCreateReqDto;
@@ -26,6 +27,9 @@ public record ProductCreateReqDto(
     @Schema(example = "COMPLETE")
     @NotNull
     ProductType productType,
+
+    @Schema(example = "PARCEL")
+    DeliveryType deliveryType,
 
     @Schema(example = "40.5")
     @NotNull @Positive
