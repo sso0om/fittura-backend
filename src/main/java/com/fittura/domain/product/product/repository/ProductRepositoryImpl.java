@@ -42,7 +42,13 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
         BooleanExpression materialCond = materialIn(condition.materials());
         boolean skuFilterExists = colorCond != null || materialCond != null;
 
-        BooleanExpression isSoldOut = isSoldOut();
+        BooleanExpression[] conditions = {
+            statusIn(condition.includedStatuses()),
+            categoryEq(condition.categoryId()),
+            keywordContains(condition.keyword()),
+            colorCond,
+            materialCond
+        };
 
         JPAQuery<ProductResDto> query = queryFactory
             .select(Projections.constructor(ProductResDto.class,
@@ -52,7 +58,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
                 product.status,
                 product.productType,
                 product.createdDate,
-                isSoldOut
+                isSoldOut()
             ))
             .distinct()
             .from(product);
@@ -61,14 +67,8 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             query.leftJoin(productSku).on(productSku.product.id.eq(product.id));
         }
 
-        List<ProductResDto> content = query
-            .where(
-                statusIn(condition.includedStatuses()),
-                categoryEq(condition.categoryId()),
-                keywordContains(condition.keyword()),
-                colorCond,
-                materialCond
-            )
+        List<ProductResDto> products = query
+            .where(conditions)
             .orderBy(getOrderSpecifier(pageable))
             .offset(pageable.getOffset())
             .limit(pageable.getPageSize())
@@ -83,16 +83,10 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
         }
 
         Long total = countQuery
-            .where(
-                statusIn(condition.includedStatuses()),
-                categoryEq(condition.categoryId()),
-                keywordContains(condition.keyword()),
-                colorCond,
-                materialCond
-            )
+            .where(conditions)
             .fetchOne();
 
-        return new PageImpl<>(content, pageable, total == null ? 0L : total);
+        return new PageImpl<>(products, pageable, total == null ? 0L : total);
     }
 
     @Override
@@ -105,6 +99,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
                 product.name,
                 product.description,
                 product.productType,
+                product.deliveryType,
                 product.status,
                 product.basePrice,
                 product.dimension.weight,
@@ -170,6 +165,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             productRow.name(),
             productRow.description(),
             productRow.productType(),
+            productRow.deliveryType(),
             productRow.status(),
             productRow.basePrice(),
             productRow.weight(),
@@ -193,6 +189,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
                 product.name,
                 product.description,
                 product.productType,
+                product.deliveryType,
                 product.status,
                 product.basePrice,
                 product.dimension.weight,
@@ -230,6 +227,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             productRow.name(),
             productRow.description(),
             productRow.productType(),
+            productRow.deliveryType(),
             productRow.status(),
             productRow.basePrice(),
             productRow.weight(),
