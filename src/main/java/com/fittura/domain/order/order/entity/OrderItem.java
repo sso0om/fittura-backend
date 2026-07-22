@@ -102,6 +102,7 @@ public class OrderItem extends BaseEntity {
     }
 
     public void assignDelivery(Long deliveryId) {
+        // TODO: delivery의 order와 orderItem의 Order 일치 여부는 delivery 생성 로직에서 진행
         this.deliveryId = deliveryId;
     }
 
