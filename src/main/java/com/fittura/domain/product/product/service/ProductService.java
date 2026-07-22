@@ -75,6 +75,7 @@ public class ProductService {
             reqDto.name(),
             reqDto.description(),
             reqDto.productType(),
+            reqDto.deliveryType(),
             dimension
         );
 
@@ -110,6 +111,7 @@ public class ProductService {
             category,
             reqDto.name(),
             reqDto.description(),
+            reqDto.deliveryType(),
             dimension
         );
     }

@@ -1,6 +1,7 @@
 package com.fittura.domain.product.product.entity;
 
 import com.fittura.domain.category.entity.Category;
+import com.fittura.domain.product.product.constant.DeliveryType;
 import com.fittura.domain.product.product.constant.ProductStatus;
 import com.fittura.domain.product.product.constant.ProductType;
 import com.fittura.domain.product.product.error.ProductErrorCode;
@@ -44,6 +45,10 @@ public class Product extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
+    private DeliveryType deliveryType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
     private ProductStatus status;
 
     @Column(nullable = false)
@@ -67,6 +72,7 @@ public class Product extends BaseEntity {
         String name,
         String description,
         ProductType productType,
+        DeliveryType deliveryType,
         Dimension dimension
     ) {
         Objects.requireNonNull(category, "category must not be null");
@@ -77,6 +83,7 @@ public class Product extends BaseEntity {
             .name(name)
             .description(description)
             .productType(productType)
+            .deliveryType(deliveryType)
             .basePrice(0L)
             .dimension(dimension)
             .status(ProductStatus.DISABLED)
@@ -101,6 +108,7 @@ public class Product extends BaseEntity {
         Category category,
         String name,
         String description,
+        DeliveryType deliveryType,
         Dimension dimension
     ) {
         Objects.requireNonNull(category, "category must not be null");
@@ -109,6 +117,7 @@ public class Product extends BaseEntity {
         this.category = category;
         this.name = name;
         this.description = description;
+        this.deliveryType = deliveryType;
         this.dimension = dimension;
     }
 
