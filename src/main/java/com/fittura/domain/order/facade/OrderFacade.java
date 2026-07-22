@@ -3,14 +3,9 @@ package com.fittura.domain.order.facade;
 import com.fittura.domain.order.cart.entity.CartItem;
 import com.fittura.domain.order.cart.service.CartService;
 import com.fittura.domain.order.order.dto.request.OrderCreateReqDto;
-import com.fittura.domain.order.order.dto.request.OrderSearchCondition;
-import com.fittura.domain.order.order.dto.response.OrderWithDeliveryResDto;
-import com.fittura.domain.order.order.dto.response.OrderWithAllResDto;
 import com.fittura.domain.order.order.entity.Order;
 import com.fittura.domain.order.order.service.OrderService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,15 +17,6 @@ public class OrderFacade {
 
     private final OrderService orderService;
     private final CartService cartService;
-
-    public Page<OrderWithDeliveryResDto> getOrders(Long memberId, OrderSearchCondition searchCondition, Pageable pageable) {
-        return orderService.getOrders(memberId, searchCondition, pageable);
-    }
-
-    @Transactional(readOnly = true)
-    public OrderWithAllResDto getOrderByIdAndMember(Long orderId, Long memberId) {
-        return orderService.getOrderByIdAndMember(orderId, memberId);
-    }
 
     @Transactional
     public Long createOrder(Long memberId, OrderCreateReqDto reqDto) {

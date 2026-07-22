@@ -1,6 +1,5 @@
 package com.fittura.domain.product.product.dto.response;
 
-import com.fittura.domain.product.product.constant.DeliveryType;
 import com.fittura.domain.product.product.constant.ProductStatus;
 import com.fittura.domain.product.product.constant.ProductType;
 import com.fittura.domain.product.sku.dto.response.SkuResDto;
@@ -14,7 +13,6 @@ public record ProductWithSkuResDto(
     String name,
     String description,
     ProductType productType,
-    DeliveryType deliveryType,
     ProductStatus status,
     Long basePrice,
     Double weight,
@@ -27,11 +25,11 @@ public record ProductWithSkuResDto(
     // Projection 전용 생성자
     public ProductWithSkuResDto(
         Long id, String name, String description,
-        ProductType productType, DeliveryType deliveryType, ProductStatus status,
+        ProductType productType, ProductStatus status,
         Long basePrice, Double weight, Double width,
         Double height, Double depth, boolean isSoldOut
     ) {
-        this(id, name, description, productType, deliveryType, status,
+        this(id, name, description, productType, status,
             basePrice, weight, width, height, depth, isSoldOut, List.of());
     }
 }

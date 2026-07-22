@@ -3,9 +3,6 @@ package com.fittura.domain.order.order.service;
 import com.fittura.domain.order.cart.entity.CartItem;
 import com.fittura.domain.order.order.dto.request.AddressCreateReqDto;
 import com.fittura.domain.order.order.dto.request.OrderCreateReqDto;
-import com.fittura.domain.order.order.dto.request.OrderSearchCondition;
-import com.fittura.domain.order.order.dto.response.OrderWithDeliveryResDto;
-import com.fittura.domain.order.order.dto.response.OrderWithAllResDto;
 import com.fittura.domain.order.order.entity.Order;
 import com.fittura.domain.order.order.entity.OrderAddress;
 import com.fittura.domain.order.order.entity.OrderItem;
@@ -17,8 +14,6 @@ import com.fittura.domain.product.sku.entity.ProductSku;
 import com.fittura.global.error.ItemError;
 import com.fittura.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -33,15 +28,6 @@ public class OrderService {
     private final OrderAddressRepository addressRepository;
 
     // ========== 주문 ==========
-
-    public Page<OrderWithDeliveryResDto> getOrders(Long memberId, OrderSearchCondition searchCondition, Pageable pageable) {
-        return orderRepository.findOrders(memberId, searchCondition, pageable);
-    }
-
-    public OrderWithAllResDto getOrderByIdAndMember(Long orderId, Long memberId) {
-        return orderRepository.findWithAllByIdAndMemberId(orderId, memberId)
-            .orElseThrow(() -> new ServiceException(OrderErrorCode.NOT_FOUND_ORDER));
-    }
 
     public Order createOrder(Long memberId, OrderCreateReqDto reqDto) {
         Order order = Order.create(memberId, reqDto.pointUsedAmount());
