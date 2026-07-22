@@ -18,7 +18,15 @@ import static lombok.AccessLevel.PROTECTED;
 
 @Getter
 @Entity
-@Table(name = "order_items")
+@Table(
+    name = "order_items",
+    indexes = {
+        @Index(
+            name = "idx_order_items_delivery_id",
+            columnList = "delivery_id"
+        )
+    }
+)
 @NoArgsConstructor(access = PROTECTED)
 @AllArgsConstructor(access = PRIVATE)
 @Builder(access = PRIVATE)
@@ -33,6 +41,9 @@ public class OrderItem extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sku_id", nullable = false)
     private ProductSku sku;
+
+    @Column
+    private Long deliveryId;
 
     @Column(nullable = false)
     private String productName;
@@ -88,6 +99,10 @@ public class OrderItem extends BaseEntity {
         // TODO: promotion 기능 때 반영 예정
         this.discountAmount = discountAmount;
         this.itemTotalAmount = itemTotalAmount - discountAmount;
+    }
+
+    public void assignDelivery(Long deliveryId) {
+        this.deliveryId = deliveryId;
     }
 
     private static void validateQuantity(Integer quantity) {
