@@ -3,6 +3,9 @@ package com.fittura.domain.order.order.controller;
 import com.fittura.domain.category.entity.Category;
 import com.fittura.domain.category.repository.CategoryRepository;
 import com.fittura.domain.category.support.CategoryFixture;
+import com.fittura.domain.delivery.delivery.entitiy.Delivery;
+import com.fittura.domain.delivery.delivery.repository.DeliveryRepository;
+import com.fittura.domain.delivery.delivery.support.DeliveryFixture;
 import com.fittura.domain.order.cart.entity.Cart;
 import com.fittura.domain.order.cart.entity.CartItem;
 import com.fittura.domain.order.cart.error.CartErrorCode;
@@ -12,6 +15,7 @@ import com.fittura.domain.order.cart.support.CartFixture;
 import com.fittura.domain.order.cart.support.CartItemFixture;
 import com.fittura.domain.order.order.entity.Order;
 import com.fittura.domain.order.order.entity.OrderAddress;
+import com.fittura.domain.order.order.entity.OrderItem;
 import com.fittura.domain.order.order.error.OrderErrorCode;
 import com.fittura.domain.order.order.repository.OrderAddressRepository;
 import com.fittura.domain.order.order.repository.OrderItemRepository;
@@ -19,6 +23,7 @@ import com.fittura.domain.order.order.repository.OrderRepository;
 import com.fittura.domain.order.order.support.OrderAddressFixture;
 import com.fittura.domain.order.order.support.OrderFixture;
 import com.fittura.domain.order.order.support.OrderItemFixture;
+import com.fittura.domain.product.product.constant.DeliveryType;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.repository.ProductRepository;
 import com.fittura.domain.product.product.support.ProductFixture;
@@ -31,6 +36,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -51,10 +59,144 @@ class OrderControllerTest extends IntegrationTestBase {
     @Autowired private CategoryRepository categoryRepository;
     @Autowired private ProductRepository productRepository;
     @Autowired private ProductSkuRepository productSkuRepository;
+    @Autowired private DeliveryRepository deliveryRepository;
 
     private static final String ORDER_URL = "/api/v1/orders";
+    private static final LocalDateTime SEARCH_START = LocalDate.now().minusMonths(1).atStartOfDay();
+    private static final LocalDateTime SEARCH_END = LocalDate.now().plusDays(1).atStartOfDay();
 
-// ========== 주문 조회 ==========
+    // ========== 주문 목록 조회 ==========
+
+    @Test
+    @DisplayName("주문 목록 조회 성공 - 배송 정보 포함")
+    void getOrdersSuccess_withDelivery() throws Exception {
+        // given
+        Long memberId = 40L;
+        ProductSku sku = savedDefaultSku();
+        createOrderWithDelivery(memberId, sku, 2, DeliveryType.PARCEL);
+
+        // when & then
+        mockMvc.perform(get(ORDER_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .param("startDate", SEARCH_START.toString())
+                .param("endDate", SEARCH_END.toString()))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.message").value("주문 목록이 조회되었습니다."))
+            .andExpect(jsonPath("$.data.content.length()").value(1))
+            .andExpect(jsonPath("$.data.content[0].deliveries.length()").value(1))
+            .andExpect(jsonPath("$.data.content[0].deliveries[0].deliveryType").value("PARCEL"))
+            .andExpect(jsonPath("$.data.content[0].deliveries[0].status").value("READY"))
+            .andExpect(jsonPath("$.data.content[0].deliveries[0].itemCnt").value(1))
+            .andExpect(jsonPath("$.data.content[0].deliveries[0].repProductName").value("A Desk"));
+    }
+
+    @Test
+    @DisplayName("주문 목록 조회 성공 - 배송 유형별로 여러 배송")
+    void getOrdersSuccess_multipleDeliveries() throws Exception {
+        // given
+        Long memberId = 41L;
+        ProductSku parcelSku = savedDefaultSku();
+        ProductSku installSku = savedDefaultSku();
+        createOrderWithMultipleDeliveries(memberId, parcelSku, installSku);
+
+        // when & then
+        mockMvc.perform(get(ORDER_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .param("startDate", SEARCH_START.toString())
+                .param("endDate", SEARCH_END.toString()))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.content.length()").value(1))
+            .andExpect(jsonPath("$.data.content[0].deliveries.length()").value(2))
+            .andExpect(jsonPath("$.data.content[0].deliveries[*].deliveryType",
+                containsInAnyOrder("PARCEL", "INSTALLATION")));
+    }
+
+    @Test
+    @DisplayName("주문 목록 조회 성공 - 배송 없는 주문은 deliveries 빈 배열")
+    void getOrdersSuccess_noDelivery() throws Exception {
+        // given
+        Long memberId = 42L;
+        ProductSku sku = savedDefaultSku();
+        createOrderWithItem(memberId, sku, 1);   // 배송 미생성
+
+        // when & then
+        mockMvc.perform(get(ORDER_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .param("startDate", SEARCH_START.toString())
+                .param("endDate", SEARCH_END.toString()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.content.length()").value(1))
+            .andExpect(jsonPath("$.data.content[0].deliveries.length()").value(0));
+    }
+
+    @Test
+    @DisplayName("주문 목록 조회 - 본인 주문만 조회됨")
+    void getOrdersSuccess_onlyOwn() throws Exception {
+        // given
+        Long memberId = 43L;
+        Long otherMemberId = 44L;
+        ProductSku sku = savedDefaultSku();
+        createOrderWithDelivery(memberId, sku, 1, DeliveryType.PARCEL);
+        createOrderWithDelivery(otherMemberId, sku, 1, DeliveryType.PARCEL);
+
+        // when & then
+        mockMvc.perform(get(ORDER_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .param("startDate", SEARCH_START.toString())
+                .param("endDate", SEARCH_END.toString()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.content.length()").value(1));
+    }
+
+    @Test
+    @DisplayName("주문 목록 조회 - 상품명 검색 매칭/미매칭")
+    void getOrdersSuccess_productNameFilter() throws Exception {
+        // given
+        Long memberId = 45L;
+        ProductSku sku = savedDefaultSku();   // "A Desk"
+        createOrderWithDelivery(memberId, sku, 1, DeliveryType.PARCEL);
+
+        // 매칭
+        mockMvc.perform(get(ORDER_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .param("startDate", SEARCH_START.toString())
+                .param("endDate", SEARCH_END.toString())
+                .param("productName", "Desk"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.content.length()").value(1));
+
+        // 미매칭
+        mockMvc.perform(get(ORDER_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .param("startDate", SEARCH_START.toString())
+                .param("endDate", SEARCH_END.toString())
+                .param("productName", "존재안함"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.content.length()").value(0));
+    }
+
+    @Test
+    @DisplayName("주문 목록 조회 실패 - 날짜 역전")
+    void getOrdersFail_invalidDateRange() throws Exception {
+        // given
+        Long memberId = 46L;
+        LocalDateTime start = LocalDate.now().atStartOfDay();
+        LocalDateTime end = LocalDate.now().minusMonths(1).atStartOfDay();
+
+        // when & then
+        mockMvc.perform(get(ORDER_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .param("startDate", start.toString())
+                .param("endDate", end.toString()))
+            .andDo(print())
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value(OrderErrorCode.DATE_RANGE_INVALID.getCode()));
+    }
+
+
+    // ========== 주문 조회 ==========
 
     @Test
     @DisplayName("주문 조회 성공")
@@ -419,6 +561,45 @@ class OrderControllerTest extends IntegrationTestBase {
 
         OrderAddress address = OrderAddressFixture.address(order);
         addressRepository.save(address);
+
+        return order;
+    }
+
+    private Order createOrderWithDelivery(Long memberId, ProductSku sku, Integer quantity, DeliveryType type) {
+        Order order = OrderFixture.order(memberId, 0L);
+        OrderItem item = OrderItemFixture.orderItem(order, sku, quantity);
+        order.calcFinalAmount();
+        orderRepository.save(order);
+
+        OrderAddress address = OrderAddressFixture.address(order);
+        addressRepository.save(address);
+
+        Delivery delivery = DeliveryFixture.delivery(order.getId(), type, 3000L);
+        deliveryRepository.save(delivery);
+
+        item.assignDelivery(delivery.getId());
+        orderItemRepository.save(item);
+
+        return order;
+    }
+
+    private Order createOrderWithMultipleDeliveries(Long memberId, ProductSku parcelSku, ProductSku installSku) {
+        Order order = OrderFixture.order(memberId, 0L);
+        OrderItem parcelItem = OrderItemFixture.orderItem(order, parcelSku, 1);
+        OrderItem installItem = OrderItemFixture.orderItem(order, installSku, 1);
+        order.calcFinalAmount();
+        orderRepository.save(order);
+
+        OrderAddress address = OrderAddressFixture.address(order);
+        addressRepository.save(address);
+
+        Delivery parcel = deliveryRepository.save(DeliveryFixture.parcel(order.getId()));
+        Delivery install = deliveryRepository.save(DeliveryFixture.installation(order.getId()));
+
+        parcelItem.assignDelivery(parcel.getId());
+        installItem.assignDelivery(install.getId());
+        orderItemRepository.save(parcelItem);
+        orderItemRepository.save(installItem);
 
         return order;
     }
