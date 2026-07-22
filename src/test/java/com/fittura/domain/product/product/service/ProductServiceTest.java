@@ -6,7 +6,6 @@ import com.fittura.domain.category.error.CategoryErrorCode;
 import com.fittura.domain.category.repository.CategoryRepository;
 import com.fittura.domain.category.support.CategoryFixture;
 import com.fittura.domain.product.product.constant.AttributeKey;
-import com.fittura.domain.product.product.constant.DeliveryType;
 import com.fittura.domain.product.product.constant.ProductStatus;
 import com.fittura.domain.product.product.constant.ProductType;
 import com.fittura.domain.product.product.dto.request.*;
@@ -141,7 +140,7 @@ class ProductServiceTest {
             new SkuResDto(1L, 90000L, SkuStatus.ACTIVE, null, null)
         );
         ProductWithSkuResDto productWithSkuResDto = new ProductWithSkuResDto(
-            1L, "A Desk", null, ProductType.COMPONENT, DeliveryType.PARCEL, ProductStatus.ACTIVE,
+            1L, "A Desk", null, ProductType.COMPONENT, ProductStatus.ACTIVE,
             50000L, 10.0, 100.0, 75.0, 50.0, false, skus
         );
 
@@ -185,7 +184,7 @@ class ProductServiceTest {
             new CompositionResDto(1L, "의자 다리", 4, 0)
         );
         ProductWithAllResDto productWithAllResDto = new ProductWithAllResDto(
-            1L, "A Desk", null, ProductType.COMPLETE, DeliveryType.PARCEL, ProductStatus.DISABLED,
+            1L, "A Desk", null, ProductType.COMPLETE, ProductStatus.DISABLED,
             100000L, 10.0, 100.0, 75.0, 50.0, false, skus, attributes, compositions
         );
 
@@ -222,7 +221,7 @@ class ProductServiceTest {
     void createFail_categoryNotFound() {
         // given
         ProductCreateReqDto reqDto = new ProductCreateReqDto(
-            99L, "A Desk", null, ProductType.COMPLETE, DeliveryType.PARCEL,
+            99L, "A Desk", null, ProductType.COMPLETE,
             40.5, 150.0, 100.0, 50.0,
             List.of(skuDto()),
             List.of(attributeDto()),
@@ -246,7 +245,7 @@ class ProductServiceTest {
         ReflectionTestUtils.setField(archived, "status", CategoryStatus.ARCHIVED);
 
         ProductCreateReqDto reqDto = new ProductCreateReqDto(
-            1L, "A Desk", null, ProductType.COMPLETE, DeliveryType.PARCEL,
+            1L, "A Desk", null, ProductType.COMPLETE,
             40.5, 150.0, 100.0, 50.0,
             List.of(skuDto()),
             List.of(attributeDto()),
@@ -270,7 +269,7 @@ class ProductServiceTest {
         CategoryFixture.childActive(parent); // parent에 자식 추가 → isLeaf() == false
 
         ProductCreateReqDto reqDto = new ProductCreateReqDto(
-            1L, "A Desk", null, ProductType.COMPLETE, DeliveryType.PARCEL,
+            1L, "A Desk", null, ProductType.COMPLETE,
             40.5, 150.0, 100.0, 50.0,
             List.of(skuDto()),
             List.of(attributeDto()),
@@ -291,7 +290,7 @@ class ProductServiceTest {
     void createCompleteFail_noCompositions() {
         // given
         ProductCreateReqDto reqDto = new ProductCreateReqDto(
-            1L, "A Desk", null, ProductType.COMPLETE, DeliveryType.PARCEL,
+            1L, "A Desk", null, ProductType.COMPLETE,
             40.5, 150.0, 100.0, 50.0,
             List.of(skuDto()),
             List.of(attributeDto()),
@@ -312,7 +311,7 @@ class ProductServiceTest {
     void createComponentFail_hasCompositions() {
         // given
         ProductCreateReqDto reqDto = new ProductCreateReqDto(
-            1L, "A Desk", null, ProductType.COMPONENT, DeliveryType.PARCEL,
+            1L, "A Desk", null, ProductType.COMPONENT,
             40.5, 150.0, 100.0, 50.0,
             List.of(skuDto()),
             List.of(attributeDto()),
@@ -339,7 +338,7 @@ class ProductServiceTest {
         Product product = ProductFixture.component("Old Name");
 
         ProductUpdateReqDto reqDto = new ProductUpdateReqDto(
-            1L, "New Name", "새 설명", DeliveryType.PARCEL,
+            1L, "New Name", "새 설명",
             20.0, 200.0, 120.0, 60.0,
             List.of(skuUpdateDto(null)), List.of(), List.of()
         );
@@ -360,7 +359,7 @@ class ProductServiceTest {
         // given
         Product product = ProductFixture.component("Old Name");
         ProductUpdateReqDto reqDto = new ProductUpdateReqDto(
-            99L, "New Name", null, DeliveryType.PARCEL,
+            99L, "New Name", null,
             20.0, 200.0, 120.0, 60.0,
             List.of(skuUpdateDto(null)), List.of(), List.of()
         );
@@ -383,7 +382,7 @@ class ProductServiceTest {
 
         Product product = ProductFixture.component("Old Name");
         ProductUpdateReqDto reqDto = new ProductUpdateReqDto(
-            1L, "New Name", null, DeliveryType.PARCEL,
+            1L, "New Name", null,
             20.0, 200.0, 120.0, 60.0,
             List.of(skuUpdateDto(null)), List.of(), List.of()
         );
@@ -406,7 +405,7 @@ class ProductServiceTest {
 
         Product product = ProductFixture.component("Old Name");
         ProductUpdateReqDto reqDto = new ProductUpdateReqDto(
-            1L, "New Name", null, DeliveryType.PARCEL,
+            1L, "New Name", null,
             20.0, 200.0, 120.0, 60.0,
             List.of(skuUpdateDto(null)), List.of(), List.of()
         );
