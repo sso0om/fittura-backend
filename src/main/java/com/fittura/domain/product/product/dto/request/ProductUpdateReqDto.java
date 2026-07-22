@@ -24,6 +24,7 @@ public record ProductUpdateReqDto(
     String description,
 
     @Schema(example = "PARCEL")
+    @NotNull
     DeliveryType deliveryType,
 
     @Schema(example = "40.5")
