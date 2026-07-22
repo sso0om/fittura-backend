@@ -47,10 +47,14 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
             ))
             .from(order)
             .where(conditions)
-            .orderBy(order.orderDate.desc())
+            .orderBy(order.orderDate.desc(), order.id.desc())
             .offset(pageable.getOffset())
             .limit(pageable.getPageSize())
             .fetch();
+
+        if (rows.isEmpty()) {
+            return new PageImpl<>(List.of(), pageable, 0L);
+        }
 
         List<Long> orderIds = rows.stream()
             .map(OrderWithDeliveryResDto::orderId)
