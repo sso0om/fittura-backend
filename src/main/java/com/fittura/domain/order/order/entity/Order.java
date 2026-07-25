@@ -114,6 +114,10 @@ public class Order extends BaseEntity {
         finalAmount = totalAmount - discountAmount - pointUsedAmount + deliveryFee;
     }
 
+    public void prepare() {
+        this.status = OrderStatus.PREPARING;
+    }
+
     private static void validateAmount(Long amount) {
         if (amount == null || amount < 0) {
             throw new ServiceException(OrderErrorCode.AMOUNT_MUST_BE_POSITIVE);

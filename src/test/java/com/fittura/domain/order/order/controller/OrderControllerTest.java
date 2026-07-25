@@ -557,6 +557,7 @@ class OrderControllerTest extends IntegrationTestBase {
         Order order = OrderFixture.order(memberId, 1000L);
         OrderItemFixture.orderItem(order, sku, quantity);
         order.calcFinalAmount();
+        order.prepare();
         orderRepository.save(order);
 
         OrderAddress address = OrderAddressFixture.address(order);
@@ -569,6 +570,7 @@ class OrderControllerTest extends IntegrationTestBase {
         Order order = OrderFixture.order(memberId, 0L);
         OrderItem item = OrderItemFixture.orderItem(order, sku, quantity);
         order.calcFinalAmount();
+        order.prepare();
         orderRepository.save(order);
 
         OrderAddress address = OrderAddressFixture.address(order);
@@ -588,6 +590,7 @@ class OrderControllerTest extends IntegrationTestBase {
         OrderItem parcelItem = OrderItemFixture.orderItem(order, parcelSku, 1);
         OrderItem installItem = OrderItemFixture.orderItem(order, installSku, 1);
         order.calcFinalAmount();
+        order.prepare();
         orderRepository.save(order);
 
         OrderAddress address = OrderAddressFixture.address(order);

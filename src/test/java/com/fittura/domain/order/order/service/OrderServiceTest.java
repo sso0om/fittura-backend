@@ -59,7 +59,7 @@ class OrderServiceTest {
 
     @Test
     @DisplayName("주문 조회 성공")
-    void getOrderByIdAndMemberSuccess() {
+    void getOrderDetailSuccess() {
         // given
         Long orderId = 1L;
         Long memberId = 1L;
@@ -76,7 +76,7 @@ class OrderServiceTest {
             .willReturn(Optional.of(dto));
 
         // when
-        OrderWithAllResDto result = orderService.getOrderByIdAndMember(orderId, memberId);
+        OrderWithAllResDto result = orderService.getOrderDetail(orderId, memberId);
 
         // then
         assertThat(result).isEqualTo(dto);
@@ -84,7 +84,7 @@ class OrderServiceTest {
 
     @Test
     @DisplayName("주문 조회 실패 - 존재하지 않거나 본인 주문 아님")
-    void getOrderByIdAndMemberFail_notFound() {
+    void getOrderDetailFail_notFound() {
         // given
         Long orderId = 999L;
         Long memberId = 1L;
@@ -92,7 +92,7 @@ class OrderServiceTest {
             .willReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> orderService.getOrderByIdAndMember(orderId, memberId))
+        assertThatThrownBy(() -> orderService.getOrderDetail(orderId, memberId))
             .isInstanceOf(ServiceException.class)
             .satisfies(e -> assertThat(((ServiceException) e).getErrorCode())
                 .isEqualTo(OrderErrorCode.NOT_FOUND_ORDER));

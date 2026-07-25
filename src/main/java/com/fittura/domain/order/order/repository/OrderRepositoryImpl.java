@@ -18,6 +18,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.fittura.domain.delivery.delivery.entitiy.QDelivery.delivery;
+import static com.fittura.domain.order.order.constant.OrderStatus.*;
 import static com.fittura.domain.order.order.entity.QOrder.order;
 import static com.fittura.domain.order.order.entity.QOrderAddress.orderAddress;
 import static com.fittura.domain.order.order.entity.QOrderItem.orderItem;
@@ -33,6 +34,7 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
             order.memberId.eq(memberId),
             order.orderDate.goe(condition.startDate()),
             order.orderDate.lt(condition.endDate()),
+            order.status.in(PAID, PREPARING, COMPLETED, CANCEL_REQUESTED, CANCELLED, RETURN_REQUESTED, RETURNED),
             orderNumberEq(condition.orderNumber()),
             productNameContains(condition.productName())
         };

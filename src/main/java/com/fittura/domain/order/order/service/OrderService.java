@@ -38,7 +38,7 @@ public class OrderService {
         return orderRepository.findOrders(memberId, searchCondition, pageable);
     }
 
-    public OrderWithAllResDto getOrderByIdAndMember(Long orderId, Long memberId) {
+    public OrderWithAllResDto getOrderDetail(Long orderId, Long memberId) {
         return orderRepository.findWithAllByIdAndMemberId(orderId, memberId)
             .orElseThrow(() -> new ServiceException(OrderErrorCode.NOT_FOUND_ORDER));
     }
