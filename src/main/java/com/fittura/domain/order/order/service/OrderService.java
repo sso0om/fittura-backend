@@ -4,8 +4,8 @@ import com.fittura.domain.order.cart.entity.CartItem;
 import com.fittura.domain.order.order.dto.request.AddressCreateReqDto;
 import com.fittura.domain.order.order.dto.request.OrderCreateReqDto;
 import com.fittura.domain.order.order.dto.request.OrderSearchCondition;
-import com.fittura.domain.order.order.dto.response.OrderWithDeliveryResDto;
 import com.fittura.domain.order.order.dto.response.OrderWithAllResDto;
+import com.fittura.domain.order.order.dto.response.OrderWithDeliveryResDto;
 import com.fittura.domain.order.order.entity.Order;
 import com.fittura.domain.order.order.entity.OrderAddress;
 import com.fittura.domain.order.order.entity.OrderItem;
@@ -40,6 +40,11 @@ public class OrderService {
 
     public OrderWithAllResDto getOrderDetail(Long orderId, Long memberId) {
         return orderRepository.findWithAllByIdAndMemberId(orderId, memberId)
+            .orElseThrow(() -> new ServiceException(OrderErrorCode.NOT_FOUND_ORDER));
+    }
+
+    public Order getOrder(Long orderId, Long memberId) {
+        return orderRepository.findByIdAndMemberId(orderId, memberId)
             .orElseThrow(() -> new ServiceException(OrderErrorCode.NOT_FOUND_ORDER));
     }
 
@@ -98,6 +103,22 @@ public class OrderService {
 
         if (!errors.isEmpty()) {
             throw new ServiceException(OrderErrorCode.CART_ITEMS_NOT_VALID, errors);
+        }
+    }
+
+    public void validateOrderItems(List<OrderItem> orderItems) {
+        List<ItemError> errors = new ArrayList<>();
+
+        for (OrderItem orderItem : orderItems) {
+            if (!orderItem.isOrdered()) {
+                errors.add(ItemError.of(orderItem.getProductName(), OrderErrorCode.NOT_VALID_STATUS));
+            }
+
+            // TODO: claim 수량 체크
+        }
+
+        if (!errors.isEmpty()) {
+            throw new ServiceException(OrderErrorCode.CLAIM_ITEMS_NOT_VALID);
         }
     }
 }

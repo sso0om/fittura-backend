@@ -2,6 +2,7 @@ package com.fittura.domain.order.order.entity;
 
 import com.fittura.domain.order.order.constant.OrderStatus;
 import com.fittura.domain.order.order.error.OrderErrorCode;
+import com.fittura.global.error.CommonErrorCode;
 import com.fittura.global.exception.ServiceException;
 import com.fittura.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
@@ -117,6 +118,23 @@ public class Order extends BaseEntity {
     public void prepare() {
         this.status = OrderStatus.PREPARING;
     }
+
+
+    //  ===== 유효성 검증 =====
+
+    public void validateCancel() {
+        switch (status) {
+            case PAID, PREPARING: return;
+            case COMPLETED: throw new ServiceException(OrderErrorCode.COMPLETED_CAN_NOT_CANCEL);
+            case CANCEL_REQUESTED: throw new ServiceException(OrderErrorCode.ALREADY_CANCEL_REQUESTED);
+            case PENDING, CANCELLED, RETURN_REQUESTED, RETURNED:
+                throw new ServiceException(OrderErrorCode.NOT_VALID_STATUS);
+            default: throw new ServiceException(CommonErrorCode.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    // ===== private method =====
 
     private static void validateAmount(Long amount) {
         if (amount == null || amount < 0) {

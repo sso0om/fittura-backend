@@ -106,6 +106,10 @@ public class OrderItem extends BaseEntity {
         this.deliveryId = deliveryId;
     }
 
+    public boolean isOrdered() {
+        return status == OrderItemStatus.ORDERED;
+    }
+
     private static void validateQuantity(Integer quantity) {
         if (quantity == null || quantity < 1) {
             throw new ServiceException(OrderErrorCode.QUANTITY_MUST_BE_POSITIVE);

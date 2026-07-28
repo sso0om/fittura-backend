@@ -1,6 +1,7 @@
 package com.fittura.domain.order.order.controller;
 
 import com.fittura.domain.order.facade.OrderFacade;
+import com.fittura.domain.order.order.dto.request.ClaimOrderReqDto;
 import com.fittura.domain.order.order.dto.request.OrderCreateReqDto;
 import com.fittura.domain.order.order.dto.request.OrderSearchCondition;
 import com.fittura.domain.order.order.dto.response.OrderWithAllResDto;
@@ -50,13 +51,13 @@ public class OrderController {
         return ResponseEntity.ok(RsData.success("주문 목록이 조회되었습니다.", resDtos));
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{orderId}")
     @Operation(summary = "주문 조회", description = "주문 조회 API")
     public ResponseEntity<RsData<OrderWithAllResDto>> getOrder(
         @LogInMemberId Long memberId,
-        @PathVariable Long id
+        @PathVariable Long orderId
     ) {
-        OrderWithAllResDto resDto = orderFacade.getOrderByIdAndMember(id, memberId);
+        OrderWithAllResDto resDto = orderFacade.getOrderByIdAndMember(orderId, memberId);
         return ResponseEntity.ok(RsData.success("주문이 조회되었습니다.", resDto));
     }
 
@@ -70,5 +71,16 @@ public class OrderController {
         return ResponseEntity
             .status(HttpStatus.CREATED)
             .body(RsData.createSuccess("주문이 생성되었습니다.", orderId));
+    }
+
+    @PostMapping("{orderId}/cancel")
+    @Operation(summary = "주문 취소", description = "주문 취소 API")
+    public ResponseEntity<RsData<Void>> updateOrder(
+        @LogInMemberId Long memberId,
+        @PathVariable Long orderId,
+        @RequestBody @Valid ClaimOrderReqDto reqDto
+    ) {
+        orderFacade.cancelOrder(memberId, orderId, reqDto);
+        return ResponseEntity.ok(RsData.success("주문이 취소되었습니다.", null));
     }
 }
