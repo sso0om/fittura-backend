@@ -7,6 +7,7 @@ import com.fittura.domain.order.order.dto.request.OrderCreateReqDto;
 import com.fittura.domain.order.order.dto.request.OrderSearchCondition;
 import com.fittura.domain.order.order.dto.response.OrderWithAllResDto;
 import com.fittura.domain.order.order.dto.response.OrderWithDeliveryResDto;
+import com.fittura.domain.order.order.entity.Claim;
 import com.fittura.domain.order.order.entity.Order;
 import com.fittura.domain.order.order.service.OrderService;
 import lombok.RequiredArgsConstructor;
@@ -57,7 +58,7 @@ public class OrderFacade {
 
         // TODO: Delivery 목록 조회, 상태 검증
 
-        // OrderClaim 생성 (CANCEL, 사유, 대상 아이템)
+        Claim claim = orderService.createCancelClaim(order, reqDto);
 
         // SKU 잠금 후 재고 롤백
 

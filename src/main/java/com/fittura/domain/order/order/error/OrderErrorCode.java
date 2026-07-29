@@ -24,9 +24,11 @@ public enum OrderErrorCode implements ErrorCode {
     NOT_VALID_STATUS(HttpStatus.BAD_REQUEST, "OR400-12", "주문 상태를 확인해주세요."),
     NO_CANCELLABLE_ITEM(HttpStatus.BAD_REQUEST, "OR400-13", "취소 가능한 상품이 없습니다."),
     CLAIM_ITEMS_NOT_VALID(HttpStatus.BAD_REQUEST, "OR400-14" , "취소/반품/교환 불가한 상품이 있습니다." ),
+    QUANTITY_NOT_VALID(HttpStatus.BAD_REQUEST, "OR400-15" , "주문한 수량 이하로 취소/반품/교환 가능합니다." ),
 
     // 404
-    NOT_FOUND_ORDER(HttpStatus.NOT_FOUND, "OR404-01", "주문을 찾을 수 없습니다."),;
+    NOT_FOUND_ORDER(HttpStatus.NOT_FOUND, "OR404-01", "주문을 찾을 수 없습니다."),
+    NOT_FOUND_ORDER_ITEM(HttpStatus.NOT_FOUND, "OR404-02", "주문 상품을 찾을 수 없습니다." ),;
 
     private final HttpStatus status;
     private final String code;

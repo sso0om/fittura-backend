@@ -1,15 +1,13 @@
 package com.fittura.domain.order.order.service;
 
 import com.fittura.domain.order.cart.entity.CartItem;
-import com.fittura.domain.order.order.dto.request.AddressCreateReqDto;
-import com.fittura.domain.order.order.dto.request.OrderCreateReqDto;
-import com.fittura.domain.order.order.dto.request.OrderSearchCondition;
+import com.fittura.domain.order.order.constant.ClaimType;
+import com.fittura.domain.order.order.dto.request.*;
 import com.fittura.domain.order.order.dto.response.OrderWithAllResDto;
 import com.fittura.domain.order.order.dto.response.OrderWithDeliveryResDto;
-import com.fittura.domain.order.order.entity.Order;
-import com.fittura.domain.order.order.entity.OrderAddress;
-import com.fittura.domain.order.order.entity.OrderItem;
+import com.fittura.domain.order.order.entity.*;
 import com.fittura.domain.order.order.error.OrderErrorCode;
+import com.fittura.domain.order.order.repository.ClaimRepository;
 import com.fittura.domain.order.order.repository.OrderAddressRepository;
 import com.fittura.domain.order.order.repository.OrderItemRepository;
 import com.fittura.domain.order.order.repository.OrderRepository;
@@ -23,6 +21,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +31,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final OrderAddressRepository addressRepository;
+    private final ClaimRepository claimRepository;
 
     // ========== 주문 ==========
 
@@ -83,6 +84,31 @@ public class OrderService {
     }
 
 
+    // ========== 취소/환불/교환 ==========
+
+    public Claim createCancelClaim(Order order, ClaimOrderReqDto reqDto) {
+        Map<Long, Integer> quantityByItemId = reqDto.claimItems().stream()
+            .collect(Collectors.toMap(
+                ClaimItemReqDto::orderItemId,
+                ClaimItemReqDto::quantity
+            ));
+
+        List<OrderItem> orderItems = order.getItems().stream()
+            .filter(oi -> quantityByItemId.containsKey(oi.getId()))
+            .toList();
+
+        validateClaimItems(orderItems, quantityByItemId);
+
+        Claim claim = Claim.create(order, ClaimType.CANCEL, reqDto.reason(), reqDto.reasonDetail());
+        for (OrderItem orderItem : orderItems) {
+            ClaimItem.create(claim, orderItem, quantityByItemId.get(orderItem.getId()));
+        }
+        claimRepository.save(claim);
+
+        return claim;
+    }
+
+
     // ========== 유효성 검사 ==========
 
     public void validateCartItems(List<CartItem> cartItems) {
@@ -106,19 +132,23 @@ public class OrderService {
         }
     }
 
-    public void validateOrderItems(List<OrderItem> orderItems) {
+    private void validateClaimItems(List<OrderItem> orderItems, Map<Long, Integer> quantityByItemId) {
+        if (orderItems.size() != quantityByItemId.size()) {
+            throw new ServiceException(OrderErrorCode.NOT_FOUND_ORDER_ITEM);
+        }
+
         List<ItemError> errors = new ArrayList<>();
 
         for (OrderItem orderItem : orderItems) {
             if (!orderItem.isOrdered()) {
                 errors.add(ItemError.of(orderItem.getProductName(), OrderErrorCode.NOT_VALID_STATUS));
+            } else if (!orderItem.isQuantityValid(quantityByItemId.get(orderItem.getId()))) {
+                errors.add(ItemError.of(orderItem.getProductName(), OrderErrorCode.QUANTITY_NOT_VALID));
             }
-
-            // TODO: claim 수량 체크
         }
 
         if (!errors.isEmpty()) {
-            throw new ServiceException(OrderErrorCode.CLAIM_ITEMS_NOT_VALID);
+            throw new ServiceException(OrderErrorCode.CLAIM_ITEMS_NOT_VALID, errors);
         }
     }
 }

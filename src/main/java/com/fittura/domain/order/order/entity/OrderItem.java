@@ -11,6 +11,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import static lombok.AccessLevel.PRIVATE;
@@ -41,6 +43,10 @@ public class OrderItem extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sku_id", nullable = false)
     private ProductSku sku;
+
+    @Builder.Default
+    @OneToMany(mappedBy = "orderItem", cascade = CascadeType.ALL)
+    private List<ClaimItem> claimItems = new ArrayList<>();
 
     @Column
     private Long deliveryId;
@@ -95,10 +101,23 @@ public class OrderItem extends BaseEntity {
         return orderItem;
     }
 
+    public void addClaimItem(ClaimItem claimItem) {
+        claimItems.add(claimItem);
+    }
+
     public void calcDiscountAmount(Long discountAmount) {
         // TODO: promotion 기능 때 반영 예정
         this.discountAmount = discountAmount;
         this.itemTotalAmount = itemTotalAmount - discountAmount;
+    }
+
+    public Long calcRefundAmount(int claimQuantity) {
+        int remaining = quantity - getTotalClaimQuantity();
+
+        if (claimQuantity == remaining) {
+            return itemTotalAmount - getTotalRefundedAmount();
+        }
+        return itemTotalAmount * claimQuantity / quantity;
     }
 
     public void assignDelivery(Long deliveryId) {
@@ -110,6 +129,13 @@ public class OrderItem extends BaseEntity {
         return status == OrderItemStatus.ORDERED;
     }
 
+
+    // ===== 유효성 검증 =====
+
+    public boolean isQuantityValid(Integer claimQuantity) {
+        return quantity - getTotalClaimQuantity() - claimQuantity >= 0;
+    }
+
     private static void validateQuantity(Integer quantity) {
         if (quantity == null || quantity < 1) {
             throw new ServiceException(OrderErrorCode.QUANTITY_MUST_BE_POSITIVE);
@@ -117,5 +143,19 @@ public class OrderItem extends BaseEntity {
         if (quantity > MAX_QUANTITY) {
             throw new ServiceException(OrderErrorCode.QUANTITY_EXCEEDED);
         }
+    }
+
+    private int getTotalClaimQuantity() {
+        return claimItems.stream()
+            .filter(ci -> ci.getClaim().isConfirmed())
+            .mapToInt(ClaimItem::getQuantity)
+            .sum();
+    }
+
+    private Long getTotalRefundedAmount() {
+        return claimItems.stream()
+            .filter(ci -> ci.getClaim().isConfirmed())
+            .mapToLong(ClaimItem::getRefundAmount)
+            .sum();
     }
 }
