@@ -107,6 +107,10 @@ public class SkuService {
         }
     }
 
+    public void restoreStock(Map<Long, Integer> quantityBySkuId) {
+        quantityBySkuId.forEach(productSkuRepository::restoreStock);
+    }
+
 
     // ========== 구성품 ==========
 

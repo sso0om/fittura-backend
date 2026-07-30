@@ -1,0 +1,15 @@
+name: Enforce PR source branch
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  check-source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate head branch
+        run: |
+          if [ "${{ github.head_ref }}" != "develop" ]; then
+            echo "::error::main can only receive PRs from develop. Got: ${{ github.head_ref }}"
+            exit 1
+          fi
