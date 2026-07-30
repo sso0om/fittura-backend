@@ -125,10 +125,26 @@ public class OrderItem extends BaseEntity {
         this.deliveryId = deliveryId;
     }
 
+
+    // ===== 상태 =====
+
+    public void requestCancel() {
+        this.status = OrderItemStatus.CANCEL_REQUESTED;
+    }
+
+    public void reflectCancel() {
+        if (quantity == getTotalClaimQuantity()) {
+            this.status = OrderItemStatus.CANCELLED;
+        }
+    }
+
     public boolean isOrdered() {
         return status == OrderItemStatus.ORDERED;
     }
 
+    public boolean isCanceled() {
+        return status == OrderItemStatus.CANCELLED;
+    }
 
     // ===== 유효성 검증 =====
 
@@ -144,6 +160,9 @@ public class OrderItem extends BaseEntity {
             throw new ServiceException(OrderErrorCode.QUANTITY_EXCEEDED);
         }
     }
+
+
+    // ===== 헬퍼 메서드 =====
 
     private int getTotalClaimQuantity() {
         return claimItems.stream()

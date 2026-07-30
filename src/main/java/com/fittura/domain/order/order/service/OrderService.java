@@ -87,17 +87,8 @@ public class OrderService {
     // ========== 취소/환불/교환 ==========
 
     public Claim createCancelClaim(Order order, ClaimOrderReqDto reqDto) {
-        Map<Long, Integer> quantityByItemId = reqDto.claimItems().stream()
-            .collect(Collectors.toMap(
-                ClaimItemReqDto::orderItemId,
-                ClaimItemReqDto::quantity
-            ));
-
-        List<OrderItem> orderItems = order.getItems().stream()
-            .filter(oi -> quantityByItemId.containsKey(oi.getId()))
-            .toList();
-
-        validateClaimItems(orderItems, quantityByItemId);
+        Map<Long, Integer> quantityByItemId = getQuantityByItemId(reqDto);
+        List<OrderItem> orderItems = getClaimItems(order, quantityByItemId);
 
         Claim claim = Claim.create(order, ClaimType.CANCEL, reqDto.reason(), reqDto.reasonDetail());
         for (OrderItem orderItem : orderItems) {
@@ -106,6 +97,20 @@ public class OrderService {
         claimRepository.save(claim);
 
         return claim;
+    }
+
+    public void requestCancel(Order order, List<ClaimItem> claimItems) {
+        claimItems.forEach(ci -> ci.getOrderItem().requestCancel());
+    }
+
+    public void cancelItems(List<ClaimItem> claimItems) {
+        claimItems.forEach(ci -> ci.getOrderItem().reflectCancel());
+    }
+
+    public void cancelIfAllItemsCancelled(Order order) {
+        boolean allCancelled = order.getItems().stream().allMatch(OrderItem::isCanceled);
+
+        if (allCancelled) order.cancel();
     }
 
 
@@ -150,5 +155,25 @@ public class OrderService {
         if (!errors.isEmpty()) {
             throw new ServiceException(OrderErrorCode.CLAIM_ITEMS_NOT_VALID, errors);
         }
+    }
+
+
+    // ========== 헬퍼 메서드 ==========
+
+    private Map<Long, Integer> getQuantityByItemId(ClaimOrderReqDto reqDto) {
+        return reqDto.claimItems().stream()
+            .collect(Collectors.toMap(
+                ClaimItemReqDto::orderItemId,
+                ClaimItemReqDto::quantity
+            ));
+    }
+
+    private List<OrderItem> getClaimItems(Order order, Map<Long, Integer> quantityByItemId) {
+        List<OrderItem> orderItems = order.getItems().stream()
+            .filter(oi -> quantityByItemId.containsKey(oi.getId()))
+            .toList();
+
+        validateClaimItems(orderItems, quantityByItemId);
+        return orderItems;
     }
 }

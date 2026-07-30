@@ -12,8 +12,11 @@ import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.summingInt;
 import static lombok.AccessLevel.PRIVATE;
 import static lombok.AccessLevel.PROTECTED;
 
@@ -76,6 +79,27 @@ public class Claim extends BaseEntity {
         items.add(item);
         refundAmount += item.getRefundAmount();
     }
+
+    public Map<Long, Integer> getQuantityBySkuId() {
+        return items.stream()
+            .collect(groupingBy(
+                ci -> ci.getOrderItem().getSku().getId(),
+                summingInt(ClaimItem::getQuantity)
+            ));
+    }
+
+
+    // ===== 상태 =====
+
+    public void approve() {
+        this.status = ClaimStatus.APPROVED;
+    }
+
+    public void complete() {
+        this.status = ClaimStatus.COMPLETED;
+    }
+
+    public void reject() {}
 
     public boolean isConfirmed() {
         return status != ClaimStatus.REJECTED;

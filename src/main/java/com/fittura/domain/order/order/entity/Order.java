@@ -115,8 +115,19 @@ public class Order extends BaseEntity {
         finalAmount = totalAmount - discountAmount - pointUsedAmount + deliveryFee;
     }
 
+
+    // ===== 상태 =====
+
     public void prepare() {
         this.status = OrderStatus.PREPARING;
+    }
+
+    public void cancel() {
+        this.status = OrderStatus.CANCELLED;
+    }
+
+    public boolean isPaid() {
+        return status == OrderStatus.PAID;
     }
 
 
@@ -126,15 +137,14 @@ public class Order extends BaseEntity {
         switch (status) {
             case PAID, PREPARING: return;
             case COMPLETED: throw new ServiceException(OrderErrorCode.COMPLETED_CAN_NOT_CANCEL);
-            case CANCEL_REQUESTED: throw new ServiceException(OrderErrorCode.ALREADY_CANCEL_REQUESTED);
-            case PENDING, CANCELLED, RETURN_REQUESTED, RETURNED:
+            case PENDING, CANCELLED, RETURNED:
                 throw new ServiceException(OrderErrorCode.NOT_VALID_STATUS);
             default: throw new ServiceException(CommonErrorCode.INTERNAL_SERVER_ERROR);
         }
     }
 
 
-    // ===== private method =====
+    // ===== 헬퍼 메서드 =====
 
     private static void validateAmount(Long amount) {
         if (amount == null || amount < 0) {

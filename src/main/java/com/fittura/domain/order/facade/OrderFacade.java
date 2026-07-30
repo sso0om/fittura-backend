@@ -10,6 +10,7 @@ import com.fittura.domain.order.order.dto.response.OrderWithDeliveryResDto;
 import com.fittura.domain.order.order.entity.Claim;
 import com.fittura.domain.order.order.entity.Order;
 import com.fittura.domain.order.order.service.OrderService;
+import com.fittura.domain.product.sku.service.SkuService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,6 +25,7 @@ public class OrderFacade {
 
     private final OrderService orderService;
     private final CartService cartService;
+    private final SkuService skuService;
 
     @Transactional(readOnly = true)
     public Page<OrderWithDeliveryResDto> getOrders(Long memberId, OrderSearchCondition searchCondition, Pageable pageable) {
@@ -60,12 +62,26 @@ public class OrderFacade {
 
         Claim claim = orderService.createCancelClaim(order, reqDto);
 
-        // SKU 잠금 후 재고 롤백
+        if (order.isPaid()) {
+            completeCancellation(order, claim);
+        } else {
+            orderService.requestCancel(order, claim.getItems());
+        }
 
         // TODO: OrderItem status → CANCEL_REQUESTED
+    }
+
+    public void completeCancellation(Order order, Claim claim) {
+        claim.approve();
+        skuService.restoreStock(claim.getQuantityBySkuId());
+
         // TODO: Payment 환불 (PG 취소 API)
         // TODO: Point 환급/회수
 
         // 상태 전이: OrderItem, Delivery, Order → CANCELLED
+        claim.complete();
+        orderService.cancelItems(claim.getItems());
+        // Delivery
+        orderService.cancelIfAllItemsCancelled(order);
     }
 }

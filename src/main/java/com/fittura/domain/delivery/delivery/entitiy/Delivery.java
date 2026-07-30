@@ -57,4 +57,8 @@ public class Delivery extends BaseEntity {
             .deliveryFee(deliveryFee)
             .build();
     }
+
+    public void cancel() {
+        this.status = DeliveryStatus.CANCELLED;
+    }
 }
