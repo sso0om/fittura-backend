@@ -79,7 +79,8 @@ public class Order extends BaseEntity {
         validateAmount(pointUsedAmount);
 
         LocalDateTime now = LocalDateTime.now();
-        String orderNumber = now.format(DateTimeFormatter.ofPattern("yyyyMMdd"))
+        String orderNumber = "Order-"
+            + now.format(DateTimeFormatter.ofPattern("yyyyMMdd"))
             + "-"
             + UUID.randomUUID().toString().substring(0, 8);
 
