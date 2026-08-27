@@ -127,12 +127,20 @@ public class Order extends BaseEntity {
         this.status = OrderStatus.CANCELLED;
     }
 
+    public boolean isPending() {return this.status == OrderStatus.PENDING;}
+
     public boolean isPaid() {
         return status == OrderStatus.PAID;
     }
 
 
     //  ===== 유효성 검증 =====
+
+    public void validatePayable() {
+        if (this.status != OrderStatus.PENDING) {
+            throw new ServiceException(OrderErrorCode.NOT_PAYABLE_STATUS);
+        }
+    }
 
     public void validateCancel() {
         switch (status) {
