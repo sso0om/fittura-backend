@@ -13,11 +13,10 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.summingInt;
 import static lombok.AccessLevel.PRIVATE;
 import static lombok.AccessLevel.PROTECTED;
 
@@ -116,11 +115,23 @@ public class Order extends BaseEntity {
         finalAmount = totalAmount - discountAmount - pointUsedAmount + deliveryFee;
     }
 
+    public Map<Long, Integer> getQuantityBySkuId() {
+        return items.stream()
+            .collect(groupingBy(
+                oi -> oi.getSku().getId(),
+                summingInt(OrderItem::getQuantity)
+            ));
+    }
+
 
     // ===== 상태 =====
 
     public void prepare() {
         this.status = OrderStatus.PREPARING;
+    }
+
+    public void paid() {
+        this.status = OrderStatus.PAID;
     }
 
     public void cancel() {

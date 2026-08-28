@@ -107,6 +107,13 @@ public class SkuService {
         }
     }
 
+
+    // ========== SKU - 재고 ==========
+
+    public void confirmSku(Map<Long, Integer> quantityBySkuId) {
+        quantityBySkuId.forEach(productSkuRepository::confirmStock);
+    }
+
     public void restoreStock(Map<Long, Integer> quantityBySkuId) {
         quantityBySkuId.forEach(productSkuRepository::restoreStock);
     }

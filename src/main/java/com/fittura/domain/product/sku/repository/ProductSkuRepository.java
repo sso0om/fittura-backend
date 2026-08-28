@@ -20,6 +20,15 @@ public interface ProductSkuRepository extends JpaRepository<ProductSku, Long> {
     boolean existsByProductIdAndId(Long productId, Long skuId);
 
     @Modifying
-    @Query("update ProductSku s set s.stockQuantity = s.stockQuantity + :restoreQuantity where s.id = :skuId")
+    @Query("""
+        UPDATE ProductSku s
+        SET s.reservedQuantity = s.reservedQuantity - :confirmQuantity,
+            s.stockQuantity = s.stockQuantity - :confirmQuantity
+        WHERE s.id = :skuId
+        """)
+    void confirmStock(@Param("skuId") Long skuId, @Param("restoreQuantity") Integer confirmQuantity);
+
+    @Modifying
+    @Query("UPDATE ProductSku s SET s.stockQuantity = s.stockQuantity + :restoreQuantity WHERE s.id = :skuId")
     void restoreStock(@Param("skuId") Long skuId, @Param("restoreQuantity") Integer restoreQuantity);
 }
