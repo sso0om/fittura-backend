@@ -4,6 +4,8 @@ import com.fittura.domain.payment.payment.constant.PgFailureType;
 import com.fittura.domain.payment.payment.constant.PgProvider;
 import com.fittura.domain.payment.payment.constant.PaymentMethod;
 import com.fittura.domain.payment.payment.constant.PaymentStatus;
+import com.fittura.domain.payment.payment.error.PaymentErrorCode;
+import com.fittura.global.exception.ServiceException;
 import com.fittura.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -89,5 +91,22 @@ public class Payment extends BaseEntity {
             .cancelledAmount(0L)
             .requestedDate(now)
             .build();
+    }
+
+    public void approve(String pgTransactionId, LocalDateTime approvedDate, String rawResponse) {
+        Objects.requireNonNull(approvedDate, "approvedDate must not be null");
+        Objects.requireNonNull(rawResponse, "rawResponse must not be null");
+        if (approvedDate.isBefore(requestedDate)) throw new ServiceException(PaymentErrorCode.NOT_VALID_PG);
+
+        this.status = PaymentStatus.APPROVED;
+        this.pgTransactionId = pgTransactionId;
+        this.approvedDate = approvedDate;
+        this.rawResponse = rawResponse;
+    }
+
+    public void validatePayable() {
+        if (this.status != PaymentStatus.PENDING) {
+            throw new ServiceException(PaymentErrorCode.NOT_PAYABLE_STATUS);
+        }
     }
 }
