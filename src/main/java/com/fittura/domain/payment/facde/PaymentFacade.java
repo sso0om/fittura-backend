@@ -15,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Map;
+
 @Component
 @RequiredArgsConstructor
 public class PaymentFacade {
@@ -41,14 +43,15 @@ public class PaymentFacade {
 
         PgPaymentResponse paymentRes = paymentGateway.getPayment(reqDto.paymentKey());
         // TODO: PG 실패 응답 처리
-
         paymentService.validatePgResponse(payment, paymentRes);
 
         paymentService.approvePayment(payment, paymentRes);
-        skuService.confirmSku(order.getQuantityBySkuId());
+
+        Map<Long, Integer> quantityBySkuId = order.getQuantityBySkuId();
+        skuService.confirmSku(quantityBySkuId);
         order.paid();
 
-        // TODO: CartItem 제거
+        cartService.deleteCartItems(memberId, quantityBySkuId.keySet());
 
         // Order Id 반환
         return order.getId();

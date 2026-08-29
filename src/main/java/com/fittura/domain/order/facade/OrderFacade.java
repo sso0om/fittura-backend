@@ -46,7 +46,6 @@ public class OrderFacade {
         for(CartItem cartItem : cartItems) {
             orderService.createOrderItem(cartItem, order);
         }
-        cartService.deleteCartItems(cartItems);
         orderService.createOrderAddress(order, reqDto.orderAddress());
         orderService.calcAmount(order);
 

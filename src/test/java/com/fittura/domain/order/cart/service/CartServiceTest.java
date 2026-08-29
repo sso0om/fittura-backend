@@ -26,6 +26,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -270,18 +271,14 @@ class CartServiceTest {
     @DisplayName("장바구니 아이템 일괄 삭제 성공")
     void deleteCartItemsSuccess() {
         // given
-        Product product = ProductFixture.component("A Desk");
-        ProductSku sku = ProductSkuFixture.sku(product, 10000L, 10);
-        Cart cart = CartFixture.cart(1L);
-        CartItem cartItem1 = CartItemFixture.cartItem(cart, sku, 1);
-        CartItem cartItem2 = CartItemFixture.cartItem(cart, sku, 2);
-        List<CartItem> cartItems = List.of(cartItem1, cartItem2);
+        Long memberId = 1L;
+        Set<Long> skuIds = Set.of(1L, 2L);
 
         // when
-        cartService.deleteCartItems(cartItems);
+        cartService.deleteCartItems(memberId, skuIds);
 
         // then
-        verify(cartItemRepository).deleteAll(cartItems);
+        verify(cartItemRepository).deleteByMemberIdAndSkuIds(memberId, skuIds);
     }
 
     @Test

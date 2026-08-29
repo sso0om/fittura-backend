@@ -20,7 +20,7 @@ public class MockPaymentGateway implements PaymentGateway {
     public PgPaymentResponse getPayment(String paymentKey) {
         return new PgPaymentResponse(
             paymentKey,
-            "MOCK_ORDER_NUMBER_123",
+            "MOCK_PAYMENT_NUMBER_123",
             PaymentStatus.APPROVED,
             10000L,
             LocalDateTime.now(),

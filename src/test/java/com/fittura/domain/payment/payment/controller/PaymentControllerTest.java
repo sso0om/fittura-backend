@@ -3,6 +3,11 @@ package com.fittura.domain.payment.payment.controller;
 import com.fittura.domain.category.entity.Category;
 import com.fittura.domain.category.repository.CategoryRepository;
 import com.fittura.domain.category.support.CategoryFixture;
+import com.fittura.domain.order.cart.entity.Cart;
+import com.fittura.domain.order.cart.repository.CartItemRepository;
+import com.fittura.domain.order.cart.repository.CartRepository;
+import com.fittura.domain.order.cart.support.CartFixture;
+import com.fittura.domain.order.cart.support.CartItemFixture;
 import com.fittura.domain.order.order.constant.OrderStatus;
 import com.fittura.domain.order.order.entity.Order;
 import com.fittura.domain.order.order.error.OrderErrorCode;
@@ -43,12 +48,13 @@ class PaymentControllerTest extends IntegrationTestBase {
     @Autowired private CategoryRepository categoryRepository;
     @Autowired private ProductRepository productRepository;
     @Autowired private ProductSkuRepository productSkuRepository;
+    @Autowired private CartRepository cartRepository;
+    @Autowired private CartItemRepository cartItemRepository;
     @Autowired private EntityManager entityManager;
 
     private static final String PAYMENT_URL = "/api/v1/payments";
 
-    // MockPaymentGateway가 항상 반환하는 결제 번호
-    private static final String MOCK_PG_PAYMENT_NUMBER = "MOCK_ORDER_NUMBER_123";
+    private static final String MOCK_PG_PAYMENT_NUMBER = "MOCK_PAYMENT_NUMBER_123";
 
     // ========== 결제 준비 ==========
 
@@ -178,6 +184,11 @@ class PaymentControllerTest extends IntegrationTestBase {
         // given
         Long memberId = 6L;
         ProductSku sku = savedSkuWithPrice(7000L, 100);
+        ProductSku sku2 = savedSkuWithPrice(7000L, 100);
+        Cart cart = cartRepository.save(CartFixture.cart(memberId));
+        cartItemRepository.save(CartItemFixture.cartItem(cart, sku, 1));
+        cartItemRepository.save(CartItemFixture.cartItem(cart, sku2, 2));
+
         Order order = createOrderWithItem(memberId, sku, 1);
         Payment payment = savedPaymentMatchingPg(order);
 
@@ -209,6 +220,8 @@ class PaymentControllerTest extends IntegrationTestBase {
 
         ProductSku updatedSku = productSkuRepository.findById(sku.getId()).orElseThrow();
         assertThat(updatedSku.getStockQuantity()).isEqualTo(99);
+
+        assertThat(cartItemRepository.count()).isEqualTo(1);
     }
 
     @Test

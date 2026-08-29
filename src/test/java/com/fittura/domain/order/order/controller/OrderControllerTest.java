@@ -294,7 +294,6 @@ class OrderControllerTest extends IntegrationTestBase {
         assertThat(orderRepository.count()).isEqualTo(1);
         assertThat(orderItemRepository.count()).isEqualTo(1);
         assertThat(addressRepository.count()).isEqualTo(1);
-        assertThat(cartItemRepository.findById(cartItem.getId())).isEmpty();
     }
 
     @Test
@@ -333,7 +332,6 @@ class OrderControllerTest extends IntegrationTestBase {
             .andExpect(jsonPath("$.code").value("S201-01"));
 
         assertThat(orderItemRepository.count()).isEqualTo(2);
-        assertThat(cartItemRepository.count()).isEqualTo(0);
     }
 
     @Test
