@@ -79,7 +79,7 @@ public class Payment extends BaseEntity {
         String paymentNumber = "PAY-"
             + now.format(DateTimeFormatter.ofPattern("yyyyMMdd"))
             + "-"
-            + UUID.randomUUID().toString().substring(0, 8);
+            + UUID.randomUUID().toString().replace("-", "");
 
         return Payment.builder()
             .orderId(orderId)

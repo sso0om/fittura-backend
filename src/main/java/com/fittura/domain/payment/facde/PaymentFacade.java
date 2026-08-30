@@ -53,7 +53,6 @@ public class PaymentFacade {
 
         cartService.deleteCartItems(memberId, quantityBySkuId.keySet());
 
-        // Order Id 반환
         return order.getId();
     }
 }

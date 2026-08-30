@@ -1,6 +1,8 @@
 package com.fittura.domain.payment.payment.service;
 
 import com.fittura.domain.order.order.entity.Order;
+import com.fittura.domain.payment.payment.constant.PaymentMethod;
+import com.fittura.domain.payment.payment.constant.PaymentStatus;
 import com.fittura.domain.payment.payment.dto.request.PaymentPrepareReqDto;
 import com.fittura.domain.payment.payment.dto.response.PaymentPrepareResDto;
 import com.fittura.domain.payment.payment.entity.Payment;
@@ -54,9 +56,27 @@ public class PaymentService {
     }
 
     public void validatePgResponse(Payment payment, PgPaymentResponse paymentRes) {
+        if (paymentRes.status() != PaymentStatus.APPROVED) {
+            throw new ServiceException(PaymentErrorCode.NOT_VALID_PG);
+        }
+
         if (!Objects.equals(payment.getPaymentNumber(), paymentRes.paymentNumber()) ||
             !Objects.equals(payment.getTotalAmount(), paymentRes.totalAmount())
         ) {
+            throw new ServiceException(PaymentErrorCode.NOT_VALID_PG);
+        }
+        validateMethodDetail(payment.getPaymentMethod(), paymentRes);
+    }
+
+    private static void validateMethodDetail(PaymentMethod method, PgPaymentResponse paymentRes) {
+        boolean detailMissing = switch (method) {
+            case CARD -> paymentRes.card() == null;
+            // TODO: 지원 방식 추가
+            case TRANSFER, EASY_PAY, PHONE
+                -> throw new ServiceException(PaymentErrorCode.UNSUPPORTED_PAYMENT_METHOD);
+        };
+
+        if (detailMissing) {
             throw new ServiceException(PaymentErrorCode.NOT_VALID_PG);
         }
     }
