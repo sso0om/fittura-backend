@@ -234,6 +234,8 @@ class SkuServiceTest {
     void confirmSkuSuccess() {
         // given
         Map<Long, Integer> quantityBySkuId = Map.of(1L, 3, 2L, 5);
+        given(productSkuRepository.confirmStock(1L, 3)).willReturn(1);
+        given(productSkuRepository.confirmStock(2L, 5)).willReturn(1);
 
         // when
         skuService.confirmSku(quantityBySkuId);
@@ -254,6 +256,16 @@ class SkuServiceTest {
 
         // then
         verify(productSkuRepository, never()).confirmStock(any(), any());
+    }
+
+    @Test
+    @DisplayName("재고 확정 실패 시 예외")
+    void confirmSkuFail() {
+        Map<Long, Integer> quantityBySkuId = Map.of(1L, 3);
+        given(productSkuRepository.confirmStock(1L, 3)).willReturn(0);
+
+        assertThatThrownBy(() -> skuService.confirmSku(quantityBySkuId))
+            .isInstanceOf(ServiceException.class);
     }
 
 

@@ -561,6 +561,8 @@ class OrderControllerTest extends IntegrationTestBase {
         OrderAddress address = OrderAddressFixture.address(order);
         addressRepository.save(address);
 
+        sku.reserveQuantity(quantity);
+
         return order;
     }
 

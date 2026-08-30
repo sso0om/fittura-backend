@@ -25,8 +25,10 @@ public interface ProductSkuRepository extends JpaRepository<ProductSku, Long> {
         SET s.reservedQuantity = s.reservedQuantity - :confirmQuantity,
             s.stockQuantity = s.stockQuantity - :confirmQuantity
         WHERE s.id = :skuId
+          AND s.reservedQuantity >= :confirmQuantity
+          AND s.stockQuantity >= :confirmQuantity
         """)
-    void confirmStock(@Param("skuId") Long skuId, @Param("confirmQuantity") Integer confirmQuantity);
+    int confirmStock(@Param("skuId") Long skuId, @Param("confirmQuantity") Integer confirmQuantity);
 
     @Modifying
     @Query("UPDATE ProductSku s SET s.stockQuantity = s.stockQuantity + :restoreQuantity WHERE s.id = :skuId")
