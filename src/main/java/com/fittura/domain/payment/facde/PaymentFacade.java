@@ -35,7 +35,7 @@ public class PaymentFacade {
 
     @Transactional
     public Long approvePayment(Long memberId, Long paymentId, PaymentApproveReqDto reqDto) {
-        Payment payment = paymentService.getPayment(paymentId);
+        Payment payment = paymentService.getPaymentForUpdate(paymentId);
         payment.validatePayable();
 
         Order order = orderService.getOrder(payment.getOrderId(), memberId);

@@ -29,8 +29,8 @@ public class PaymentService {
     private final PaymentCardRepository paymentCardRepository;
     private final InstitutionCodeRepository institutionCodeRepository;
 
-    public Payment getPayment(Long paymentId) {
-        return paymentRepository.findById(paymentId)
+    public Payment getPaymentForUpdate(Long paymentId) {
+        return paymentRepository.findByIdForUpdate(paymentId)
             .orElseThrow(() -> new ServiceException(PaymentErrorCode.NOT_FOUND_PAYMENT));
     }
 
