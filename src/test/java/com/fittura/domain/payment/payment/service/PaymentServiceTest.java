@@ -141,6 +141,26 @@ class PaymentServiceTest {
                 .isEqualTo(PaymentErrorCode.NOT_VALID_PG));
     }
 
+    @Test
+    @DisplayName("PG 응답 검증 실패 - 승인 상태가 아님")
+    void validatePgResponseFail_notApproved() {
+        Payment payment = PaymentFixture.payment(1L);
+        PgPaymentResponse paymentRes = new PgPaymentResponse(
+            "mock-payment-key",
+            payment.getPaymentNumber(),
+            PaymentStatus.FAILED,
+            10000L,
+            LocalDateTime.now().plusMinutes(1),
+            "{mock raw response}",
+            new PgCardResponse("11", "1234****", 0, false, "00000000")
+        );
+
+        assertThatThrownBy(() -> paymentService.validatePgResponse(payment, paymentRes))
+            .isInstanceOf(ServiceException.class)
+            .satisfies(e -> assertThat(((ServiceException) e).getErrorCode())
+                .isEqualTo(PaymentErrorCode.NOT_VALID_PG));
+    }
+
 
     // ========== 헬퍼 메서드 ==========
 
