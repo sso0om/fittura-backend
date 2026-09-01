@@ -19,6 +19,9 @@ import com.fittura.domain.payment.payment.entity.Payment;
 import com.fittura.domain.payment.payment.error.PaymentErrorCode;
 import com.fittura.domain.payment.payment.repository.PaymentRepository;
 import com.fittura.domain.payment.payment.support.PaymentFixture;
+import com.fittura.domain.payment.pg.MockPaymentGateway;
+import com.fittura.domain.payment.pg.PgCardResponse;
+import com.fittura.domain.payment.pg.PgPaymentResponse;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.repository.ProductRepository;
 import com.fittura.domain.product.product.support.ProductFixture;
@@ -27,12 +30,15 @@ import com.fittura.domain.product.sku.repository.ProductSkuRepository;
 import com.fittura.domain.product.sku.support.ProductSkuFixture;
 import com.fittura.global.IntegrationTestBase;
 import jakarta.persistence.EntityManager;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -51,10 +57,15 @@ class PaymentControllerTest extends IntegrationTestBase {
     @Autowired private CartRepository cartRepository;
     @Autowired private CartItemRepository cartItemRepository;
     @Autowired private EntityManager entityManager;
+    @Autowired private MockPaymentGateway mockGateway;
 
     private static final String PAYMENT_URL = "/api/v1/payments";
+    private static final String PAYMENT_KEY = "MOCK_PAYMENT_NUMBER_123";
 
-    private static final String MOCK_PG_PAYMENT_NUMBER = "MOCK_PAYMENT_NUMBER_123";
+    @AfterEach
+    void clearStubs() {
+        mockGateway.clear();
+    }
 
     // ========== 결제 준비 ==========
 
@@ -194,9 +205,9 @@ class PaymentControllerTest extends IntegrationTestBase {
 
         String reqBody = """
                 {
-                    "paymentKey": "mock-payment-key"
+                    "paymentKey": "%s"
                 }
-                """;
+                """.formatted(PAYMENT_KEY);
 
         // when & then
         mockMvc.perform(post(PAYMENT_URL + "/" + payment.getId())
@@ -232,9 +243,9 @@ class PaymentControllerTest extends IntegrationTestBase {
 
         String reqBody = """
                 {
-                    "paymentKey": "mock-payment-key"
+                    "paymentKey": "%s"
                 }
-                """;
+                """.formatted(PAYMENT_KEY);
 
         // when & then
         mockMvc.perform(post(PAYMENT_URL + "/999999")
@@ -258,9 +269,9 @@ class PaymentControllerTest extends IntegrationTestBase {
 
         String reqBody = """
                 {
-                    "paymentKey": "mock-payment-key"
+                    "paymentKey": "%s"
                 }
-                """;
+                """.formatted(PAYMENT_KEY);
 
         // when & then
         mockMvc.perform(post(PAYMENT_URL + "/" + payment.getId())
@@ -280,12 +291,14 @@ class PaymentControllerTest extends IntegrationTestBase {
         ProductSku sku = savedSkuWithPrice(7000L, 100);
         Order order = createOrderWithItem(memberId, sku, 1);
         Payment payment = savedPayment(order);
+        mockGateway.stub(PAYMENT_KEY,
+            pgPaymentResponse(PAYMENT_KEY, payment.getPaymentNumber(), order.getFinalAmount() + 10000L));
 
         String reqBody = """
                 {
-                    "paymentKey": "mock-payment-key"
+                    "paymentKey": "%s"
                 }
-                """;
+                """.formatted(PAYMENT_KEY);
 
         // when & then
         mockMvc.perform(post(PAYMENT_URL + "/" + payment.getId())
@@ -314,9 +327,9 @@ class PaymentControllerTest extends IntegrationTestBase {
 
         String reqBody = """
                 {
-                    "paymentKey": "mock-payment-key"
+                    "paymentKey": "%s"
                 }
-                """;
+                """.formatted(PAYMENT_KEY);
 
         // when & then
         mockMvc.perform(post(PAYMENT_URL + "/" + payment.getId())
@@ -340,9 +353,9 @@ class PaymentControllerTest extends IntegrationTestBase {
 
         String reqBody = """
                 {
-                    "paymentKey": "mock-payment-key"
+                    "paymentKey": "%s"
                 }
-                """;
+                """.formatted(PAYMENT_KEY);
 
         // when & then
         mockMvc.perform(post(PAYMENT_URL + "/" + payment.getId())
@@ -383,9 +396,26 @@ class PaymentControllerTest extends IntegrationTestBase {
         return paymentRepository.save(payment);
     }
 
-    private Payment savedPaymentMatchingPg(Order order) {
+    private Payment savedPaymentMatchingPg(Order order, String paymentKey) {
         Payment payment = savedPayment(order);
-        ReflectionTestUtils.setField(payment, "paymentNumber", MOCK_PG_PAYMENT_NUMBER);
+        ReflectionTestUtils.setField(payment, "paymentNumber", paymentKey);
+        mockGateway.stub(paymentKey, pgPaymentResponse(paymentKey, payment.getPaymentNumber(), order.getFinalAmount()));
         return payment;
+    }
+
+    private Payment savedPaymentMatchingPg(Order order) {
+        return savedPaymentMatchingPg(order, PAYMENT_KEY);
+    }
+
+    private PgPaymentResponse pgPaymentResponse(String paymentKey, String paymentNumber, Long totalAmount) {
+        return new PgPaymentResponse(
+            paymentKey,
+            paymentNumber,
+            PaymentStatus.APPROVED,
+            totalAmount,
+            LocalDateTime.now().plusMinutes(1),
+            "{mock raw response}",
+            new PgCardResponse("11", "1234****", 0, false, "00000000")
+        );
     }
 }
