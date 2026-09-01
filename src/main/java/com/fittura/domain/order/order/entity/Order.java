@@ -13,11 +13,10 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.summingInt;
 import static lombok.AccessLevel.PRIVATE;
 import static lombok.AccessLevel.PROTECTED;
 
@@ -79,7 +78,8 @@ public class Order extends BaseEntity {
         validateAmount(pointUsedAmount);
 
         LocalDateTime now = LocalDateTime.now();
-        String orderNumber = now.format(DateTimeFormatter.ofPattern("yyyyMMdd"))
+        String orderNumber = "Order-"
+            + now.format(DateTimeFormatter.ofPattern("yyyyMMdd"))
             + "-"
             + UUID.randomUUID().toString().substring(0, 8);
 
@@ -115,6 +115,14 @@ public class Order extends BaseEntity {
         finalAmount = totalAmount - discountAmount - pointUsedAmount + deliveryFee;
     }
 
+    public Map<Long, Integer> getQuantityBySkuId() {
+        return items.stream()
+            .collect(groupingBy(
+                oi -> oi.getSku().getId(),
+                summingInt(OrderItem::getQuantity)
+            ));
+    }
+
 
     // ===== 상태 =====
 
@@ -122,9 +130,15 @@ public class Order extends BaseEntity {
         this.status = OrderStatus.PREPARING;
     }
 
+    public void paid() {
+        this.status = OrderStatus.PAID;
+    }
+
     public void cancel() {
         this.status = OrderStatus.CANCELLED;
     }
+
+    public boolean isPending() {return this.status == OrderStatus.PENDING;}
 
     public boolean isPaid() {
         return status == OrderStatus.PAID;
@@ -132,6 +146,12 @@ public class Order extends BaseEntity {
 
 
     //  ===== 유효성 검증 =====
+
+    public void validatePayable() {
+        if (this.status != OrderStatus.PENDING) {
+            throw new ServiceException(OrderErrorCode.NOT_PAYABLE_STATUS);
+        }
+    }
 
     public void validateCancel() {
         switch (status) {

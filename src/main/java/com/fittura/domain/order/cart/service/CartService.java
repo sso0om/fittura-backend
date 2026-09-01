@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -72,8 +73,8 @@ public class CartService {
         cartitem.changeQuantity(reqDto.quantity());
     }
 
-    public void deleteCartItems(List<CartItem> cartItems) {
-        cartItemRepository.deleteAll(cartItems);
+    public void deleteCartItems(Long memberId, Set<Long> skuIds) {
+        cartItemRepository.deleteByMemberIdAndSkuIds(memberId, skuIds);
     }
 
     public void deleteCartItem(Long memberId, Long itemId) {

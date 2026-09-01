@@ -107,6 +107,18 @@ public class SkuService {
         }
     }
 
+
+    // ========== SKU - 재고 ==========
+
+    public void confirmSku(Map<Long, Integer> quantityBySkuId) {
+        quantityBySkuId.forEach((skuId, quantity) -> {
+            int affected = productSkuRepository.confirmStock(skuId, quantity);
+            if (affected == 0) {
+                throw new ServiceException(ProductErrorCode.STOCK_NOT_VALID);
+            }
+        });
+    }
+
     public void restoreStock(Map<Long, Integer> quantityBySkuId) {
         quantityBySkuId.forEach(productSkuRepository::restoreStock);
     }

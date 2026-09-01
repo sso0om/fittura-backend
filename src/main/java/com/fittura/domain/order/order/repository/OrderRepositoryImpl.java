@@ -34,7 +34,7 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
             order.memberId.eq(memberId),
             order.orderDate.goe(condition.startDate()),
             order.orderDate.lt(condition.endDate()),
-            order.status.in(PAID, PREPARING, COMPLETED, CANCEL_REQUESTED, CANCELLED, RETURN_REQUESTED, RETURNED),
+            order.status.in(PAID, PREPARING, COMPLETED, CANCELLED, RETURNED),
             orderNumberEq(condition.orderNumber()),
             productNameContains(condition.productName())
         };

@@ -25,12 +25,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -222,6 +224,48 @@ class SkuServiceTest {
         // then
         assertThat(sku1.isArchived()).isTrue();
         assertThat(sku2.isArchived()).isTrue();
+    }
+
+
+    // ========== SKU 재고 확정 ==========
+
+    @Test
+    @DisplayName("SKU 재고 확정 성공")
+    void confirmSkuSuccess() {
+        // given
+        Map<Long, Integer> quantityBySkuId = Map.of(1L, 3, 2L, 5);
+        given(productSkuRepository.confirmStock(1L, 3)).willReturn(1);
+        given(productSkuRepository.confirmStock(2L, 5)).willReturn(1);
+
+        // when
+        skuService.confirmSku(quantityBySkuId);
+
+        // then
+        verify(productSkuRepository).confirmStock(1L, 3);
+        verify(productSkuRepository).confirmStock(2L, 5);
+    }
+
+    @Test
+    @DisplayName("SKU 재고 확정 성공 - 대상 없음")
+    void confirmSkuSuccess_empty() {
+        // given
+        Map<Long, Integer> quantityBySkuId = Map.of();
+
+        // when
+        skuService.confirmSku(quantityBySkuId);
+
+        // then
+        verify(productSkuRepository, never()).confirmStock(any(), any());
+    }
+
+    @Test
+    @DisplayName("재고 확정 실패 시 예외")
+    void confirmSkuFail() {
+        Map<Long, Integer> quantityBySkuId = Map.of(1L, 3);
+        given(productSkuRepository.confirmStock(1L, 3)).willReturn(0);
+
+        assertThatThrownBy(() -> skuService.confirmSku(quantityBySkuId))
+            .isInstanceOf(ServiceException.class);
     }
 
 

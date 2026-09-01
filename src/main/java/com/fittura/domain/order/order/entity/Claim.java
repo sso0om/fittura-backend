@@ -22,7 +22,7 @@ import static lombok.AccessLevel.PROTECTED;
 
 @Getter
 @Entity
-@Table(name = "claim")
+@Table(name = "claims")
 @NoArgsConstructor(access = PROTECTED)
 @AllArgsConstructor(access = PRIVATE)
 @Builder(access = PRIVATE)
