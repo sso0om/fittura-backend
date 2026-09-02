@@ -30,13 +30,13 @@ public class ProductFacade {
     }
 
     @Transactional(readOnly = true)
-    public ProductWithAllResDto getProductWithAll(Long id) {
-        return productService.getProductWithAll(id);
+    public ProductWithAllResDto getProductWithAll(Long productId) {
+        return productService.getProductWithAll(productId);
     }
 
     @Transactional(readOnly = true)
-    public ProductWithSkuResDto getProductWithSku(Long id) {
-        return productService.getProductWithSku(id);
+    public ProductWithSkuResDto getProductWithSku(Long productId) {
+        return productService.getProductWithSku(productId);
     }
 
     @Transactional
@@ -53,8 +53,8 @@ public class ProductFacade {
     }
 
     @Transactional
-    public void updateProduct(Long id, ProductUpdateReqDto reqDto) {
-        Product product = productService.getProduct(id);
+    public void updateProduct(Long productId, ProductUpdateReqDto reqDto) {
+        Product product = productService.getProduct(productId);
 
         productService.updateProduct(product, reqDto);
         productService.updateProductAttribute(product, reqDto.attributes());
@@ -67,18 +67,18 @@ public class ProductFacade {
     }
 
     @Transactional
-    public void disableProduct(Long id) {
-        productService.disableProduct(id);
+    public void disableProduct(Long productId) {
+        productService.disableProduct(productId);
     }
 
     @Transactional
-    public void discontinueProduct(Long id) {
-        productService.discontinueProduct(id);
+    public void discontinueProduct(Long productId) {
+        productService.discontinueProduct(productId);
     }
 
     @Transactional
-    public void deleteProduct(Long id) {
-        Product product = productService.getProduct(id);
+    public void deleteProduct(Long productId) {
+        Product product = productService.getProduct(productId);
 
         productService.validateModifiableProduct(product);
         skuService.validateDeletableSku(product);

@@ -35,12 +35,12 @@ public class AdminCategoryControllerV1 {
             .ok(RsData.success(resDtos));
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{categoryId}")
     @Operation(summary = "카테고리 단건 조회", description = "카테고리 단건 조회 API")
     public ResponseEntity<RsData<CategoryResDto>> getCategory(
-        @PathVariable Long id
+        @PathVariable Long categoryId
     ) {
-        CategoryResDto resDto = categoryService.getCategoryById(id);
+        CategoryResDto resDto = categoryService.getCategoryById(categoryId);
 
         return ResponseEntity
             .ok(RsData.success(resDto));
@@ -58,46 +58,46 @@ public class AdminCategoryControllerV1 {
             .body(RsData.createSuccess("카테고리가 생성되었습니다.", resDto));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{categoryId}")
     @Operation(summary = "카테고리 단건 수정", description = "카테고리 단건 수정 API")
     public ResponseEntity<RsData<Void>> updateCategory(
-        @PathVariable Long id,
+        @PathVariable Long categoryId,
         @RequestBody @Valid CategoryUpdateReqDto reqDto
     ) {
-        categoryService.updateCategory(id, reqDto);
+        categoryService.updateCategory(categoryId, reqDto);
 
         return ResponseEntity
             .ok(RsData.success("카테고리가 수정되었습니다.", null));
     }
 
-    @PatchMapping("/{id}/activate")
+    @PatchMapping("/{categoryId}/activate")
     @Operation(summary = "카테고리 활성화", description = "카테고리 활성화 API")
     public ResponseEntity<RsData<CategoryResDto>> activateCategory(
-        @PathVariable Long id
+        @PathVariable Long categoryId
     ) {
-        CategoryResDto resDto = categoryService.activeCategory(id);
+        CategoryResDto resDto = categoryService.activateCategory(categoryId);
 
         return ResponseEntity
             .ok(RsData.createSuccess("카테고리가 활성화되었습니다.", resDto));
     }
 
-    @PatchMapping("/{id}/disable")
+    @PatchMapping("/{categoryId}/disable")
     @Operation(summary = "카테고리 비활성화", description = "카테고리 비활성화 API")
     public ResponseEntity<RsData<CategoryResDto>> disableCategory(
-        @PathVariable Long id
+        @PathVariable Long categoryId
     ) {
-        CategoryResDto resDto = categoryService.disableCategory(id);
+        CategoryResDto resDto = categoryService.disableCategory(categoryId);
 
         return ResponseEntity
             .ok(RsData.createSuccess("카테고리가 비활성화되었습니다.", resDto));
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{categoryId}")
     @Operation(summary = "카테고리 삭제", description = "카테고리 삭제(archived) API")
     public ResponseEntity<RsData<Void>> deleteCategory(
-        @PathVariable Long id
+        @PathVariable Long categoryId
     ) {
-        categoryService.deleteCategory(id);
+        categoryService.deleteCategory(categoryId);
 
         return ResponseEntity
             .ok(RsData.success("카테고리를 삭제하였습니다.", null));

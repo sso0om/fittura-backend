@@ -58,12 +58,12 @@ public class AdminProductControllerV1 {
             .ok(RsData.success("제품 목록이 조회되었습니다.", resDtos));
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{productId}")
     @Operation(summary = "제품 상세 조회", description = "제품 상세 조회 API")
     public ResponseEntity<RsData<ProductWithAllResDto>> getProduct(
-        @PathVariable Long id
+        @PathVariable Long productId
     ) {
-        ProductWithAllResDto resDto = productFacade.getProductWithAll(id);
+        ProductWithAllResDto resDto = productFacade.getProductWithAll(productId);
 
         return ResponseEntity
             .ok(RsData.success("제품이 조회되었습니다.", resDto));
@@ -81,46 +81,46 @@ public class AdminProductControllerV1 {
             .body(RsData.createSuccess("제품이 생성되었습니다.", productId));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{productId}")
     @Operation(summary = "제품 수정", description = "제품 수정 API")
     public ResponseEntity<RsData<Void>> updateProduct(
-        @PathVariable Long id,
+        @PathVariable Long productId,
         @RequestBody @Valid ProductUpdateReqDto reqDto
     ) {
-        productFacade.updateProduct(id, reqDto);
+        productFacade.updateProduct(productId, reqDto);
 
         return ResponseEntity
             .ok(RsData.success("제품이 수정되었습니다.", null));
     }
 
-    @PatchMapping("/{id}/disable")
+    @PatchMapping("/{productId}/disable")
     @Operation(summary = "제품 비활성화", description = "제품 비활성화 API")
     public ResponseEntity<RsData<Void>> disableProduct(
-        @PathVariable Long id
+        @PathVariable Long productId
     ) {
-        productFacade.disableProduct(id);
+        productFacade.disableProduct(productId);
 
         return ResponseEntity
             .ok(RsData.success("제품이 비활성화되었습니다.", null));
     }
 
-    @PatchMapping("/{id}/discontinue")
+    @PatchMapping("/{productId}/discontinue")
     @Operation(summary = "제품 단종", description = "제품 단종 처리 API")
     public ResponseEntity<RsData<Void>> discontinueProduct(
-        @PathVariable Long id
+        @PathVariable Long productId
     ) {
-        productFacade.discontinueProduct(id);
+        productFacade.discontinueProduct(productId);
 
         return ResponseEntity
             .ok(RsData.success("제품이 단종되었습니다.", null));
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{productId}")
     @Operation(summary = "제품 삭제", description = "제품 삭제 API")
     public ResponseEntity<RsData<Void>> deleteProduct(
-        @PathVariable Long id
+        @PathVariable Long productId
     ) {
-        productFacade.deleteProduct(id);
+        productFacade.deleteProduct(productId);
 
         return ResponseEntity
             .ok(RsData.success("제품이 삭제되었습니다.", null));
