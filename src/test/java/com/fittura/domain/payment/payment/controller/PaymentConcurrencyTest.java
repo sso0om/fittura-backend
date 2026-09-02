@@ -146,6 +146,10 @@ public class PaymentConcurrencyTest extends IntegrationTestBase {
 
         Order paidOrder = orderRepository.findById(order.getId()).orElseThrow();
         assertThat(paidOrder.getStatus()).isEqualTo(OrderStatus.PAID);
+
+        ProductSku result =skuRepository.findById(sku.getId()).orElseThrow();
+        assertThat(result.getStockQuantity()).isEqualTo(initialStock - orderQty);
+        assertThat(result.getReservedQuantity()).isEqualTo(0);
     }
 
     @Test
