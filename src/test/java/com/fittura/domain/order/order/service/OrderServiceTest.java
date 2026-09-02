@@ -4,11 +4,15 @@ import com.fittura.domain.order.cart.entity.Cart;
 import com.fittura.domain.order.cart.entity.CartItem;
 import com.fittura.domain.order.cart.support.CartFixture;
 import com.fittura.domain.order.cart.support.CartItemFixture;
+import com.fittura.domain.order.order.constant.OrderStatus;
 import com.fittura.domain.order.order.dto.request.AddressCreateReqDto;
 import com.fittura.domain.order.order.dto.request.OrderCreateReqDto;
+import com.fittura.domain.order.order.dto.response.OrderAddressResDto;
+import com.fittura.domain.order.order.dto.response.OrderWithAllResDto;
 import com.fittura.domain.order.order.entity.Order;
 import com.fittura.domain.order.order.entity.OrderAddress;
 import com.fittura.domain.order.order.entity.OrderItem;
+import com.fittura.domain.order.order.error.OrderErrorCode;
 import com.fittura.domain.order.order.repository.OrderAddressRepository;
 import com.fittura.domain.order.order.repository.OrderItemRepository;
 import com.fittura.domain.order.order.repository.OrderRepository;
@@ -18,6 +22,7 @@ import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.support.ProductFixture;
 import com.fittura.domain.product.sku.entity.ProductSku;
 import com.fittura.domain.product.sku.support.ProductSkuFixture;
+import com.fittura.global.exception.ServiceException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,9 +30,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
@@ -46,6 +54,49 @@ class OrderServiceTest {
 
     @InjectMocks
     private OrderService orderService;
+
+    // ========== 주문 조회 ==========
+
+    @Test
+    @DisplayName("주문 조회 성공")
+    void getOrderDetailSuccess() {
+        // given
+        Long orderId = 1L;
+        Long memberId = 1L;
+        OrderWithAllResDto dto = new OrderWithAllResDto(
+            orderId, "20260712-abcd1234", OrderStatus.PENDING, LocalDateTime.now(),
+            20000L, 0L, 1000L, 4000L, 23000L,
+            new OrderAddressResDto(
+                "홍길동", "01012341234", "12345",
+                "서울특별시 중구 서소문로 127", null, "서울특별시", "중구", null
+            ),
+            List.of()
+        );
+        given(orderRepository.findWithAllByIdAndMemberId(orderId, memberId))
+            .willReturn(Optional.of(dto));
+
+        // when
+        OrderWithAllResDto result = orderService.getOrderDetail(orderId, memberId);
+
+        // then
+        assertThat(result).isEqualTo(dto);
+    }
+
+    @Test
+    @DisplayName("주문 조회 실패 - 존재하지 않거나 본인 주문 아님")
+    void getOrderDetailFail_notFound() {
+        // given
+        Long orderId = 999L;
+        Long memberId = 1L;
+        given(orderRepository.findWithAllByIdAndMemberId(orderId, memberId))
+            .willReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> orderService.getOrderDetail(orderId, memberId))
+            .isInstanceOf(ServiceException.class)
+            .satisfies(e -> assertThat(((ServiceException) e).getErrorCode())
+                .isEqualTo(OrderErrorCode.NOT_FOUND_ORDER));
+    }
 
 
     // ========== 주문 생성 ==========

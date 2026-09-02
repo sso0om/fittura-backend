@@ -2,6 +2,7 @@ package com.fittura.domain.order.order.entity;
 
 import com.fittura.domain.order.order.constant.OrderStatus;
 import com.fittura.domain.order.order.error.OrderErrorCode;
+import com.fittura.global.error.CommonErrorCode;
 import com.fittura.global.exception.ServiceException;
 import com.fittura.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
@@ -12,17 +13,24 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.summingInt;
 import static lombok.AccessLevel.PRIVATE;
 import static lombok.AccessLevel.PROTECTED;
 
 @Getter
 @Entity
-@Table(name = "orders")
+@Table(
+    name = "orders",
+    indexes = {
+        @Index(
+            name = "idx_orders_member_id_order_date",
+            columnList = "member_id, order_date"
+        )
+    }
+)
 @NoArgsConstructor(access = PROTECTED)
 @AllArgsConstructor(access = PRIVATE)
 @Builder(access = PRIVATE)
@@ -70,7 +78,8 @@ public class Order extends BaseEntity {
         validateAmount(pointUsedAmount);
 
         LocalDateTime now = LocalDateTime.now();
-        String orderNumber = now.format(DateTimeFormatter.ofPattern("yyyyMMdd"))
+        String orderNumber = "Order-"
+            + now.format(DateTimeFormatter.ofPattern("yyyyMMdd"))
             + "-"
             + UUID.randomUUID().toString().substring(0, 8);
 
@@ -105,6 +114,57 @@ public class Order extends BaseEntity {
     public void calcFinalAmount() {
         finalAmount = totalAmount - discountAmount - pointUsedAmount + deliveryFee;
     }
+
+    public Map<Long, Integer> getQuantityBySkuId() {
+        return items.stream()
+            .collect(groupingBy(
+                oi -> oi.getSku().getId(),
+                summingInt(OrderItem::getQuantity)
+            ));
+    }
+
+
+    // ===== 상태 =====
+
+    public void prepare() {
+        this.status = OrderStatus.PREPARING;
+    }
+
+    public void paid() {
+        this.status = OrderStatus.PAID;
+    }
+
+    public void cancel() {
+        this.status = OrderStatus.CANCELLED;
+    }
+
+    public boolean isPending() {return this.status == OrderStatus.PENDING;}
+
+    public boolean isPaid() {
+        return status == OrderStatus.PAID;
+    }
+
+
+    //  ===== 유효성 검증 =====
+
+    public void validatePayable() {
+        if (this.status != OrderStatus.PENDING) {
+            throw new ServiceException(OrderErrorCode.NOT_PAYABLE_STATUS);
+        }
+    }
+
+    public void validateCancel() {
+        switch (status) {
+            case PAID, PREPARING: return;
+            case COMPLETED: throw new ServiceException(OrderErrorCode.COMPLETED_CAN_NOT_CANCEL);
+            case PENDING, CANCELLED, RETURNED:
+                throw new ServiceException(OrderErrorCode.NOT_VALID_STATUS);
+            default: throw new ServiceException(CommonErrorCode.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    // ===== 헬퍼 메서드 =====
 
     private static void validateAmount(Long amount) {
         if (amount == null || amount < 0) {
