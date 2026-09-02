@@ -3,6 +3,7 @@ package com.fittura.domain.payment.payment.controller;
 import com.fittura.domain.category.entity.Category;
 import com.fittura.domain.category.repository.CategoryRepository;
 import com.fittura.domain.category.support.CategoryFixture;
+import com.fittura.domain.order.order.constant.OrderStatus;
 import com.fittura.domain.order.order.entity.Order;
 import com.fittura.domain.order.order.repository.OrderItemRepository;
 import com.fittura.domain.order.order.repository.OrderRepository;
@@ -43,6 +44,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -82,13 +84,78 @@ public class PaymentConcurrencyTest extends IntegrationTestBase {
     }
 
     @Test
+    @DisplayName("동일 결제를 동시에 승인해도 한 건만 성공하고 재고는 한 번만 차감됨")
+    void concurrentApproveSamePayment() throws Exception {
+        int initialStock = 10;
+        ProductSku sku = getProductSku("의자", initialStock);
+
+        Long memberId = 93001L;
+        int orderQty = 3;
+        Order order = createOrderWithItem(memberId, sku, orderQty);
+
+        String paymentKey = "key-single";
+        Payment payment = savedPaymentWithStub(order, paymentKey);
+
+        // ===== 동시 실행 =====
+        int threadCnt = 5;
+        ExecutorService executor = Executors.newFixedThreadPool(threadCnt);
+        CountDownLatch readyLatch  = new CountDownLatch(threadCnt);
+        CountDownLatch startLatch = new CountDownLatch(1);
+        CountDownLatch doneLatch = new CountDownLatch(threadCnt);
+        List<Throwable> failures = Collections.synchronizedList(new ArrayList<>());
+        AtomicInteger successCnt = new AtomicInteger();
+
+        for (int i = 0; i < threadCnt; i++) {
+            executor.submit(() -> {
+                try {
+                    readyLatch.countDown();
+                    startLatch.await();
+                    paymentFacade.approvePayment(
+                        memberId,
+                        payment.getId(),
+                        new  PaymentApproveReqDto(paymentKey)
+                    );
+                    successCnt.incrementAndGet();
+                } catch (Throwable e) {
+                    failures.add(e);
+                } finally {
+                    doneLatch.countDown();
+                }
+            });
+        }
+
+        readyLatch.await();
+        startLatch.countDown();
+        boolean finished = doneLatch.await(10, TimeUnit.SECONDS);
+        executor.shutdown();
+
+        // ===== 검증 =====
+        assertThat(finished).isTrue();
+
+        if (!failures.isEmpty()) {
+            failures.forEach(e -> System.out.println(
+                "failure: " + e.getClass().getName()
+                    + (e.getCause() != null ? " / cause: " + e.getCause().getClass().getName() : "")));
+        }
+
+        assertThat(successCnt.get()).isEqualTo(1);
+        assertThat(failures.size()).isEqualTo(threadCnt - 1);
+
+        Payment approved = paymentRepository.findById(payment.getId()).orElseThrow();
+        assertThat(approved.getStatus()).isEqualTo(PaymentStatus.APPROVED);
+
+        Order paidOrder = orderRepository.findById(order.getId()).orElseThrow();
+        assertThat(paidOrder.getStatus()).isEqualTo(OrderStatus.PAID);
+    }
+
+    @Test
     @DisplayName("서로 다른 결제가 같은 SKU를 동시 승인해도 재고가 정확히 차감됨")
     void concurrentConfirmOnSameSku() throws Exception {
         int initialStock = 10;
         ProductSku sku = getProductSku("의자", initialStock);
 
-        Long memberA = 93001L;
-        Long memberB = 93002L;
+        Long memberA = 94001L;
+        Long memberB = 94002L;
         int qtyA = 3;
         int qtyB = 2;
 
