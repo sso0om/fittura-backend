@@ -120,6 +120,11 @@ public class ProductService {
         product.syncBasePrice();
     }
 
+    public void activateProduct(Long productId) {
+        Product product = getProduct(productId);
+        product.activate();
+    }
+
     public void disableProduct(Long productId) {
         Product product = getProduct(productId);
         validateModifiableProduct(product);

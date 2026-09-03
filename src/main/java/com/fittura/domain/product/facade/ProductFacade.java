@@ -67,6 +67,11 @@ public class ProductFacade {
     }
 
     @Transactional
+    public void activateProduct(Long productId) {
+        productService.activateProduct(productId);
+    }
+
+    @Transactional
     public void disableProduct(Long productId) {
         productService.disableProduct(productId);
     }

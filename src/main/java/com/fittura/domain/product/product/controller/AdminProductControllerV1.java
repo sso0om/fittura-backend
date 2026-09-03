@@ -93,6 +93,17 @@ public class AdminProductControllerV1 {
             .ok(RsData.success("제품이 수정되었습니다.", null));
     }
 
+    @PatchMapping("/{productId}/activate")
+    @Operation(summary = "제품 활성화", description = "제품 활성화 API")
+    public ResponseEntity<RsData<Void>> activateProduct(
+        @PathVariable Long productId
+    ) {
+        productFacade.activateProduct(productId);
+
+        return ResponseEntity
+            .ok(RsData.success("제품이 활성화되었습니다.", null));
+    }
+
     @PatchMapping("/{productId}/disable")
     @Operation(summary = "제품 비활성화", description = "제품 비활성화 API")
     public ResponseEntity<RsData<Void>> disableProduct(
