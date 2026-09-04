@@ -201,7 +201,7 @@ class PaymentControllerTest extends IntegrationTestBase {
         cartItemRepository.save(CartItemFixture.cartItem(cart, sku2, 2));
 
         Order order = createOrderWithItem(memberId, sku, 1);
-        Payment payment = savedPaymentMatchingPg(order);
+        Payment payment = savedPayment(order);
 
         String reqBody = """
                 {
@@ -264,7 +264,7 @@ class PaymentControllerTest extends IntegrationTestBase {
         Long memberId = 8L;
         ProductSku sku = savedSkuWithPrice(7000L, 100);
         Order order = createOrderWithItem(memberId, sku, 1);
-        Payment payment = savedPaymentMatchingPg(order);
+        Payment payment = savedPayment(order);
         ReflectionTestUtils.setField(payment, "status", PaymentStatus.APPROVED);
 
         String reqBody = """
@@ -323,7 +323,7 @@ class PaymentControllerTest extends IntegrationTestBase {
         Long attackerMemberId = 11L;
         ProductSku sku = savedSkuWithPrice(7000L, 100);
         Order order = createOrderWithItem(ownerMemberId, sku, 1);
-        Payment payment = savedPaymentMatchingPg(order);
+        Payment payment = savedPayment(order);
 
         String reqBody = """
                 {
@@ -348,7 +348,7 @@ class PaymentControllerTest extends IntegrationTestBase {
         Long memberId = 12L;
         ProductSku sku = savedSkuWithPrice(7000L, 100);
         Order order = createOrderWithItem(memberId, sku, 1);
-        Payment payment = savedPaymentMatchingPg(order);
+        Payment payment = savedPayment(order);
         order.prepare();
 
         String reqBody = """

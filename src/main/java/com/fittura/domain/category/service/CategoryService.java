@@ -39,8 +39,8 @@ public class CategoryService {
     }
 
     @Transactional(readOnly = true)
-    public CategoryResDto getCategoryById(Long id) {
-        return CategoryResDto.from(getCategory(id));
+    public CategoryResDto getCategoryById(Long categoryId) {
+        return CategoryResDto.from(getCategory(categoryId));
     }
 
     @Transactional
@@ -59,8 +59,8 @@ public class CategoryService {
     }
 
     @Transactional
-    public void updateCategory(Long id, CategoryUpdateReqDto reqDto) {
-        Category category = getCategory(id);
+    public void updateCategory(Long categoryId, CategoryUpdateReqDto reqDto) {
+        Category category = getCategory(categoryId);
 
         category.update(reqDto.name(), reqDto.sortOrder());
 
@@ -74,24 +74,24 @@ public class CategoryService {
     }
 
     @Transactional
-    public CategoryResDto activeCategory(Long id) {
-        Category category = getCategory(id);
+    public CategoryResDto activateCategory(Long categoryId) {
+        Category category = getCategory(categoryId);
         category.activate();
 
         return CategoryResDto.from(category);
     }
 
     @Transactional
-    public CategoryResDto disableCategory(Long id) {
-        Category category = getCategory(id);
+    public CategoryResDto disableCategory(Long categoryId) {
+        Category category = getCategory(categoryId);
         category.disable();
 
         return CategoryResDto.from(category);
     }
 
     @Transactional
-    public void deleteCategory(Long id) {
-        Category category = getCategory(id);
+    public void deleteCategory(Long categoryId) {
+        Category category = getCategory(categoryId);
 
         List<Long> descendantIds = categoryRepository.findDescendantIds(category.getId());
 
@@ -103,8 +103,8 @@ public class CategoryService {
 
     // ===== 헬퍼 메서드 ====
 
-    private Category getCategory(Long id) {
-        return categoryRepository.findById(id)
+    private Category getCategory(Long categoryId) {
+        return categoryRepository.findById(categoryId)
             .orElseThrow(() -> new ServiceException(CategoryErrorCode.NOT_FOUND_CATEGORY));
     }
 

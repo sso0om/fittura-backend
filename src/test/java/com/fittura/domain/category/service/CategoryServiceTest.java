@@ -226,7 +226,7 @@ class CategoryServiceTest {
     // ========== 카테고리 상태 변경 ==========
     @Test
     @DisplayName("카테고리 활성화 성공")
-    void activeCategorySuccess() {
+    void activateCategorySuccess() {
         // given
         Category category = CategoryFixture.root("상위 카테고리", 1);
         Category child = CategoryFixture.child("하위", 1, category);
@@ -234,7 +234,7 @@ class CategoryServiceTest {
         given(categoryRepository.findById(1L)).willReturn(Optional.of(category));
 
         // when
-        categoryService.activeCategory(1L);
+        categoryService.activateCategory(1L);
 
         // then
         assertThat(category.getStatus()).isEqualTo(CategoryStatus.ACTIVE);

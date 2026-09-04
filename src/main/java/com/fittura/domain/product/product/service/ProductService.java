@@ -42,18 +42,18 @@ public class ProductService {
         return productRepository.findProducts(searchCondition, pageable);
     }
 
-    public ProductWithAllResDto getProductWithAll(Long id) {
-        return productRepository.findWithAllById(id)
+    public ProductWithAllResDto getProductWithAll(Long productId) {
+        return productRepository.findWithAllById(productId)
             .orElseThrow(() -> new ServiceException(ProductErrorCode.NOT_FOUND_PRODUCT));
     }
 
-    public ProductWithSkuResDto getProductWithSku(Long id) {
-        return productRepository.findWithSkuById(id)
+    public ProductWithSkuResDto getProductWithSku(Long productId) {
+        return productRepository.findWithSkuById(productId)
             .orElseThrow(() -> new ServiceException(ProductErrorCode.NOT_FOUND_PRODUCT));
     }
 
-    public Product getProduct(Long id) {
-        return productRepository.findByIdAndStatusNot(id, ProductStatus.ARCHIVED)
+    public Product getProduct(Long productId) {
+        return productRepository.findByIdAndStatusNot(productId, ProductStatus.ARCHIVED)
             .orElseThrow(() -> new ServiceException(ProductErrorCode.NOT_FOUND_PRODUCT));
     }
 
@@ -120,15 +120,20 @@ public class ProductService {
         product.syncBasePrice();
     }
 
-    public void disableProduct(Long id) {
-        Product product = getProduct(id);
+    public void activateProduct(Long productId) {
+        Product product = getProduct(productId);
+        product.activate();
+    }
+
+    public void disableProduct(Long productId) {
+        Product product = getProduct(productId);
         validateModifiableProduct(product);
 
         product.disable();
     }
 
-    public void discontinueProduct(Long id) {
-        Product product = getProduct(id);
+    public void discontinueProduct(Long productId) {
+        Product product = getProduct(productId);
         product.discontinue();
     }
 
@@ -211,8 +216,8 @@ public class ProductService {
 
     // ===== 헬퍼 메서드 ====
 
-    private Category getCategory(Long id) {
-        return categoryRepository.findById(id)
+    private Category getCategory(Long categoryId) {
+        return categoryRepository.findById(categoryId)
             .orElseThrow(() -> new ServiceException(CategoryErrorCode.NOT_FOUND_CATEGORY));
     }
 
