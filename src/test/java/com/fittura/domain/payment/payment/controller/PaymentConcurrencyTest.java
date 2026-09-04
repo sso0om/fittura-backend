@@ -16,9 +16,6 @@ import com.fittura.domain.payment.payment.entity.Payment;
 import com.fittura.domain.payment.payment.repository.PaymentCardRepository;
 import com.fittura.domain.payment.payment.repository.PaymentRepository;
 import com.fittura.domain.payment.payment.support.PaymentFixture;
-import com.fittura.domain.payment.pg.MockPaymentGateway;
-import com.fittura.domain.payment.pg.PgCardResponse;
-import com.fittura.domain.payment.pg.PgPaymentResponse;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.repository.ProductRepository;
 import com.fittura.domain.product.product.support.ProductFixture;
@@ -36,7 +33,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -61,7 +57,6 @@ public class PaymentConcurrencyTest extends IntegrationTestBase {
     @Autowired private OrderRepository orderRepository;
     @Autowired private ProductSkuRepository skuRepository;
     @Autowired private CategoryRepository categoryRepository;
-    @Autowired private MockPaymentGateway mockGateway;
 
     private Category category;
 
@@ -73,7 +68,6 @@ public class PaymentConcurrencyTest extends IntegrationTestBase {
 
     @AfterEach
     void tearDown() {
-        mockGateway.clear();
         paymentCardRepository.deleteAll();
         paymentRepository.deleteAll();
         orderItemRepository.deleteAll();
@@ -94,7 +88,7 @@ public class PaymentConcurrencyTest extends IntegrationTestBase {
         Order order = createOrderWithItem(memberId, sku, orderQty);
 
         String paymentKey = "key-single";
-        Payment payment = savedPaymentWithStub(order, paymentKey);
+        Payment payment = createPayment(order);
 
         // ===== 동시 실행 =====
         int threadCnt = 5;
@@ -168,8 +162,8 @@ public class PaymentConcurrencyTest extends IntegrationTestBase {
 
         String keyA = "key-A";
         String keyB = "key-B";
-        Payment paymentA = savedPaymentWithStub(orderA, keyA);
-        Payment paymentB = savedPaymentWithStub(orderB, keyB);
+        Payment paymentA = createPayment(orderA);
+        Payment paymentB = createPayment(orderB);
 
         List<PayTask> tasks = List.of(
             new PayTask(memberA, paymentA.getId(), keyA),
@@ -257,23 +251,5 @@ public class PaymentConcurrencyTest extends IntegrationTestBase {
     private Payment createPayment(Order order) {
         Payment payment = PaymentFixture.payment(order.getId(), order.getFinalAmount());
         return paymentRepository.save(payment);
-    }
-
-    private Payment savedPaymentWithStub(Order order, String paymentKey) {
-        Payment payment = createPayment(order);
-        mockGateway.stub(paymentKey, pgPaymentResponse(paymentKey, payment.getPaymentNumber(), order.getFinalAmount()));
-        return payment;
-    }
-
-    private PgPaymentResponse pgPaymentResponse(String paymentKey, String paymentNumber, Long totalAmount) {
-        return new PgPaymentResponse(
-            paymentKey,
-            paymentNumber,
-            PaymentStatus.APPROVED,
-            totalAmount,
-            LocalDateTime.now().plusMinutes(1),
-            "{mock raw response}",
-            new PgCardResponse("11", "1234****", 0, false, "00000000")
-        );
     }
 }
