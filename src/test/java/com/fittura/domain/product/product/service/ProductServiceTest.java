@@ -438,6 +438,24 @@ class ProductServiceTest {
     }
 
 
+    // ========== 상품 활성화 ==========
+
+    @Test
+    @DisplayName("상품 활성화 성공 - DISABLED 상태로 변경")
+    void activateProductSuccess() {
+        // given
+        Product product = ProductFixture.component("A Desk");
+        given(productRepository.findByIdAndStatusNot(1L, ProductStatus.ARCHIVED))
+            .willReturn(Optional.of(product));
+
+        // when
+        productService.activateProduct(1L);
+
+        // then
+        assertThat(product.getStatus()).isEqualTo(ProductStatus.ACTIVE);
+    }
+
+
     // ========== 상품 비활성화 ==========
 
     @Test
