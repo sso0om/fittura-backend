@@ -9,6 +9,7 @@ import com.fittura.domain.payment.payment.dto.response.PaymentPrepareResDto;
 import com.fittura.domain.payment.payment.entity.Payment;
 import com.fittura.domain.payment.payment.service.PaymentService;
 import com.fittura.domain.payment.pg.PaymentGateway;
+import com.fittura.domain.payment.pg.PgConfirmCommand;
 import com.fittura.domain.payment.pg.PgPaymentResponse;
 import com.fittura.domain.product.sku.service.SkuService;
 import lombok.RequiredArgsConstructor;
@@ -41,7 +42,9 @@ public class PaymentFacade {
         Order order = orderService.getOrder(payment.getOrderId(), memberId);
         order.validatePayable();
 
-        PgPaymentResponse paymentRes = paymentGateway.getPayment(reqDto.paymentKey());
+        PgPaymentResponse paymentRes = paymentGateway.confirm(
+            new PgConfirmCommand(reqDto.paymentKey(), payment.getPaymentNumber(), payment.getTotalAmount())
+        );
         // TODO: PG 실패 응답 처리
         paymentService.validatePgResponse(payment, paymentRes);
 
