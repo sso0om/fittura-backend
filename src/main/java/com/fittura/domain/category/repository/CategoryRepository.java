@@ -37,4 +37,6 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Category c SET c.status = :status WHERE c.id IN :ids")
     void bulkUpdateStatus(@Param("ids") List<Long> ids, @Param("status") CategoryStatus status);
+
+    List<Category> findByStatusNot(CategoryStatus categoryStatus);
 }
