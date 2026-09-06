@@ -26,7 +26,7 @@ import java.time.LocalDate;
 @RestController
 @RequestMapping("/api/v1/orders")
 @RequiredArgsConstructor
-@Tag(name = "주문 API (V1)", description = "주문 CRUD 관련 API")
+@Tag(name = "Order V1", description = "주문 CRUD 관련 API")
 public class OrderController {
 
     private final OrderFacade orderFacade;

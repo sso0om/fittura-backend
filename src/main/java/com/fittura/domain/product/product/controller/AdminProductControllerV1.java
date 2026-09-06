@@ -26,7 +26,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/admin/v1/products")
 @RequiredArgsConstructor
-@Tag(name = "관리자용 제품 API (V1)", description = "관리자용 - 제품 CRUD 관련 API")
+@Tag(name = "Admin Product V1", description = "관리자용 - 제품 CRUD 관련 API")
 public class AdminProductControllerV1 {
 
     private final ProductFacade productFacade;

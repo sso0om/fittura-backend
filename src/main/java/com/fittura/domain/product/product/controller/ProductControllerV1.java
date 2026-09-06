@@ -22,7 +22,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/products")
 @RequiredArgsConstructor
-@Tag(name = "제품 API (V1)", description = "사용자용 - 제품 조회 관련 API")
+@Tag(name = "Product V1", description = "사용자용 - 제품 조회 관련 API")
 public class ProductControllerV1 {
 
     private final ProductFacade productFacade;

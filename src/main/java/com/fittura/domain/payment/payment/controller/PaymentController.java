@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/payments")
 @RequiredArgsConstructor
-@Tag(name = "결제 API (V1)", description = "결제 관련 API")
+@Tag(name = "Payment V1", description = "결제 관련 API")
 public class PaymentController {
 
     private final PaymentFacade paymentFacade;
