@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
+@Schema(description = "주문 주소 생성 요청 DTO")
 public record AddressCreateReqDto(
     @Schema(example = "John")
     @NotBlank @Size(max = 100)

@@ -1,9 +1,11 @@
 package com.fittura.domain.product.product.dto.request;
 
 import com.fittura.domain.product.product.constant.ProductStatus;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
+@Schema(description = "상품 조회 검색 조건 DTO")
 public record ProductSearchCondition(
     List<ProductStatus> includedStatuses,
     Long categoryId,
