@@ -13,6 +13,7 @@ public record ProductResDto(
     ProductStatus status,
     ProductType productType,
     @JsonIgnore LocalDateTime createdDate,
-    boolean isSoldOut
+    boolean isSoldOut,
+    String thumbnailImageUrl
 ) {
 }

@@ -1,10 +1,12 @@
 package com.fittura.domain.product.product.repository;
 
+import com.fittura.domain.product.product.constant.ImageType;
 import com.fittura.domain.product.product.constant.ProductStatus;
 import com.fittura.domain.product.product.dto.request.ProductSearchCondition;
 import com.fittura.domain.product.product.dto.response.*;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.entity.QProduct;
+import com.fittura.domain.product.product.entity.QProductImage;
 import com.fittura.domain.product.sku.constant.SkuStatus;
 import com.fittura.domain.product.sku.dto.response.SkuResDto;
 import com.fittura.domain.product.sku.dto.response.SkuWithStockResDto;
@@ -15,6 +17,7 @@ import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.JPAExpressions;
+import com.querydsl.jpa.JPQLQuery;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -58,7 +61,8 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
                 product.status,
                 product.productType,
                 product.createdDate,
-                isSoldOut()
+                isSoldOut(),
+                thumbnailImageUrl()
             ))
             .distinct()
             .from(product);
@@ -277,6 +281,20 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
                 subSku.status.eq(SkuStatus.ACTIVE)
             )
             .notExists();
+    }
+
+    private JPQLQuery<String> thumbnailImageUrl() {
+        QProductImage subImage = new QProductImage("subImage");
+
+        return JPAExpressions
+            .select(subImage.imageUrl)
+            .from(subImage)
+            .where(
+                subImage.product.id.eq(product.id),
+                subImage.imageType.eq(ImageType.THUMBNAIL)
+            )
+            .orderBy(subImage.sortOrder.asc())
+            .limit(1);
     }
 
     // ========== OrderSpecifier ==========
