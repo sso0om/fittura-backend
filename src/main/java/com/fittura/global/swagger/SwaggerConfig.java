@@ -1,5 +1,6 @@
 package com.fittura.global.swagger;
 
+import io.swagger.v3.core.jackson.ModelResolver;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
@@ -9,6 +10,10 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class SwaggerConfig {
+
+    static {
+        ModelResolver.enumsAsRef = true;
+    }
 
     @Bean
     public OpenAPI openAPI() {
