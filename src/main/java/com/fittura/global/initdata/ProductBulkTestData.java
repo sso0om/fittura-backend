@@ -97,13 +97,13 @@ public class ProductBulkTestData implements ApplicationRunner {
         for (int i = 0; i < bulkIds.size(); i++) {
             Long productId = bulkIds.get(i);
 
-            if (i % 10 == 0) {
+            if (i % 25 == 0) {
+                // 25개마다 하나씩 영구 품절(ProductStatus.DISCONTINUED)
+                productFacade.discontinueProduct(productId);
+            } else if (i % 10 == 0) {
                 // 10개마다 하나씩 임시 품절(SkuStatus.SOLDOUT)
                 productSkuRepository.findByProductIdAndStatusNot(productId, SkuStatus.ARCHIVED)
                     .forEach(ProductSku::soldOut);
-            } else if (i % 25 == 0) {
-                // 25개마다 하나씩 영구 품절(ProductStatus.DISCONTINUED)
-                productFacade.discontinueProduct(productId);
             }
         }
     }
