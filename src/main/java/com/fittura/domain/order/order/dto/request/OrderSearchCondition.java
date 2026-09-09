@@ -25,6 +25,8 @@ public record OrderSearchCondition(
     }
 
     public LocalDateTime endDateTime() {
-        return endDate.plusDays(1).atStartOfDay();
+        return endDate.equals(LocalDate.MAX)
+            ? LocalDate.MAX.atStartOfDay()
+            : endDate.plusDays(1).atStartOfDay();
     }
 }
