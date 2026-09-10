@@ -68,10 +68,10 @@ public class OrderConcurrencyTest extends IntegrationTestBase {
 
     @AfterEach
     void tearDown() {
-        cartItemRepository.deleteAll();
         addressRepository.deleteAll();
         orderItemRepository.deleteAll();
         orderRepository.deleteAll();
+        cartItemRepository.deleteAll();
         cartRepository.deleteAll();
         skuRepository.deleteAll();
         productRepository.deleteAll();

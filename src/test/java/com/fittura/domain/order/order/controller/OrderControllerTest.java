@@ -38,7 +38,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -62,8 +61,8 @@ class OrderControllerTest extends IntegrationTestBase {
     @Autowired private DeliveryRepository deliveryRepository;
 
     private static final String ORDER_URL = "/api/v1/orders";
-    private static final LocalDateTime SEARCH_START = LocalDate.now().minusMonths(1).atStartOfDay();
-    private static final LocalDateTime SEARCH_END = LocalDate.now().plusDays(1).atStartOfDay();
+    private static final LocalDate SEARCH_START = LocalDate.now().minusMonths(1);
+    private static final LocalDate SEARCH_END = LocalDate.now().plusDays(1);
 
     // ========== 주문 목록 조회 ==========
 
@@ -178,12 +177,12 @@ class OrderControllerTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("주문 목록 조회 실패 - 날짜 역전")
+    @DisplayName("주문 목록 조회 실패 - 주문 시점과 다른 시점 조회")
     void getOrdersFail_invalidDateRange() throws Exception {
         // given
         Long memberId = 46L;
-        LocalDateTime start = LocalDate.now().atStartOfDay();
-        LocalDateTime end = LocalDate.now().minusMonths(1).atStartOfDay();
+        LocalDate start = LocalDate.now();
+        LocalDate end = LocalDate.now().minusMonths(1);
 
         // when & then
         mockMvc.perform(get(ORDER_URL)

@@ -1,7 +1,6 @@
 package com.fittura.domain.product.product.constant;
 
 public enum ImageType {
-    MAIN,       // 상품 목록, 상세 페이지 대표 이미지
-    THUMBNAIL,  // 검색 결과, 미리보기용 작은 이미지 (MAIN을 리사이징한 버전)
-    DETAIL
+    GALLERY,  // 상세 페이지 갤러리(상품 상세 상단 이미지들)
+    DETAIL    // 상세 설명 이미지 (상품 더보기 시 노출)
 }

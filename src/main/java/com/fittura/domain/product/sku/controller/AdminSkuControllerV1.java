@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/admin/v1/products/{productId}/skus")
 @RequiredArgsConstructor
-@Tag(name = "관리자용 제품의 SKU API (V1)", description = "관리자용 - 제품의 SKU 상태 관련 API")
+@Tag(name = "Admin Product SKU V1", description = "관리자용 - 제품의 SKU 상태 관련 API")
 public class AdminSkuControllerV1 {
 
     private final ProductFacade productFacade;

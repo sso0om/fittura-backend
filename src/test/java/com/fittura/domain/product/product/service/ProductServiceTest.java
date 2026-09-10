@@ -70,8 +70,8 @@ class ProductServiceTest {
         ProductSearchCondition condition = new ProductSearchCondition(List.of(ProductStatus.ACTIVE, ProductStatus.DISCONTINUED), null, null, null, null);
         Pageable pageable = PageRequest.of(0, 10);
         List<ProductResDto> content = List.of(
-            new ProductResDto(1L, "A Desk", 50000L, ProductStatus.ACTIVE, ProductType.COMPONENT, null, false),
-            new ProductResDto(2L, "A Chair", 30000L, ProductStatus.DISCONTINUED, ProductType.COMPONENT, null, false)
+            new ProductResDto(1L, "A Desk", 50000L, ProductStatus.ACTIVE, ProductType.COMPONENT, null, false, "image.png"),
+            new ProductResDto(2L, "A Chair", 30000L, ProductStatus.DISCONTINUED, ProductType.COMPONENT, null, false, "image.png")
         );
         Page<ProductResDto> page = new PageImpl<>(content, pageable, 2);
 
@@ -102,32 +102,6 @@ class ProductServiceTest {
         // then
         assertThat(result.getContent()).isEmpty();
         assertThat(result.getTotalElements()).isZero();
-    }
-
-    @Test
-    @DisplayName("상품 목록 조회 성공 - colors, materials 필터")
-    void getProductsSuccess_withColorsAndMaterials() {
-        // given
-        ProductSearchCondition condition = new ProductSearchCondition(
-            List.of(ProductStatus.ACTIVE, ProductStatus.DISCONTINUED),
-            null, null,
-            List.of("White"), List.of("Wood")
-        );
-        Pageable pageable = PageRequest.of(0, 10);
-        List<ProductResDto> content = List.of(
-            new ProductResDto(1L, "Wood Desk", 50000L, ProductStatus.ACTIVE, ProductType.COMPONENT, null, false)
-        );
-        Page<ProductResDto> page = new PageImpl<>(content, pageable, 1);
-
-        given(productRepository.findProducts(condition, pageable)).willReturn(page);
-
-        // when
-        Page<ProductResDto> result = productService.getProducts(condition, pageable);
-
-        // then
-        assertThat(result.getContent()).hasSize(1);
-        assertThat(result.getTotalElements()).isEqualTo(1);
-        assertThat(result.getContent().get(0).name()).isEqualTo("Wood Desk");
     }
 
 

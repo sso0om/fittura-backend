@@ -9,6 +9,7 @@ import com.fittura.domain.order.order.dto.response.OrderWithDeliveryResDto;
 import com.fittura.global.rsdata.RsData;
 import com.fittura.global.security.LogInMemberId;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,12 +21,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/v1/orders")
 @RequiredArgsConstructor
-@Tag(name = "주문 API (V1)", description = "주문 CRUD 관련 API")
+@Tag(name = "Order V1", description = "주문 CRUD 관련 API")
 public class OrderController {
 
     private final OrderFacade orderFacade;
@@ -36,8 +37,8 @@ public class OrderController {
         @LogInMemberId Long memberId,
         @RequestParam(required = false) String orderNumber,
         @RequestParam(required = false) String productName,
-        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
-        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @Schema(example = "2026-01-15") LocalDate startDate,
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @Schema(example = "2026-01-15") LocalDate endDate,
         @ParameterObject Pageable pageable
     ) {
        OrderSearchCondition searchCondition = new OrderSearchCondition(

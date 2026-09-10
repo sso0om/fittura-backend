@@ -47,7 +47,7 @@ public class Payment extends BaseEntity {
     @Column(nullable = false, length = 20)
     private PaymentMethod paymentMethod;
 
-    @Column(unique = true, length = 100)
+    @Column(unique = true, length = 200)
     private String pgTransactionId;
 
     @Column(nullable = false)

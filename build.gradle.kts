@@ -37,6 +37,9 @@ dependencies {
     // Common utils
     implementation("org.apache.commons:commons-lang3:3.18.0")
 
+    // env
+    implementation("me.paulschwarz:spring-dotenv:4.0.0")
+
     // Flyway
     implementation("org.flywaydb:flyway-core")
     implementation("org.flywaydb:flyway-mysql")
@@ -59,7 +62,6 @@ dependencies {
 
     // Dev tools
     developmentOnly("org.springframework.boot:spring-boot-devtools")
-    developmentOnly("me.paulschwarz:spring-dotenv:4.0.0")
 
     // DB Drivers
     runtimeOnly("com.mysql:mysql-connector-j")

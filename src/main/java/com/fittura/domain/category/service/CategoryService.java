@@ -26,7 +26,7 @@ public class CategoryService {
 
     @Transactional(readOnly = true)
     public List<CategoryTreeResDto> getAllCategories() {
-        List<Category> categories = categoryRepository.findAll();
+        List<Category> categories = categoryRepository.findByStatusNot(CategoryStatus.ARCHIVED);
 
         return buildCategoryTree(categories);
     }

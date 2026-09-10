@@ -58,10 +58,12 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
                 product.status,
                 product.productType,
                 product.createdDate,
-                isSoldOut()
+                isSoldOut(),
+                product.mainImage.imageUrl
             ))
             .distinct()
-            .from(product);
+            .from(product)
+            .leftJoin(product.mainImage);
 
         if (skuFilterExists) {
             query.leftJoin(productSku).on(productSku.product.id.eq(product.id));
