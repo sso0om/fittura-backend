@@ -266,7 +266,7 @@ class CategoryServiceTest {
         Category category = CategoryFixture.rootActiveWithId(1L);
 
         given(categoryRepository.findById(1L)).willReturn(Optional.of(category));
-        given(categoryRepository.findDescendantIds(1L))
+        given(categoryRepository.findSelfAndDescendantIds(1L))
             .willReturn(List.of(1L, 2L, 3L));
 
         // when
@@ -274,7 +274,7 @@ class CategoryServiceTest {
 
         // then
         verify(categoryRepository).findById(1L);
-        verify(categoryRepository).findDescendantIds(1L);
+        verify(categoryRepository).findSelfAndDescendantIds(1L);
         verify(categoryRepository)
             .bulkUpdateStatus(
                 argThat(ids -> ids.containsAll(List.of(1L, 2L, 3L))),

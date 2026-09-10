@@ -32,7 +32,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
         )
         SELECT id FROM descendants
         """, nativeQuery = true)
-    List<Long> findDescendantIds(@Param("parentId") Long parentId);
+    List<Long> findSelfAndDescendantIds(@Param("parentId") Long parentId);
 
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Category c SET c.status = :status WHERE c.id IN :ids")

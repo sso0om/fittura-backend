@@ -5,9 +5,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
-public record ProductSearchCondition(
-    List<ProductStatus> includedStatuses,
-    List<Long> categoryIds,
+@Schema(description = "상품 조회 검색 조건 DTO")
+public record ProductSearchReqDto(
+    List<ProductStatus> statuses,
+    Long categoryId,
     String keyword,
     List<String> colors,
     List<String> materials

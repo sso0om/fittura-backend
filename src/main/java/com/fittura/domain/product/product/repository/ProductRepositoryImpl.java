@@ -44,7 +44,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
 
         BooleanExpression[] conditions = {
             statusIn(condition.includedStatuses()),
-            categoryEq(condition.categoryId()),
+            categoryIn(condition.categoryIds()),
             keywordContains(condition.keyword()),
             colorCond,
             materialCond
@@ -248,8 +248,10 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
         return (statuses == null || statuses.isEmpty()) ? null : product.status.in(statuses);
     }
 
-    private BooleanExpression categoryEq(Long categoryId) {
-        return categoryId == null ? null : product.category.id.eq(categoryId);
+    private BooleanExpression categoryIn(List<Long> categoryIds) {
+        return (categoryIds == null || categoryIds.isEmpty())
+            ? null
+            : product.category.id.in(categoryIds);
     }
 
     private BooleanExpression keywordContains(String keyword) {
