@@ -2,7 +2,7 @@ package com.fittura.domain.product.product.controller;
 
 import com.fittura.domain.product.facade.ProductFacade;
 import com.fittura.domain.product.product.constant.ProductStatus;
-import com.fittura.domain.product.product.dto.request.ProductSearchCondition;
+import com.fittura.domain.product.product.dto.request.ProductSearchReqDto;
 import com.fittura.domain.product.product.dto.response.CompositionResDto;
 import com.fittura.domain.product.product.dto.response.ProductAttributeResDto;
 import com.fittura.domain.product.product.dto.response.ProductResDto;
@@ -15,7 +15,10 @@ import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -30,25 +33,14 @@ public class ProductControllerV1 {
     @GetMapping
     @Operation(summary = "제품 목록 조회", description = "제품 목록 조회 API - sort 예시: basePrice,desc / createdDate,desc")
     public ResponseEntity<RsData<Page<ProductResDto>>> getProducts (
-        @RequestParam(required = false) List<ProductStatus> statuses,
-        @RequestParam(required = false) Long categoryId,
-        @RequestParam(required = false) String keyword,
-        @RequestParam(required = false) List<String> colors,
-        @RequestParam(required = false) List<String> materials,
+        @ParameterObject ProductSearchReqDto reqDto,
         @ParameterObject Pageable pageable
     ) {
-        List<ProductStatus> includedStatuses = (statuses == null || statuses.isEmpty())
+        List<ProductStatus> statuses = (reqDto.statuses() == null || reqDto.statuses().isEmpty())
             ? List.of(ProductStatus.ACTIVE, ProductStatus.DISCONTINUED)
-            : statuses;
+            : reqDto.statuses();
 
-        ProductSearchCondition searchCondition = new ProductSearchCondition(
-            includedStatuses,
-            categoryId,
-            keyword,
-            colors,
-            materials
-        );
-        Page<ProductResDto> resDtos = productFacade.getProducts(searchCondition, pageable);
+        Page<ProductResDto> resDtos = productFacade.getProducts(statuses, reqDto, pageable);
 
         return ResponseEntity
             .ok(RsData.success("제품 목록이 조회되었습니다.", resDtos));

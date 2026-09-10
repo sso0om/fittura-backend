@@ -1,5 +1,6 @@
 package com.fittura.domain.product.product.controller;
 
+import com.fittura.domain.category.constant.CategoryStatus;
 import com.fittura.domain.category.entity.Category;
 import com.fittura.domain.category.repository.CategoryRepository;
 import com.fittura.domain.category.support.CategoryFixture;
@@ -107,26 +108,30 @@ class ProductControllerV1Test extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("상품 목록 조회 성공 - categoryId 필터링")
-    void getProducts_categoryId() throws Exception {
+    @DisplayName("상품 목록 조회 성공 - 부모 categoryId로 조회 시 자식 카테고리 상품까지 포함")
+    void getProducts_categoryId_includesDescendants() throws Exception {
         // given
-        Category category1 = categoryRepository.save(CategoryFixture.rootActive());
-        Category category2 = categoryRepository.save(CategoryFixture.rootActive());
+        Category parent = categoryRepository.save(CategoryFixture.rootActive());
+        Category child  = categoryRepository.save(CategoryFixture.child("자식", 0, parent, CategoryStatus.ACTIVE));
+        Category other  = categoryRepository.save(CategoryFixture.rootActive());
 
-        Product product1 = ProductFixture.component(category1, "A Desk");
-        product1.activate();
-        productRepository.save(product1);
+        Product parentProduct = ProductFixture.component(parent, "부모상품");
+        parentProduct.activate();
+        productRepository.save(parentProduct);
 
-        Product product2 = ProductFixture.component(category2, "A Chair");
-        product2.activate();
-        productRepository.save(product2);
+        Product childProduct = ProductFixture.component(child, "자식상품");
+        childProduct.activate();
+        productRepository.save(childProduct);
+
+        Product otherProduct = ProductFixture.component(other, "무관상품");
+        otherProduct.activate();
+        productRepository.save(otherProduct);
 
         // when & then
-        mockMvc.perform(get(PRODUCT_URL).param("categoryId", String.valueOf(category1.getId())))
+        mockMvc.perform(get(PRODUCT_URL).param("categoryId", String.valueOf(parent.getId())))
             .andDo(print())
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.totalElements").value(1))
-            .andExpect(jsonPath("$.data.content[0].name").value("A Desk"));
+            .andExpect(jsonPath("$.data.totalElements").value(2));
     }
 
     @Test

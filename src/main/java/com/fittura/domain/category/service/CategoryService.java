@@ -27,15 +27,22 @@ public class CategoryService {
     @Transactional(readOnly = true)
     public List<CategoryTreeResDto> getAllCategories() {
         List<Category> categories = categoryRepository.findByStatusNot(CategoryStatus.ARCHIVED);
-
         return buildCategoryTree(categories);
     }
 
     @Transactional(readOnly = true)
-    public List<CategoryTreeResDto> getActiveCategories() {
-        List<Category> categories = categoryRepository.findAllVisible(CategoryStatus.ACTIVE);
+    public List<CategoryResDto> getActiveCategories() {
+        return categoryRepository.findAllVisible(CategoryStatus.ACTIVE).stream()
+            .map(CategoryResDto::from)
+            .toList();
+    }
 
-        return buildCategoryTree(categories);
+    @Transactional(readOnly = true)
+    public List<Long> getCategoryIdWithDescendant(Long categoryId) {
+        if (categoryId == null) {
+            return null;
+        }
+        return categoryRepository.findSelfAndDescendantIds(categoryId);
     }
 
     @Transactional(readOnly = true)
@@ -93,7 +100,7 @@ public class CategoryService {
     public void deleteCategory(Long categoryId) {
         Category category = getCategory(categoryId);
 
-        List<Long> descendantIds = categoryRepository.findDescendantIds(category.getId());
+        List<Long> descendantIds = categoryRepository.findSelfAndDescendantIds(category.getId());
 
         if(!descendantIds.isEmpty()) {
             categoryRepository.bulkUpdateStatus(descendantIds, CategoryStatus.ARCHIVED);

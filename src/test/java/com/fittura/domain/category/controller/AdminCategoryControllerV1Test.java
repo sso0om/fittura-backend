@@ -80,9 +80,9 @@ class AdminCategoryControllerV1Test extends IntegrationTestBase {
             .andExpect(handler().methodName("getActiveCategories"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.code").value("S200-01"))
-            .andExpect(jsonPath("$.data.length()").value(1)) // 루트 개수
+            .andExpect(jsonPath("$.data.length()").value(2))
             .andExpect(jsonPath("$.data[0].id").value(root1.getId()))
-            .andExpect(jsonPath("$.data[0].children.length()").value(1));
+            .andExpect(jsonPath("$.data[1].id").value(child1.getId()));
     }
 
 

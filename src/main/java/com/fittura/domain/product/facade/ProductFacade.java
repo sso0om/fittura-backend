@@ -1,7 +1,10 @@
 package com.fittura.domain.product.facade;
 
+import com.fittura.domain.category.service.CategoryService;
+import com.fittura.domain.product.product.constant.ProductStatus;
 import com.fittura.domain.product.product.dto.request.ProductCreateReqDto;
 import com.fittura.domain.product.product.dto.request.ProductSearchCondition;
+import com.fittura.domain.product.product.dto.request.ProductSearchReqDto;
 import com.fittura.domain.product.product.dto.request.ProductUpdateReqDto;
 import com.fittura.domain.product.product.dto.response.*;
 import com.fittura.domain.product.product.entity.Product;
@@ -21,11 +24,20 @@ public class ProductFacade {
 
     private final ProductService productService;
     private final SkuService skuService;
+    private final CategoryService categoryService;
 
     // ========== 상품 ==========
 
     @Transactional(readOnly = true)
-    public Page<ProductResDto> getProducts(ProductSearchCondition searchCondition, Pageable pageable) {
+    public Page<ProductResDto> getProducts(List<ProductStatus> statuses, ProductSearchReqDto reqDto, Pageable pageable) {
+        List<Long> categoryIds = categoryService.getCategoryIdWithDescendant(reqDto.categoryId());
+        ProductSearchCondition searchCondition = new ProductSearchCondition(
+            statuses,
+            categoryIds,
+            reqDto.keyword(),
+            reqDto.colors(),
+            reqDto.materials()
+        );
         return productService.getProducts(searchCondition, pageable);
     }
 

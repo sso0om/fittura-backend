@@ -13,6 +13,7 @@ import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQuery;
@@ -44,7 +45,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
 
         BooleanExpression[] conditions = {
             statusIn(condition.includedStatuses()),
-            categoryEq(condition.categoryId()),
+            categoryIn(condition.categoryIds()),
             keywordContains(condition.keyword()),
             colorCond,
             materialCond
@@ -248,8 +249,10 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
         return (statuses == null || statuses.isEmpty()) ? null : product.status.in(statuses);
     }
 
-    private BooleanExpression categoryEq(Long categoryId) {
-        return categoryId == null ? null : product.category.id.eq(categoryId);
+    private BooleanExpression categoryIn(List<Long> categoryIds) {
+        if (categoryIds == null) return null;
+        if (categoryIds.isEmpty()) return Expressions.FALSE;
+        return product.category.id.in(categoryIds);
     }
 
     private BooleanExpression keywordContains(String keyword) {

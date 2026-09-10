@@ -1,6 +1,6 @@
 package com.fittura.domain.category.controller;
 
-import com.fittura.domain.category.dto.response.CategoryTreeResDto;
+import com.fittura.domain.category.dto.response.CategoryResDto;
 import com.fittura.domain.category.service.CategoryService;
 import com.fittura.global.rsdata.RsData;
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,9 +22,9 @@ public class CategoryControllerV1 {
     private final CategoryService categoryService;
 
     @GetMapping
-    @Operation(summary = "활성화 카테고리 전체 조회", description = "활성화된 카테고리 조회(트리) API")
-    public ResponseEntity<RsData<List<CategoryTreeResDto>>> getActiveCategories() {
-        List<CategoryTreeResDto> resDtos = categoryService.getActiveCategories();
+    @Operation(summary = "활성화 카테고리 전체 조회", description = "활성화된 카테고리 조회(flat) API")
+    public ResponseEntity<RsData<List<CategoryResDto>>> getActiveCategories() {
+        List<CategoryResDto> resDtos = categoryService.getActiveCategories();
 
         return ResponseEntity
             .ok(RsData.success(resDtos));
