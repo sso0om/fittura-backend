@@ -32,8 +32,7 @@ public class CategoryService {
 
     @Transactional(readOnly = true)
     public List<CategoryResDto> getActiveCategories() {
-        List<Category> categories = categoryRepository.findAllVisible(CategoryStatus.ACTIVE);
-        return categories.stream()
+        return categoryRepository.findAllVisible(CategoryStatus.ACTIVE).stream()
             .map(CategoryResDto::from)
             .toList();
     }

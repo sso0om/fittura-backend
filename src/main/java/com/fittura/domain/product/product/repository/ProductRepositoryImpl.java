@@ -13,6 +13,7 @@ import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQuery;
@@ -249,9 +250,9 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
     }
 
     private BooleanExpression categoryIn(List<Long> categoryIds) {
-        return (categoryIds == null || categoryIds.isEmpty())
-            ? null
-            : product.category.id.in(categoryIds);
+        if (categoryIds == null) return null;
+        if (categoryIds.isEmpty()) return Expressions.FALSE;
+        return product.category.id.in(categoryIds);
     }
 
     private BooleanExpression keywordContains(String keyword) {
