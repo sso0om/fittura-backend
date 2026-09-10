@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Schema(description = "주문 조회 조건 DTO")
 public record OrderSearchCondition(
@@ -26,7 +27,7 @@ public record OrderSearchCondition(
 
     public LocalDateTime endDateTime() {
         return endDate.equals(LocalDate.MAX)
-            ? LocalDate.MAX.atStartOfDay()
+            ? LocalDate.MAX.atTime(LocalTime.MAX)
             : endDate.plusDays(1).atStartOfDay();
     }
 }
