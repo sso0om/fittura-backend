@@ -22,7 +22,7 @@ public class CategoryControllerV1 {
     private final CategoryService categoryService;
 
     @GetMapping
-    @Operation(summary = "활성화 카테고리 전체 조회", description = "활성화된 카테고리 조회(트리) API")
+    @Operation(summary = "활성화 카테고리 전체 조회", description = "활성화된 카테고리 조회(flat) API")
     public ResponseEntity<RsData<List<CategoryResDto>>> getActiveCategories() {
         List<CategoryResDto> resDtos = categoryService.getActiveCategories();
 
