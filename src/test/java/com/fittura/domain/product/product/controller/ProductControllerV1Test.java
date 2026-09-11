@@ -55,6 +55,8 @@ class ProductControllerV1Test extends IntegrationTestBase {
         discontinuedProduct.discontinue();
         productRepository.save(discontinuedProduct);
 
+        productRepository.save(ProductFixture.component(category, "Hidden Desk"));
+
         // when & then
         mockMvc.perform(get(PRODUCT_URL))
             .andDo(print())
@@ -72,13 +74,20 @@ class ProductControllerV1Test extends IntegrationTestBase {
         Product activeProduct = ProductFixture.component(category, "Active Desk");
         activeProduct.activate();
         productRepository.save(activeProduct);
+        productSkuRepository.save(ProductSkuFixture.sku(activeProduct, 50000L, 100, "White", "Wood"));
+
+        Product soldOutProduct = ProductFixture.component(category, "Wood Brown Desk");
+        soldOutProduct.activate();
+        productRepository.save(soldOutProduct);
+        productSkuRepository.save(ProductSkuFixture.sku(soldOutProduct, 60000L, 0, "Brown", "Wood"));
 
         Product discontinuedProduct = ProductFixture.component(category, "Discontinued Chair");
         discontinuedProduct.discontinue();
         productRepository.save(discontinuedProduct);
+        productSkuRepository.save(ProductSkuFixture.sku(discontinuedProduct, 70000L, 100, "Black", "Metal"));
 
         // when & then
-        mockMvc.perform(get(PRODUCT_URL).param("statuses", "ACTIVE"))
+        mockMvc.perform(get(PRODUCT_URL).param("inStockOnly", "true"))
             .andDo(print())
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.totalElements").value(1))
@@ -164,22 +173,6 @@ class ProductControllerV1Test extends IntegrationTestBase {
             .andExpect(jsonPath("$.data.totalElements").value(2))
             .andExpect(jsonPath("$.data.content[0].name").value("Wood Brown Desk"))
             .andExpect(jsonPath("$.data.content[1].name").value("Wood White Desk"));
-    }
-
-    @Test
-    @DisplayName("상품 목록 조회 - DISABLED 상품은 조회 안 됨")
-    void getProducts_excludesDisabled() throws Exception {
-        // given
-        Category category = categoryRepository.save(CategoryFixture.rootActive());
-
-        // DISABLED는 Product.create()의 기본 상태
-        productRepository.save(ProductFixture.component(category, "Hidden Desk"));
-
-        // when & then
-        mockMvc.perform(get(PRODUCT_URL))
-            .andDo(print())
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.totalElements").value(0));
     }
 
     @Test

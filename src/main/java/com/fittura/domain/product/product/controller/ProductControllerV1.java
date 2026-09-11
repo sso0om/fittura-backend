@@ -1,7 +1,6 @@
 package com.fittura.domain.product.product.controller;
 
 import com.fittura.domain.product.facade.ProductFacade;
-import com.fittura.domain.product.product.constant.ProductStatus;
 import com.fittura.domain.product.product.dto.request.ProductSearchReqDto;
 import com.fittura.domain.product.product.dto.response.CompositionResDto;
 import com.fittura.domain.product.product.dto.response.ProductAttributeResDto;
@@ -36,12 +35,7 @@ public class ProductControllerV1 {
         @ParameterObject ProductSearchReqDto reqDto,
         @ParameterObject Pageable pageable
     ) {
-        List<ProductStatus> statuses = (reqDto.statuses() == null || reqDto.statuses().isEmpty())
-            ? List.of(ProductStatus.ACTIVE, ProductStatus.DISCONTINUED)
-            : reqDto.statuses();
-
-        Page<ProductResDto> resDtos = productFacade.getProducts(statuses, reqDto, pageable);
-
+        Page<ProductResDto> resDtos = productFacade.getProducts(reqDto, pageable);
         return ResponseEntity
             .ok(RsData.success("제품 목록이 조회되었습니다.", resDtos));
     }

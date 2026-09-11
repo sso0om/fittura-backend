@@ -48,7 +48,8 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             categoryIn(condition.categoryIds()),
             keywordContains(condition.keyword()),
             colorCond,
-            materialCond
+            materialCond,
+            condition.inStockOnly() ? inStock() : null
         };
 
         JPAQuery<ProductResDto> query = queryFactory
@@ -271,7 +272,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             : productSku.material.in(materials);
     }
 
-    private BooleanExpression isSoldOut() {
+    private BooleanExpression inStock() {
         QProductSku subSku = new QProductSku("subSku");
 
         return JPAExpressions
@@ -279,9 +280,14 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             .from(subSku)
             .where(
                 subSku.product.id.eq(product.id),
-                subSku.status.eq(SkuStatus.ACTIVE)
+                subSku.status.eq(SkuStatus.ACTIVE),
+                subSku.stockQuantity.subtract(subSku.reservedQuantity).gt(0)
             )
-            .notExists();
+            .exists();
+    }
+
+    private BooleanExpression isSoldOut() {
+        return inStock().not();
     }
 
     // ========== OrderSpecifier ==========

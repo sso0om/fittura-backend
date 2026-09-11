@@ -67,7 +67,7 @@ class ProductServiceTest {
     @DisplayName("상품 목록 조회 성공")
     void getProductsSuccess() {
         // given
-        ProductSearchCondition condition = new ProductSearchCondition(List.of(ProductStatus.ACTIVE, ProductStatus.DISCONTINUED), null, null, null, null);
+        ProductSearchCondition condition = new ProductSearchCondition(false, List.of(ProductStatus.ACTIVE, ProductStatus.DISCONTINUED), null, null, null, null);
         Pageable pageable = PageRequest.of(0, 10);
         List<ProductResDto> content = List.of(
             new ProductResDto(1L, "A Desk", 50000L, ProductStatus.ACTIVE, ProductType.COMPONENT, null, false, "image.png"),
@@ -90,7 +90,7 @@ class ProductServiceTest {
     @DisplayName("상품 목록 조회 성공 - 결과 없음")
     void getProductsSuccess_empty() {
         // given
-        ProductSearchCondition condition = new ProductSearchCondition(List.of(ProductStatus.ACTIVE), null, "없는상품", null, null);
+        ProductSearchCondition condition = new ProductSearchCondition(true, List.of(ProductStatus.ACTIVE), null, "없는상품", null, null);
         Pageable pageable = PageRequest.of(0, 10);
         Page<ProductResDto> emptyPage = Page.empty(pageable);
 
