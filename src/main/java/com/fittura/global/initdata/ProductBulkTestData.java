@@ -13,7 +13,6 @@ import com.fittura.domain.product.product.repository.ProductRepository;
 import com.fittura.domain.product.sku.constant.SkuStatus;
 import com.fittura.domain.product.sku.dto.request.CompositionCreateReqDto;
 import com.fittura.domain.product.sku.dto.request.SkuCreateReqDto;
-import com.fittura.domain.product.sku.entity.ProductSku;
 import com.fittura.domain.product.sku.repository.ProductSkuRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationArguments;
@@ -33,8 +32,9 @@ import java.util.List;
 public class ProductBulkTestData implements ApplicationRunner {
 
     private static final String BULK_NAME_PREFIX = "[TEST] ";
-    private static final int COMPONENT_COUNT_PER_CATEGORY = 15; // 부품 카테고리당 생성 개수
-    private static final int COMPLETE_COUNT = 30;               // 완제품 총 생성 개수
+    private static final int PART_COUNT_PER_CATEGORY = 30;       // 부품(COMPONENT): 부품 카테고리당
+    private static final int COMPOSED_COUNT_PER_CATEGORY = 20;   // 조합 완제품(COMPLETE): 카테고리당
+    private static final int STANDALONE_COUNT_PER_CATEGORY = 20; // 단품(COMPONENT): 완제품 카테고리당
 
     private static final List<String> COLORS = List.of("오크", "월넛", "블랙", "화이트", "그레이");
     private static final List<String> MATERIALS = List.of("원목", "스틸", "패브릭", "인조가죽");
@@ -47,63 +47,79 @@ public class ProductBulkTestData implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        // 이미 벌크 테스트 데이터가 있으면 재실행하지 않음 (앱 재시작마다 중복 생성 방지)
         boolean alreadySeeded = productRepository.findAll().stream()
             .anyMatch(product -> product.getName().startsWith(BULK_NAME_PREFIX));
         if (alreadySeeded) {
             return;
         }
 
-        // ===== 1. 부품(COMPONENT) 대량 생성 =====
-        // ProductInitData와 동일한 카테고리 이름 사용 (CategoryInitData 실행 전제)
-        List<Category> componentCategories = List.of(
+        List<Long> bulkIds = new ArrayList<>();
+
+        // ===== 1. 부품(COMPONENT) — 부품 리프 카테고리 전부(8개) =====
+        List<Category> partCategories = List.of(
             getCategory("식탁 상판"),
             getCategory("식탁 다리"),
             getCategory("의자 좌판"),
             getCategory("의자 등받이"),
-            getCategory("의자 다리")
+            getCategory("의자 다리"),
+            getCategory("서랍장 상판"),
+            getCategory("서랍장 서랍"),
+            getCategory("서랍장 손잡이")
         );
-
-        List<Long> bulkIds = new ArrayList<>();
-        for (Category category : componentCategories) {
-            for (int i = 1; i <= COMPONENT_COUNT_PER_CATEGORY; i++) {
-                bulkIds.add(createBulkComponent(category, i));
+        for (Category category : partCategories) {
+            for (int i = 1; i <= PART_COUNT_PER_CATEGORY; i++) {
+                bulkIds.add(createPart(category, i));
             }
         }
 
-        // ===== 2. 완제품(COMPLETE) 대량 생성 =====
-        // 조합용 부품 SKU는 기존 ProductInitData가 만들어둔 원본 상품에서 그대로 가져옴
+        // ===== 2. 조합 완제품(COMPLETE + composition) =====
+        // 조합용 부품 SKU는 기존 ProductInitData가 만들어둔 원본 상품에서 가져옴
         Long topSkuId = findSkuIdByProductName("원목 상판 800X800", "오크");
         Long tableLegSkuId = findSkuIdByProductName("철제 테이블 다리 4개 세트", "블랙");
         Long seatSkuId = findSkuIdByProductName("패브릭 좌판", "베이지");
         Long backSkuId = findSkuIdByProductName("원목 등받이", "오크");
         Long chairLegSkuId = findSkuIdByProductName("원목 의자 다리 프레임", "오크");
 
-        Category roundTableCategory = getCategory("원형");
-        Category diningChairCategory = getCategory("식탁 의자");
-
-        for (int i = 1; i <= COMPLETE_COUNT; i++) {
-            if (i % 2 == 0) {
-                bulkIds.add(createBulkTable(roundTableCategory, i, topSkuId, tableLegSkuId));
-            } else {
-                bulkIds.add(createBulkChair(diningChairCategory, i, seatSkuId, backSkuId, chairLegSkuId));
+        // 테이블류(상판+다리): 원형, 바 테이블
+        for (Category category : List.of(getCategory("원형"), getCategory("바 테이블"))) {
+            for (int i = 1; i <= COMPOSED_COUNT_PER_CATEGORY; i++) {
+                bulkIds.add(createComposedTable(category, i, topSkuId, tableLegSkuId));
+            }
+        }
+        // 의자류(좌판+등받이+다리): 식탁 의자, 접이식 의자
+        for (Category category : List.of(getCategory("식탁 의자"), getCategory("접이식 의자"))) {
+            for (int i = 1; i <= COMPOSED_COUNT_PER_CATEGORY; i++) {
+                bulkIds.add(createComposedChair(category, i, seatSkuId, backSkuId, chairLegSkuId));
             }
         }
 
-        // ===== 3. 활성화 =====
+        // ===== 3. 단품(COMPONENT, 구성품 없는 완제품) — 모든 완제품 카테고리 =====
+        List<Category> finishedCategories = List.of(
+            getCategory("원형"),
+            getCategory("바 테이블"),
+            getCategory("식탁 의자"),
+            getCategory("접이식 의자"),
+            getCategory("3단 서랍장"),
+            getCategory("5단 서랍장")
+        );
+        for (Category category : finishedCategories) {
+            for (int i = 1; i <= STANDALONE_COUNT_PER_CATEGORY; i++) {
+                bulkIds.add(createStandaloneProduct(category, i));
+            }
+        }
+
+        // ===== 4. 활성화 =====
         productRepository.findAllById(bulkIds).forEach(Product::activate);
 
-        // ===== 4. 상태 다양화 (목록 필터/정렬/오버레이 라벨 확인용) =====
+        // ===== 5. 상태 다양화 (필터/오버레이 라벨 확인용) =====
         for (int i = 0; i < bulkIds.size(); i++) {
             Long productId = bulkIds.get(i);
-
             if (i % 25 == 0) {
-                // 25개마다 하나씩 영구 품절(ProductStatus.DISCONTINUED)
-                productFacade.discontinueProduct(productId);
+                productFacade.discontinueProduct(productId);                  // 영구 품절(단종)
             } else if (i % 10 == 0) {
-                // 10개마다 하나씩 임시 품절(SkuStatus.SOLDOUT)
+                // 일시 품절: 재고 0 → 파생 로직이 품절 처리
                 productSkuRepository.findByProductIdAndStatusNot(productId, SkuStatus.ARCHIVED)
-                    .forEach(ProductSku::soldOut);
+                    .forEach(sku -> sku.update(sku.getPrice(), 0, sku.getColor(), sku.getMaterial()));
             }
         }
     }
@@ -111,7 +127,8 @@ public class ProductBulkTestData implements ApplicationRunner {
 
     // ========== 상품 생성 ==========
 
-    private Long createBulkComponent(Category category, int index) {
+    /** 부품(COMPONENT) — 상판/다리 등 개별 부품 */
+    private Long createPart(Category category, int index) {
         String color = COLORS.get(index % COLORS.size());
         String material = MATERIALS.get(index % MATERIALS.size());
         long price = 10_000L + (index * 1_000L);
@@ -129,12 +146,32 @@ public class ProductBulkTestData implements ApplicationRunner {
         ));
     }
 
-    private Long createBulkTable(Category category, int index, Long topSkuId, Long legSkuId) {
+    /** 단품(COMPONENT) — 구성품 없이 자체 SKU로 파는 완제품 */
+    private Long createStandaloneProduct(Category category, int index) {
+        String color = COLORS.get(index % COLORS.size());
+        String material = MATERIALS.get(index % MATERIALS.size());
+        long price = 80_000L + (index * 1_500L);
+
+        return productFacade.createProduct(new ProductCreateReqDto(
+            category.getId(),
+            BULK_NAME_PREFIX + category.getName() + " 단품 " + index,
+            "테스트용 더미 데이터입니다.",
+            ProductType.COMPONENT,          // ← 단품은 COMPONENT (구성품 없음)
+            DeliveryType.PARCEL,
+            10.0, 60.0, 50.0, 60.0,
+            List.of(new SkuCreateReqDto(price, 20, color, material)),
+            List.of(new AttributeCreateReqDto(AttributeKey.SIZE_LABEL, "테스트 규격 " + index)),
+            List.of()                        // 구성품 없음
+        ));
+    }
+
+    /** 조합 완제품(COMPLETE) — 상판+다리 */
+    private Long createComposedTable(Category category, int index, Long topSkuId, Long legSkuId) {
         long price = 120_000L + (index * 2_000L);
 
         return productFacade.createProduct(new ProductCreateReqDto(
             category.getId(),
-            BULK_NAME_PREFIX + "원형 식탁 " + index,
+            BULK_NAME_PREFIX + category.getName() + " " + index,
             "테스트용 더미 데이터입니다.",
             ProductType.COMPLETE,
             DeliveryType.INSTALLATION,
@@ -148,14 +185,15 @@ public class ProductBulkTestData implements ApplicationRunner {
         ));
     }
 
-    private Long createBulkChair(
+    /** 조합 완제품(COMPLETE) — 좌판+등받이+다리 */
+    private Long createComposedChair(
         Category category, int index, Long seatSkuId, Long backSkuId, Long legSkuId
     ) {
         long price = 60_000L + (index * 1_500L);
 
         return productFacade.createProduct(new ProductCreateReqDto(
             category.getId(),
-            BULK_NAME_PREFIX + "식탁 의자 " + index,
+            BULK_NAME_PREFIX + category.getName() + " " + index,
             "테스트용 더미 데이터입니다.",
             ProductType.COMPLETE,
             DeliveryType.PARCEL,
@@ -174,8 +212,7 @@ public class ProductBulkTestData implements ApplicationRunner {
     // ========== 헬퍼 메서드 ==========
 
     private Category getCategory(String name) {
-        return categoryRepository.findAll()
-            .stream()
+        return categoryRepository.findAll().stream()
             .filter(category -> category.getName().equals(name))
             .findFirst()
             .orElseThrow(() -> new IllegalStateException(
@@ -184,13 +221,11 @@ public class ProductBulkTestData implements ApplicationRunner {
     }
 
     private Long findSkuIdByProductName(String productName, String color) {
-        Product product = productRepository.findAll()
-            .stream()
+        Product product = productRepository.findAll().stream()
             .filter(p -> p.getName().equals(productName))
             .findFirst()
             .orElseThrow(() -> new IllegalStateException(
-                "조합용 원본 부품 상품을 찾을 수 없습니다: " + productName
-                    + " (기존 ProductInitData 실행 여부 확인)"
+                "조합용 원본 부품 상품을 찾을 수 없습니다: " + productName + " (ProductInitData 실행 여부 확인)"
             ));
 
         return productSkuRepository.findByProductIdAndStatusNot(product.getId(), SkuStatus.ARCHIVED)
