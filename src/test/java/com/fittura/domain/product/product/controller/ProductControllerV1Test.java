@@ -11,9 +11,15 @@ import com.fittura.domain.product.product.repository.ProductAttributeRepository;
 import com.fittura.domain.product.product.repository.ProductRepository;
 import com.fittura.domain.product.product.support.ProductAttributeFixture;
 import com.fittura.domain.product.product.support.ProductFixture;
+import com.fittura.domain.product.sku.entity.Color;
+import com.fittura.domain.product.sku.entity.Material;
 import com.fittura.domain.product.sku.entity.ProductSku;
+import com.fittura.domain.product.sku.repository.ColorRepository;
 import com.fittura.domain.product.sku.repository.CompositionRepository;
+import com.fittura.domain.product.sku.repository.MaterialRepository;
 import com.fittura.domain.product.sku.repository.ProductSkuRepository;
+import com.fittura.domain.product.sku.support.ColorFixture;
+import com.fittura.domain.product.sku.support.MaterialFixture;
 import com.fittura.domain.product.sku.support.ProductCompositionFixture;
 import com.fittura.domain.product.sku.support.ProductSkuFixture;
 import com.fittura.global.IntegrationTestBase;
@@ -35,6 +41,8 @@ class ProductControllerV1Test extends IntegrationTestBase {
     @Autowired private ProductSkuRepository productSkuRepository;
     @Autowired private ProductAttributeRepository attributeRepository;
     @Autowired private CompositionRepository compositionRepository;
+    @Autowired private ColorRepository colorRepository;
+    @Autowired private MaterialRepository materialRepository;
 
     private static final String PRODUCT_URL = "/api/v1/products";
 
@@ -74,17 +82,17 @@ class ProductControllerV1Test extends IntegrationTestBase {
         Product activeProduct = ProductFixture.component(category, "Active Desk");
         activeProduct.activate();
         productRepository.save(activeProduct);
-        productSkuRepository.save(ProductSkuFixture.sku(activeProduct, 50000L, 100, "White", "Wood"));
+        productSkuRepository.save(ProductSkuFixture.sku(activeProduct, 50000L, 100));
 
         Product soldOutProduct = ProductFixture.component(category, "Wood Brown Desk");
         soldOutProduct.activate();
         productRepository.save(soldOutProduct);
-        productSkuRepository.save(ProductSkuFixture.sku(soldOutProduct, 60000L, 0, "Brown", "Wood"));
+        productSkuRepository.save(ProductSkuFixture.sku(soldOutProduct, 60000L, 0));
 
         Product discontinuedProduct = ProductFixture.component(category, "Discontinued Chair");
         discontinuedProduct.discontinue();
         productRepository.save(discontinuedProduct);
-        productSkuRepository.save(ProductSkuFixture.sku(discontinuedProduct, 70000L, 100, "Black", "Metal"));
+        productSkuRepository.save(ProductSkuFixture.sku(discontinuedProduct, 70000L, 100));
 
         // when & then
         mockMvc.perform(get(PRODUCT_URL).param("inStockOnly", "true"))
@@ -149,25 +157,31 @@ class ProductControllerV1Test extends IntegrationTestBase {
         // given
         Category category = categoryRepository.save(CategoryFixture.rootActive());
 
+        Color white = colorRepository.save(ColorFixture.color("White"));
+        Color brown = colorRepository.save(ColorFixture.color("Brown"));
+        Color black = colorRepository.save(ColorFixture.color("Black"));
+        Material wood = materialRepository.save(MaterialFixture.material("Wood"));
+        Material metal = materialRepository.save(MaterialFixture.material("Metal"));
+
         Product woodProduct = ProductFixture.component(category, "Wood White Desk");
         woodProduct.activate();
         productRepository.save(woodProduct);
-        productSkuRepository.save(ProductSkuFixture.sku(woodProduct, 50000L, 100, "White", "Wood"));
+        productSkuRepository.save(ProductSkuFixture.sku(woodProduct, 50000L, 100, white, wood));
 
         Product woodBrownProduct = ProductFixture.component(category, "Wood Brown Desk");
         woodBrownProduct.activate();
         productRepository.save(woodBrownProduct);
-        productSkuRepository.save(ProductSkuFixture.sku(woodBrownProduct, 60000L, 100, "Brown", "Wood"));
+        productSkuRepository.save(ProductSkuFixture.sku(woodBrownProduct, 60000L, 100, brown, wood));
 
         Product metalProduct = ProductFixture.component(category, "Metal Black Chair");
         metalProduct.activate();
         productRepository.save(metalProduct);
-        productSkuRepository.save(ProductSkuFixture.sku(metalProduct, 70000L, 100, "Black", "Metal"));
+        productSkuRepository.save(ProductSkuFixture.sku(metalProduct, 70000L, 100, black, metal));
 
         // when & then
         mockMvc.perform(get(PRODUCT_URL)
-                .param("colors", "White", "Brown")
-                .param("materials", "Wood"))
+                .param("colors", String.valueOf(white.getId()), String.valueOf(brown.getId()))
+                .param("materials", String.valueOf(wood.getId())))
             .andDo(print())
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.totalElements").value(2))
@@ -250,10 +264,13 @@ class ProductControllerV1Test extends IntegrationTestBase {
     void getProductSuccess() throws Exception {
         // given
         Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Color white = colorRepository.save(ColorFixture.color("White"));
+        Material wood = materialRepository.save(MaterialFixture.material("Wood"));
+
         Product product = ProductFixture.component(category, "A Desk");
         product.activate();
         productRepository.save(product);
-        productSkuRepository.save(ProductSkuFixture.sku(product, 45000L, 100));
+        productSkuRepository.save(ProductSkuFixture.sku(product, 45000L, 100, white, wood));
 
         // when & then
         mockMvc.perform(get(PRODUCT_URL + "/" + product.getId()))

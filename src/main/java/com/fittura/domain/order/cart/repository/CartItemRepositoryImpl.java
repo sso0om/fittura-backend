@@ -14,6 +14,8 @@ import java.util.List;
 
 import static com.fittura.domain.order.cart.entity.QCartItem.cartItem;
 import static com.fittura.domain.product.product.entity.QProduct.product;
+import static com.fittura.domain.product.sku.entity.QColor.color;
+import static com.fittura.domain.product.sku.entity.QMaterial.material;
 import static com.fittura.domain.product.sku.entity.QProductSku.productSku;
 
 @RequiredArgsConstructor
@@ -51,6 +53,8 @@ public class CartItemRepositoryImpl implements CartItemRepositoryCustom {
             .selectFrom(cartItem)
             .join(cartItem.productSku, productSku).fetchJoin()
             .join(productSku.product, product).fetchJoin()
+            .leftJoin(productSku.color, color).fetchJoin()
+            .leftJoin(productSku.material, material).fetchJoin()
             .where(
                 cartItem.id.in(itemIds),
                 cartItem.cart.memberId.eq(memberId),
@@ -69,8 +73,8 @@ public class CartItemRepositoryImpl implements CartItemRepositoryCustom {
                 product.id,
                 product.name,
                 productSku.id,
-                productSku.color,
-                productSku.material,
+                color.name,
+                material.name,
                 productSku.price,
                 cartItem.quantity,
                 productSku.price.multiply(cartItem.quantity),
@@ -80,6 +84,8 @@ public class CartItemRepositoryImpl implements CartItemRepositoryCustom {
             .from(cartItem)
             .join(cartItem.productSku, productSku)
             .join(productSku.product, product)
+            .leftJoin(productSku.color, color)
+            .leftJoin(productSku.material, material)
             .where(
                 cartItem.cart.id.eq(cartId),
                 productSku.status.ne(SkuStatus.ARCHIVED),

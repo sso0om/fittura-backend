@@ -9,8 +9,8 @@ public record ProductSearchReqDto(
     Boolean inStockOnly,
     Long categoryId,
     String keyword,
-    List<String> colors,
-    List<String> materials
+    List<Long> colors,
+    List<Long> materials
 ) {
     public ProductSearchReqDto {
         if (inStockOnly == null) inStockOnly = false;

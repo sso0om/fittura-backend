@@ -43,11 +43,13 @@ public class ProductSku extends BaseEntity {
     @Column(nullable = false, length = 20)
     private SkuStatus status;
 
-    @Column(length = 50)
-    private String color;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "colorId")
+    private Color color;
 
-    @Column(length = 50)
-    private String material;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "material_id")
+    private Material material;
 
     // ===== 생성 =====
 
@@ -55,8 +57,8 @@ public class ProductSku extends BaseEntity {
         Product product,
         Long price,
         Integer stockQuantity,
-        String color,
-        String material
+        Color color,
+        Material material
     ) {
         Objects.requireNonNull(product, "product must not be null");
 
@@ -75,7 +77,7 @@ public class ProductSku extends BaseEntity {
         return productSku;
     }
 
-    public void update(Long price, Integer stockQuantity, String color, String material) {
+    public void update(Long price, Integer stockQuantity, Color color, Material material) {
         this.price = price;
         this.stockQuantity = stockQuantity;
         this.color = color;
@@ -117,7 +119,10 @@ public class ProductSku extends BaseEntity {
     }
 
     public String getSkuIdentifier() {
-        return Stream.of(color, material)
+        return Stream.of(
+                color != null ? color.getName() : null,
+                material != null ? material.getName() : null
+            )
             .filter(s -> s != null && !s.isEmpty())
             .collect(Collectors.joining(" / "));
     }

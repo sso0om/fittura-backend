@@ -1,6 +1,8 @@
 package com.fittura.domain.product.sku.support;
 
 import com.fittura.domain.product.product.entity.Product;
+import com.fittura.domain.product.sku.entity.Color;
+import com.fittura.domain.product.sku.entity.Material;
 import com.fittura.domain.product.sku.entity.ProductSku;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -13,12 +15,12 @@ public class ProductSkuFixture {
             product,
             price,
             stock,
-            "White",
-            "Wood"
+            null,
+            null
         );
     }
 
-    public static ProductSku sku(Product product, Long price, Integer stock, String color, String material) {
+    public static ProductSku sku(Product product, Long price, Integer stock, Color color, Material material) {
         return ProductSku.create(
             product,
             price,
@@ -33,8 +35,8 @@ public class ProductSkuFixture {
             product,
             10000L,
             100,
-            color,
-            material
+            color != null ? Color.create(color) : null,
+            material != null ? Material.create(material) : null
         );
     }
 

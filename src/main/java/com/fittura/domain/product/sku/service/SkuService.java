@@ -8,9 +8,13 @@ import com.fittura.domain.product.sku.dto.request.CompositionCreateReqDto;
 import com.fittura.domain.product.sku.dto.request.CompositionUpdateReqDto;
 import com.fittura.domain.product.sku.dto.request.SkuCreateReqDto;
 import com.fittura.domain.product.sku.dto.request.SkuUpdateReqDto;
+import com.fittura.domain.product.sku.entity.Color;
+import com.fittura.domain.product.sku.entity.Material;
 import com.fittura.domain.product.sku.entity.ProductComposition;
 import com.fittura.domain.product.sku.entity.ProductSku;
+import com.fittura.domain.product.sku.repository.ColorRepository;
 import com.fittura.domain.product.sku.repository.CompositionRepository;
+import com.fittura.domain.product.sku.repository.MaterialRepository;
 import com.fittura.domain.product.sku.repository.ProductSkuRepository;
 import com.fittura.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +32,8 @@ public class SkuService {
 
     private final ProductSkuRepository productSkuRepository;
     private final CompositionRepository compositionRepository;
+    private final ColorRepository colorRepository;
+    private final MaterialRepository materialRepository;
 
     public ProductSku getProductSku(Long skuId) {
         return productSkuRepository.findByIdAndStatusNot(skuId, SkuStatus.ARCHIVED)
@@ -36,13 +42,15 @@ public class SkuService {
 
     public void createSkus(Product product, List<SkuCreateReqDto> skuDtos) {
         for (SkuCreateReqDto skuDto : skuDtos) {
+            Color color = getColor(skuDto.colorId());
+            Material material = getMaterial(skuDto.materialId());
 
             ProductSku productSku = ProductSku.create(
                 product,
                 skuDto.price(),
                 skuDto.stockQuantity(),
-                skuDto.color(),
-                skuDto.material()
+                color,
+                material
             );
             productSkuRepository.save(productSku);
         }
@@ -71,18 +79,21 @@ public class SkuService {
             .forEach(ProductSku::archive);
 
         for (SkuUpdateReqDto dto : reqDto) {
+            Color color = getColor(dto.colorId());
+            Material material = getMaterial(dto.materialId());
+
             if (dto.id() == null) {
                 ProductSku newSku = ProductSku.create(
                     product,
                     dto.price(),
                     dto.stockQuantity(),
-                    dto.color(),
-                    dto.material()
+                    color,
+                    material
                 );
                 productSkuRepository.save(newSku);
             } else {
                 ProductSku sku = existingMap.get(dto.id());
-                sku.update(dto.price(), dto.stockQuantity(), dto.color(), dto.material());
+                sku.update(dto.price(), dto.stockQuantity(), color, material);
             }
         }
     }
@@ -181,6 +192,21 @@ public class SkuService {
 
     public void deleteCompositions(Product product) {
         compositionRepository.deleteAllByParentProductId(product.getId());
+    }
+
+
+    // ===== color, material ====
+
+    public Color getColor(Long colorId) {
+        if (colorId == null) return null;
+        return colorRepository.findById(colorId)
+            .orElseThrow(() -> new ServiceException(ProductErrorCode.NOT_FOUND_COLOR));
+    }
+
+    public Material getMaterial(Long materialId) {
+        if (materialId == null) return null;
+        return materialRepository.findById(materialId)
+            .orElseThrow(() -> new ServiceException(ProductErrorCode.NOT_FOUND_MATERIAL));
     }
 
 

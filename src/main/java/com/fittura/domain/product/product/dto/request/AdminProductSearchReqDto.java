@@ -10,7 +10,7 @@ public record AdminProductSearchReqDto(
     List<ProductStatus> statuses,
     Long categoryId,
     String keyword,
-    List<String> colors,
-    List<String> materials
+    List<Long> colors,
+    List<Long> materials
 ) {
 }

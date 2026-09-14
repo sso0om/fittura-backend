@@ -559,7 +559,7 @@ class ProductServiceTest {
     // ========== 핼퍼 메서드 ==========
 
     private SkuCreateReqDto skuDto() {
-        return new SkuCreateReqDto(10000L, 100, "White", "Wood");
+        return new SkuCreateReqDto(10000L, 100, 1L, 1L);
     }
 
     private AttributeCreateReqDto attributeDto() {
@@ -571,7 +571,7 @@ class ProductServiceTest {
     }
 
     private SkuUpdateReqDto skuUpdateDto(Long id) {
-        return new SkuUpdateReqDto(id, 10000L, 100, "White", "Wood");
+        return new SkuUpdateReqDto(id, 10000L, 100, 1L, 1L);
     }
 
     private void givenCategoryNotFound(Long categoryId) {

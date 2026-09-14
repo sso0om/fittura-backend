@@ -233,8 +233,8 @@ public class OrderConcurrencyTest extends IntegrationTestBase {
         long holdMillis = 2000L;
 
         Product chair = createActiveProduct("의자");
-        ProductSku chairRed = createSku(chair, 5, "red");
-        ProductSku chairBlue = createSku(chair, 5, "blue");
+        ProductSku chairRed = createSku(chair, 5);
+        ProductSku chairBlue = createSku(chair, 5);
 
         Long memberX = 92001L;
         Long memberY = 92002L;
@@ -312,14 +312,14 @@ public class OrderConcurrencyTest extends IntegrationTestBase {
         return product;
     }
 
-    private ProductSku createSku(Product product, int stock, String color) {
-        ProductSku sku = ProductSkuFixture.sku(product, 100_000L, stock, color, null);
+    private ProductSku createSku(Product product, int stock) {
+        ProductSku sku = ProductSkuFixture.sku(product, 100_000L, stock);
         skuRepository.save(sku);
         return sku;
     }
 
     private ProductSku getProductSku(String productName, int stock) {
-        return createSku(createActiveProduct(productName), stock, null);
+        return createSku(createActiveProduct(productName), stock);
     }
 
     private boolean isDeadlockRelated(Throwable e) {

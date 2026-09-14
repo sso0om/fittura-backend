@@ -9,10 +9,16 @@ import com.fittura.domain.product.sku.dto.request.CompositionCreateReqDto;
 import com.fittura.domain.product.sku.dto.request.CompositionUpdateReqDto;
 import com.fittura.domain.product.sku.dto.request.SkuCreateReqDto;
 import com.fittura.domain.product.sku.dto.request.SkuUpdateReqDto;
+import com.fittura.domain.product.sku.entity.Color;
+import com.fittura.domain.product.sku.entity.Material;
 import com.fittura.domain.product.sku.entity.ProductComposition;
 import com.fittura.domain.product.sku.entity.ProductSku;
+import com.fittura.domain.product.sku.repository.ColorRepository;
 import com.fittura.domain.product.sku.repository.CompositionRepository;
+import com.fittura.domain.product.sku.repository.MaterialRepository;
 import com.fittura.domain.product.sku.repository.ProductSkuRepository;
+import com.fittura.domain.product.sku.support.ColorFixture;
+import com.fittura.domain.product.sku.support.MaterialFixture;
 import com.fittura.domain.product.sku.support.ProductCompositionFixture;
 import com.fittura.domain.product.sku.support.ProductSkuFixture;
 import com.fittura.global.exception.ServiceException;
@@ -45,6 +51,12 @@ class SkuServiceTest {
     @Mock
     private CompositionRepository compositionRepository;
 
+    @Mock
+    private ColorRepository colorRepository;
+
+    @Mock
+    private MaterialRepository materialRepository;
+
     @InjectMocks
     private SkuService skuService;
 
@@ -57,9 +69,14 @@ class SkuServiceTest {
         // given
         Product product = ProductFixture.component("Chair Leg");
         List<SkuCreateReqDto> skuDtos = List.of(
-            new SkuCreateReqDto(4500L, 100, "White", "Wood"),
-            new SkuCreateReqDto(4800L, 50, "Black", "Metal")
+            new SkuCreateReqDto(4500L, 100, 1L, 1L),
+            new SkuCreateReqDto(4800L, 50, 2L, 2L)
         );
+
+        givenColor(1L, "White");
+        givenMaterial(1L, "Wood");
+        givenColor(2L, "Black");
+        givenMaterial(2L, "Metal");
 
         // when
         skuService.createSkus(product, skuDtos);
@@ -80,9 +97,11 @@ class SkuServiceTest {
         ProductSku existing = ProductSkuFixture.skuWithId(1L, product);
 
         givenSkus(product.getId(), List.of(existing));
+        givenColor(2L, "Black");
+        givenMaterial(2L, "Metal");
 
         List<SkuUpdateReqDto> reqDto = List.of(
-            new SkuUpdateReqDto(1L, 9000L, 80, "Black", "Metal")
+            new SkuUpdateReqDto(1L, 9000L, 80, 2L, 2L)
         );
 
         // when
@@ -91,8 +110,8 @@ class SkuServiceTest {
         // then
         assertThat(existing.getPrice()).isEqualTo(9000L);
         assertThat(existing.getStockQuantity()).isEqualTo(80);
-        assertThat(existing.getColor()).isEqualTo("Black");
-        assertThat(existing.getMaterial()).isEqualTo("Metal");
+        assertThat(existing.getColor().getName()).isEqualTo("Black");
+        assertThat(existing.getMaterial().getName()).isEqualTo("Metal");
     }
 
     @Test
@@ -103,10 +122,12 @@ class SkuServiceTest {
         ProductSku existing = ProductSkuFixture.skuWithId(1L, product);
 
         givenSkus(product.getId(), List.of(existing));
+        givenColor(1L, "White");
+        givenMaterial(1L, "Wood");
 
         List<SkuUpdateReqDto> reqDto = List.of(
-            new SkuUpdateReqDto(1L, 20000L, 50, "White", "Wood"),
-            new SkuUpdateReqDto(null, 15000L, 30, "Black", "Metal")
+            new SkuUpdateReqDto(1L, 20000L, 50, 1L, 1L),
+            new SkuUpdateReqDto(null, 15000L, 30, 1L, 1L)
         );
 
         // when
@@ -126,9 +147,11 @@ class SkuServiceTest {
         ProductSku toKeep = ProductSkuFixture.skuWithId(2L, product);
 
         givenSkus(product.getId(), List.of(toDelete, toKeep));
+        givenColor(1L, "White");
+        givenMaterial(1L, "Wood");
 
         List<SkuUpdateReqDto> reqDto = List.of(
-            new SkuUpdateReqDto(2L, 20000L, 50, "White", "Wood")
+            new SkuUpdateReqDto(2L, 20000L, 50, 1L, 1L)
         );
 
         // when
@@ -370,7 +393,7 @@ class SkuServiceTest {
             .isEqualTo(ProductErrorCode.CHILD_SKU_ONLY_COMPONENT);
     }
 
-    
+
     // ========== 구성품 수정 ==========
 
     @Test
@@ -582,5 +605,17 @@ class SkuServiceTest {
 
     private void givenCompositions(Long productId, List<ProductComposition> compositions) {
         given(compositionRepository.findByParentProductId(productId)).willReturn(compositions);
+    }
+
+    private void givenColor(Long colorId, String name) {
+        Color color = ColorFixture.color(name);
+        ReflectionTestUtils.setField(color, "id", colorId);
+        given(colorRepository.findById(colorId)).willReturn(Optional.of(color));
+    }
+
+    private void givenMaterial(Long materialId, String name) {
+        Material material = MaterialFixture.material(name);
+        ReflectionTestUtils.setField(material, "id", materialId);
+        given(materialRepository.findById(materialId)).willReturn(Optional.of(material));
     }
 }

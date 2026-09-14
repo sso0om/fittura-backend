@@ -12,10 +12,16 @@ import com.fittura.domain.product.product.repository.ProductAttributeRepository;
 import com.fittura.domain.product.product.repository.ProductRepository;
 import com.fittura.domain.product.product.support.ProductAttributeFixture;
 import com.fittura.domain.product.product.support.ProductFixture;
+import com.fittura.domain.product.sku.entity.Color;
+import com.fittura.domain.product.sku.entity.Material;
 import com.fittura.domain.product.sku.entity.ProductComposition;
 import com.fittura.domain.product.sku.entity.ProductSku;
+import com.fittura.domain.product.sku.repository.ColorRepository;
 import com.fittura.domain.product.sku.repository.CompositionRepository;
+import com.fittura.domain.product.sku.repository.MaterialRepository;
 import com.fittura.domain.product.sku.repository.ProductSkuRepository;
+import com.fittura.domain.product.sku.support.ColorFixture;
+import com.fittura.domain.product.sku.support.MaterialFixture;
 import com.fittura.domain.product.sku.support.ProductCompositionFixture;
 import com.fittura.domain.product.sku.support.ProductSkuFixture;
 import com.fittura.global.IntegrationTestBase;
@@ -46,6 +52,8 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
     @Autowired private ProductSkuRepository productSkuRepository;
     @Autowired private CompositionRepository compositionRepository;
     @Autowired private ProductAttributeRepository productAttributeRepository;
+    @Autowired private ColorRepository colorRepository;
+    @Autowired private MaterialRepository materialRepository;
 
     private static final String PRODUCT_ADMIN_URL = "/api/admin/v1/products";
 
@@ -135,10 +143,13 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
     void getProductSuccess() throws Exception {
         // given
         Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Color white = colorRepository.save(ColorFixture.color("White"));
+        Material wood = materialRepository.save(MaterialFixture.material("Wood"));
+
         Product product = productRepository.save(
             ProductFixture.component(category, "A Desk")
         );
-        productSkuRepository.save(ProductSkuFixture.sku(product, 45000L, 100));
+        productSkuRepository.save(ProductSkuFixture.sku(product, 45000L, 100, white, wood));
 
         // when & then
         mockMvc.perform(get(PRODUCT_ADMIN_URL + "/" + product.getId()))
@@ -177,6 +188,8 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
     void createCompleteSuccess() throws Exception {
         // given
         Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Color white = colorRepository.save(ColorFixture.color("White"));
+        Material wood = materialRepository.save(MaterialFixture.material("Wood"));
 
         Product componentProduct = productRepository.save(
             ProductFixture.component(category, "Chair Leg")
@@ -202,8 +215,8 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
                 "skus": [{
                     "price": 90000,
                     "stockQuantity": 50,
-                    "color": "White",
-                    "material": "Wood"
+                    "colorId": %d,
+                    "materialId": %d
                 }],
                 "attributes": [],
                 "compositions": [{
@@ -212,7 +225,7 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
                     "sortOrder": 0
                 }]
             }
-        """.formatted(category.getId(), childSku.getId());
+        """.formatted(category.getId(), white.getId(), wood.getId(), childSku.getId());
 
         // when
         ResultActions resultActions = mockMvc
@@ -241,6 +254,8 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
     void createComponentSuccess() throws Exception {
         // given
         Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Color white = colorRepository.save(ColorFixture.color("White"));
+        Material wood = materialRepository.save(MaterialFixture.material("Wood"));
 
         long productCountBefore = productRepository.count();
         long skuCountBefore = productSkuRepository.count();
@@ -259,13 +274,13 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
                 "skus": [{
                     "price": 4500,
                     "stockQuantity": 100,
-                    "color": "White",
-                    "material": "Wood"
+                    "colorId": %d,
+                    "materialId": %d
                 }],
                 "attributes": [],
                 "compositions": []
             }
-        """.formatted(category.getId());
+        """.formatted(category.getId(), white.getId(), wood.getId());
 
         // when
         ResultActions resultActions = mockMvc
@@ -504,6 +519,8 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
     void createCompleteFail_childSkuIsComplete() throws Exception {
         // given
         Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Color white = colorRepository.save(ColorFixture.color("White"));
+        Material wood = materialRepository.save(MaterialFixture.material("Wood"));
         Product completeProduct = productRepository.save(ProductFixture.complete(category, "기존 완제품"));
         ProductSku completeSku = productSkuRepository.save(ProductSkuFixture.sku(completeProduct, 10000L, 100));
 
@@ -519,14 +536,16 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
                 "depth": 10.0,
                 "skus": [{
                     "price": 4500,
-                    "stockQuantity": 100
+                    "stockQuantity": 100,
+                    "colorId": %d,
+                    "materialId": %d
                 }],
                 "attributes": [],
                 "compositions": [
                     { "childSkuId": %d, "quantity": 1, "sortOrder": 0 }
                 ]
             }
-        """.formatted(category.getId(), completeSku.getId());
+        """.formatted(category.getId(), white.getId(), wood.getId(), completeSku.getId());
 
         mockMvc.perform(post(PRODUCT_ADMIN_URL)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -545,6 +564,9 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
     void updateComponentSuccess() throws Exception {
         // given
         Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Color black = colorRepository.save(ColorFixture.color("Black"));
+        Material metal = materialRepository.save(MaterialFixture.material("Metal"));
+
         Product product = productRepository.save(
             ProductFixture.component(category, "Old Name")
         );
@@ -564,13 +586,13 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
                     "id": %d,
                     "price": 75000,
                     "stockQuantity": 80,
-                    "color": "Black",
-                    "material": "Metal"
+                    "colorId": %d,
+                    "materialId": %d
                 }],
                 "attributes": [],
                 "compositions": []
             }
-        """.formatted(category.getId(), sku.getId());
+        """.formatted(category.getId(), sku.getId(), black.getId(), metal.getId());
 
         // when & then
         mockMvc.perform(put(PRODUCT_ADMIN_URL + "/" + product.getId())
@@ -589,8 +611,8 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
 
         ProductSku updatedSku = productSkuRepository.findById(sku.getId()).orElseThrow();
         assertThat(updatedSku.getStockQuantity()).isEqualTo(80);
-        assertThat(updatedSku.getColor()).isEqualTo("Black");
-        assertThat(updatedSku.getMaterial()).isEqualTo("Metal");
+        assertThat(updatedSku.getColor().getName()).isEqualTo("Black");
+        assertThat(updatedSku.getMaterial().getName()).isEqualTo("Metal");
     }
 
     @Test
@@ -598,12 +620,16 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
     void updateCompleteSuccess_withCompositions() throws Exception {
         // given
         Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Color white = colorRepository.save(ColorFixture.color("White"));
+        Color black = colorRepository.save(ColorFixture.color("Black"));
+        Material wood = materialRepository.save(MaterialFixture.material("Wood"));
+        Material metal = materialRepository.save(MaterialFixture.material("Metal"));
 
         Product componentProduct = productRepository.save(
             ProductFixture.component(category, "Chair Leg")
         );
         ProductSku oldChildSku = productSkuRepository.save(ProductSkuFixture.sku(componentProduct, 5000L, 100));
-        ProductSku newChildSku = productSkuRepository.save(ProductSkuFixture.sku(componentProduct, 5000L, 100, "Black", "Metal"));
+        ProductSku newChildSku = productSkuRepository.save(ProductSkuFixture.sku(componentProduct, 5000L, 100, black, metal));
 
         Product completeProduct = productRepository.save(
             ProductFixture.complete(category, "A Desk")
@@ -626,8 +652,8 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
                     "id": %d,
                     "price": 90000,
                     "stockQuantity": 50,
-                    "color": "White",
-                    "material": "Wood"
+                    "colorId": %d,
+                    "materialId": %d
                 }],
                 "attributes": [],
                 "compositions": [{
@@ -636,7 +662,7 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
                     "sortOrder": 0
                 }]
             }
-        """.formatted(category.getId(), completeSku.getId(), newChildSku.getId());
+        """.formatted(category.getId(), completeSku.getId(), white.getId(), wood.getId(), newChildSku.getId());
 
         // when & then
         mockMvc.perform(put(PRODUCT_ADMIN_URL + "/" + completeProduct.getId())
@@ -660,6 +686,9 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
     void updateSuccess_withNewAttribute() throws Exception {
         // given
         Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Color white = colorRepository.save(ColorFixture.color("White"));
+        Material wood = materialRepository.save(MaterialFixture.material("Wood"));
+
         Product product = productRepository.save(
             ProductFixture.component(category, "A Desk")
         );
@@ -678,8 +707,8 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
                     "id": %d,
                     "price": 45000,
                     "stockQuantity": 100,
-                    "color": "White",
-                    "material": "Wood"
+                    "colorId": %d,
+                    "materialId": %d
                 }],
                 "attributes": [{
                     "attributeKey": "SIZE_LABEL",
@@ -687,7 +716,7 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
                 }],
                 "compositions": []
             }
-        """.formatted(category.getId(), sku.getId());
+        """.formatted(category.getId(), sku.getId(), white.getId(), wood.getId());
 
         // when & then
         mockMvc.perform(put(PRODUCT_ADMIN_URL + "/" + product.getId())
@@ -719,9 +748,7 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
                 "skus": [{
                     "id": null,
                     "price": 75000,
-                    "stockQuantity": 80,
-                    "color": "Black",
-                    "material": "Metal"
+                    "stockQuantity": 80
                 }],
                 "attributes": [],
                 "compositions": []
@@ -818,9 +845,7 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
                 "skus": [{
                     "id": %d,
                     "price": 45000,
-                    "stockQuantity": 100,
-                    "color": "White",
-                    "material": "Wood"
+                    "stockQuantity": 100
                 }],
                 "attributes": [],
                 "compositions": []

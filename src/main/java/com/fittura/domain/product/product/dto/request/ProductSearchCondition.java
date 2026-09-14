@@ -9,7 +9,7 @@ public record ProductSearchCondition(
     List<ProductStatus> includedStatuses,
     List<Long> categoryIds,
     String keyword,
-    List<String> colors,
-    List<String> materials
+    List<Long> colors,
+    List<Long> materials
 ) {
 }
