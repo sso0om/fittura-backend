@@ -430,4 +430,20 @@ class ProductControllerV1Test extends IntegrationTestBase {
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.code").value(ProductErrorCode.NOT_FOUND_PRODUCT.getCode()));
     }
+
+    @Test
+    @DisplayName("필터링 옵션 조회 성공")
+    void getProductFiltersSuccess() throws Exception {
+        colorRepository.save(ColorFixture.color("White"));
+        colorRepository.save(ColorFixture.color("Brown"));
+        colorRepository.save(ColorFixture.color("Black"));
+        materialRepository.save(MaterialFixture.material("Wood"));
+        materialRepository.save(MaterialFixture.material("Metal"));
+
+        mockMvc.perform(get(PRODUCT_URL + "/filters"))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.colors.length()").value(3))
+            .andExpect(jsonPath("$.data.materials.length()").value(2));
+    }
 }

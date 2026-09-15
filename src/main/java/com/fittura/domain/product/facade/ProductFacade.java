@@ -158,4 +158,14 @@ public class ProductFacade {
         productService.validateProductExists(productId);
         return skuService.getProductCompositionDtos(productId);
     }
+
+
+    // ========== 필터 ==========
+
+    @Transactional(readOnly = true)
+    public ProductFilterResDto getProductFilter() {
+        List<ColorResDto> colors = skuService.getColors();
+        List<MaterialResDto> materials = skuService.getMaterials();
+        return new ProductFilterResDto(colors, materials);
+    }
 }

@@ -1,6 +1,8 @@
 package com.fittura.domain.product.sku.service;
 
+import com.fittura.domain.product.product.dto.response.ColorResDto;
 import com.fittura.domain.product.product.dto.response.CompositionResDto;
+import com.fittura.domain.product.product.dto.response.MaterialResDto;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.error.ProductErrorCode;
 import com.fittura.domain.product.sku.constant.SkuStatus;
@@ -197,10 +199,24 @@ public class SkuService {
 
     // ===== color, material ====
 
+    public List<ColorResDto> getColors() {
+        return colorRepository.findAll()
+            .stream()
+            .map(ColorResDto::from)
+            .toList();
+    }
+
     public Color getColor(Long colorId) {
         if (colorId == null) return null;
         return colorRepository.findById(colorId)
             .orElseThrow(() -> new ServiceException(ProductErrorCode.NOT_FOUND_COLOR));
+    }
+
+    public List<MaterialResDto> getMaterials() {
+        return materialRepository.findAll()
+            .stream()
+            .map(MaterialResDto::from)
+            .toList();
     }
 
     public Material getMaterial(Long materialId) {
