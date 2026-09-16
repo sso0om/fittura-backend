@@ -30,10 +30,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NoSuchElementException.class)
     public ResponseEntity<RsData<Void>> handle(NoSuchElementException e) {
         return new ResponseEntity<>(
-                RsData.error(
-                        CommonErrorCode.NOT_FOUND
-                ),
-                NOT_FOUND
+            RsData.error(
+                CommonErrorCode.NOT_FOUND
+            ),
+            NOT_FOUND
         );
     }
 
@@ -41,16 +41,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<RsData<List<ValidationError>>> handle(ConstraintViolationException e) {
         List<ValidationError> validationErrors = e.getConstraintViolations()
-                .stream()
-                .map(ValidationError::from)
-                .toList();
+            .stream()
+            .map(ValidationError::from)
+            .toList();
 
         return new ResponseEntity<>(
-                RsData.error(
-                        CommonErrorCode.VALIDATION_ERROR,
-                        validationErrors
-                ),
-                BAD_REQUEST
+            RsData.error(
+                CommonErrorCode.VALIDATION_ERROR,
+                validationErrors
+            ),
+            BAD_REQUEST
         );
     }
 
@@ -58,23 +58,23 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<RsData<List<ValidationError>>> handle(MethodArgumentNotValidException e) {
         List<ValidationError> validationErrors = e.getBindingResult()
-                .getAllErrors()
-                .stream()
-                .map(error -> {
-                    if (error instanceof FieldError fieldError) {
-                        return ValidationError.from(fieldError);
-                    } else {
-                        return new ValidationError(error.getObjectName(), error.getDefaultMessage());
-                    }
-                })
-                .toList();
+            .getAllErrors()
+            .stream()
+            .map(error -> {
+                if (error instanceof FieldError fieldError) {
+                    return ValidationError.from(fieldError);
+                } else {
+                    return new ValidationError(error.getObjectName(), error.getDefaultMessage());
+                }
+            })
+            .toList();
 
         return new ResponseEntity<>(
-                RsData.error(
-                        CommonErrorCode.VALIDATION_ERROR,
-                        validationErrors
-                ),
-                BAD_REQUEST
+            RsData.error(
+                CommonErrorCode.VALIDATION_ERROR,
+                validationErrors
+            ),
+            BAD_REQUEST
         );
     }
 
@@ -85,10 +85,10 @@ public class GlobalExceptionHandler {
         log.warn("Bad request payload: {}", reason);
 
         return new ResponseEntity<>(
-                RsData.error(
-                        CommonErrorCode.BAD_REQUEST
-                ),
-                BAD_REQUEST
+            RsData.error(
+                CommonErrorCode.BAD_REQUEST
+            ),
+            BAD_REQUEST
         );
     }
 
@@ -108,11 +108,11 @@ public class GlobalExceptionHandler {
         ErrorCode errorCode = e.getErrorCode();
 
         return new ResponseEntity<>(
-                RsData.error(
-                        errorCode,
-                        e.getDetail()
-                ),
-                errorCode.httpStatus()
+            RsData.error(
+                errorCode,
+                e.getDetail()
+            ),
+            errorCode.httpStatus()
         );
     }
 
@@ -125,11 +125,11 @@ public class GlobalExceptionHandler {
         // 클라이언트에게 traceId와 간단한 메시지만 전달
         ErrorCode errorCode = CommonErrorCode.INTERNAL_SERVER_ERROR;
         return new ResponseEntity<>(
-                RsData.error(
-                        errorCode,
-                        Map.of("traceId", traceId)
-                ),
-                errorCode.httpStatus()
+            RsData.error(
+                errorCode,
+                Map.of("traceId", traceId)
+            ),
+            errorCode.httpStatus()
         );
     }
 }

@@ -47,16 +47,26 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
 public class OrderConcurrencyTest extends IntegrationTestBase {
 
-    @Autowired private OrderFacade orderFacade;
-    @Autowired private OrderAddressRepository addressRepository;
-    @Autowired private OrderItemRepository orderItemRepository;
-    @Autowired private OrderRepository orderRepository;
-    @Autowired private CategoryRepository categoryRepository;
-    @Autowired private ProductRepository productRepository;
-    @Autowired private ProductSkuRepository skuRepository;
-    @Autowired private CartRepository cartRepository;
-    @Autowired private CartItemRepository cartItemRepository;
-    @Autowired private PlatformTransactionManager transactionManager;
+    @Autowired
+    private OrderFacade orderFacade;
+    @Autowired
+    private OrderAddressRepository addressRepository;
+    @Autowired
+    private OrderItemRepository orderItemRepository;
+    @Autowired
+    private OrderRepository orderRepository;
+    @Autowired
+    private CategoryRepository categoryRepository;
+    @Autowired
+    private ProductRepository productRepository;
+    @Autowired
+    private ProductSkuRepository skuRepository;
+    @Autowired
+    private CartRepository cartRepository;
+    @Autowired
+    private CartItemRepository cartItemRepository;
+    @Autowired
+    private PlatformTransactionManager transactionManager;
 
     private Category category;
 
@@ -296,7 +306,8 @@ public class OrderConcurrencyTest extends IntegrationTestBase {
 
     // ========== 헬퍼 메서드 ==========
 
-    private record OrderTask(Long memberId, List<Long> cartItemIds) {}
+    private record OrderTask(Long memberId, List<Long> cartItemIds) {
+    }
 
     private AddressCreateReqDto addressDto() {
         return new AddressCreateReqDto(

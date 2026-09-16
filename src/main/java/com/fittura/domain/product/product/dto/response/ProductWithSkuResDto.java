@@ -25,7 +25,7 @@ public record ProductWithSkuResDto(
     Double depth,
     boolean isSoldOut,
     List<SkuResDto> skus
-){
+) {
     // Projection 전용 생성자
     public ProductWithSkuResDto(
         Long id, Long categoryId, String name, String description,

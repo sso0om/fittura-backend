@@ -25,7 +25,7 @@ public record ProductWithAllResDto(
     List<SkuWithStockResDto> skus,
     List<ProductAttributeResDto> attributes,
     List<CompositionResDto> compositions
-){
+) {
     // Projection 전용 생성자
     public ProductWithAllResDto(
         Long id, String name, String description,

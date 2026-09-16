@@ -24,6 +24,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.fittura.domain.order.cart.error.CartErrorCode;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -35,12 +36,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class CartControllerV1Test extends IntegrationTestBase {
 
-    @Autowired private MockMvc mockMvc;
-    @Autowired private CartRepository cartRepository;
-    @Autowired private CartItemRepository cartItemRepository;
-    @Autowired private CategoryRepository categoryRepository;
-    @Autowired private ProductRepository productRepository;
-    @Autowired private ProductSkuRepository productSkuRepository;
+    @Autowired
+    private MockMvc mockMvc;
+    @Autowired
+    private CartRepository cartRepository;
+    @Autowired
+    private CartItemRepository cartItemRepository;
+    @Autowired
+    private CategoryRepository categoryRepository;
+    @Autowired
+    private ProductRepository productRepository;
+    @Autowired
+    private ProductSkuRepository productSkuRepository;
 
     private static final String CART_URL = "/api/v1/cart";
 
@@ -124,11 +131,11 @@ class CartControllerV1Test extends IntegrationTestBase {
         ProductSku sku = savedDefaultSku();
 
         String reqBody = """
-                {
-                    "skuId": %d,
-                    "quantity": 3
-                }
-                """.formatted(sku.getId());
+            {
+                "skuId": %d,
+                "quantity": 3
+            }
+            """.formatted(sku.getId());
 
         // when & then
         mockMvc.perform(post(CART_URL + "/items")
@@ -156,11 +163,11 @@ class CartControllerV1Test extends IntegrationTestBase {
         cartItemRepository.save(CartItemFixture.cartItem(cart, sku, 2));
 
         String reqBody = """
-                {
-                    "skuId": %d,
-                    "quantity": 3
-                }
-                """.formatted(sku.getId());
+            {
+                "skuId": %d,
+                "quantity": 3
+            }
+            """.formatted(sku.getId());
 
         // when & then
         mockMvc.perform(post(CART_URL + "/items")
@@ -183,11 +190,11 @@ class CartControllerV1Test extends IntegrationTestBase {
         Long memberId = 3L;
 
         String reqBody = """
-                {
-                    "skuId": 9999,
-                    "quantity": 1
-                }
-                """;
+            {
+                "skuId": 9999,
+                "quantity": 1
+            }
+            """;
 
         // when & then
         mockMvc.perform(post(CART_URL + "/items")
@@ -212,10 +219,10 @@ class CartControllerV1Test extends IntegrationTestBase {
         CartItem cartItem = cartItemRepository.save(CartItemFixture.cartItem(cart, sku, 2));
 
         String reqBody = """
-                {
-                    "quantity": 7
-                }
-                """;
+            {
+                "quantity": 7
+            }
+            """;
 
         // when & then
         mockMvc.perform(patch(CART_URL + "/items/" + cartItem.getId())
@@ -238,10 +245,10 @@ class CartControllerV1Test extends IntegrationTestBase {
         Long memberId = 21L;
 
         String reqBody = """
-                {
-                    "quantity": 3
-                }
-                """;
+            {
+                "quantity": 3
+            }
+            """;
 
         // when & then
         mockMvc.perform(patch(CART_URL + "/items/9999")
@@ -264,10 +271,10 @@ class CartControllerV1Test extends IntegrationTestBase {
         CartItem cartItem = cartItemRepository.save(CartItemFixture.cartItem(ownerCart, sku, 2));
 
         String reqBody = """
-                {
-                    "quantity": 5
-                }
-                """;
+            {
+                "quantity": 5
+            }
+            """;
 
         // when & then
         mockMvc.perform(patch(CART_URL + "/items/" + cartItem.getId())

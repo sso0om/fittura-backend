@@ -19,4 +19,5 @@ public record CompositionCreateReqDto(
     @Schema(example = "0")
     @NotNull @PositiveOrZero
     Integer sortOrder
-) {}
+) {
+}

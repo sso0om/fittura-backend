@@ -41,12 +41,12 @@ public class OrderController {
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @Schema(example = "2026-01-15") LocalDate endDate,
         @ParameterObject Pageable pageable
     ) {
-       OrderSearchCondition searchCondition = new OrderSearchCondition(
-           orderNumber,
-           productName,
-           startDate,
-           endDate
-       );
+        OrderSearchCondition searchCondition = new OrderSearchCondition(
+            orderNumber,
+            productName,
+            startDate,
+            endDate
+        );
         Page<OrderWithDeliveryResDto> resDtos = orderFacade.getOrders(memberId, searchCondition, pageable);
 
         return ResponseEntity.ok(RsData.success("주문 목록이 조회되었습니다.", resDtos));

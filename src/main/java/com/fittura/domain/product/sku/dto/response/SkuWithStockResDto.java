@@ -22,7 +22,7 @@ public record SkuWithStockResDto(
             sku.getReservedQuantity(),
             sku.getStatus(),
             sku.getColor() != null ? sku.getColor().getName() : null,
-            sku.getMaterial()  != null ? sku.getMaterial().getName() : null
+            sku.getMaterial() != null ? sku.getMaterial().getName() : null
         );
     }
 }

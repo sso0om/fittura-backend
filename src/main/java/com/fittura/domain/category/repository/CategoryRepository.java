@@ -21,7 +21,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
         AND (p IS NULL OR p.status = :status)
         ORDER BY c.depth ASC, c.sortOrder ASC
         """)
-    // ACTIVE인 루트이거나 부모와 자신 모두 ACTIVE인 카테고리만 조회
+        // ACTIVE인 루트이거나 부모와 자신 모두 ACTIVE인 카테고리만 조회
     List<Category> findAllVisible(@Param("status") CategoryStatus status);
 
     @Query(value = """

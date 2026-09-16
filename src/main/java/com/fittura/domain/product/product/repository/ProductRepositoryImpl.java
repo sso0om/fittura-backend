@@ -252,7 +252,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
         boolean hasMaterial = materialIds != null && !materialIds.isEmpty();
         if (!hasColor && !hasMaterial && !inStockOnly) return null;
 
-        QProductSku sku = new  QProductSku("filterSku");
+        QProductSku sku = new QProductSku("filterSku");
 
         BooleanExpression cond = sku.product.id.eq(product.id);
         if (hasColor) cond = cond.and(sku.color.id.in(colorIds));

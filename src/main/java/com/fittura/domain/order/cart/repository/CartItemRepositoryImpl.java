@@ -80,7 +80,7 @@ public class CartItemRepositoryImpl implements CartItemRepositoryCustom {
                 productSku.price.multiply(cartItem.quantity),
                 product.status,
                 productSku.status
-                ))
+            ))
             .from(cartItem)
             .join(cartItem.productSku, productSku)
             .join(productSku.product, product)

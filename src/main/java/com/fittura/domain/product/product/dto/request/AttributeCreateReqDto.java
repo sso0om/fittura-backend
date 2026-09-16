@@ -18,4 +18,5 @@ public record AttributeCreateReqDto(
     @Size(max = 255)
     String attributeValue
 
-) {}
+) {
+}

@@ -3,9 +3,9 @@ package com.fittura.global.rsdata;
 import com.fittura.global.error.ErrorCode;
 
 public record RsData<T>(
-        String code,
-        String message,
-        T data
+    String code,
+    String message,
+    T data
 ) {
     private static final String DEFAULT_SUCCESS_CODE = "S200-01";
     private static final String DEFAULT_CREATE_SUCCESS_CODE = "S201-01";

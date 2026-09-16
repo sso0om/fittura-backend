@@ -5,7 +5,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 public class OrderFixture {
 
-    private OrderFixture() {}
+    private OrderFixture() {
+    }
 
     public static Order order(Long memberId) {
         return Order.create(memberId, 0L);

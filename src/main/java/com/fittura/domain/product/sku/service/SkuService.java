@@ -231,7 +231,7 @@ public class SkuService {
     public void validateDeletableSku(Product product) {
         if (product.isComplete()) return;
 
-        if(compositionRepository.isAnySkuReferencedByOther(product.getId())) {
+        if (compositionRepository.isAnySkuReferencedByOther(product.getId())) {
             throw new ServiceException(ProductErrorCode.PRODUCT_SKU_REFERENCED_BY_OTHER);
         }
     }

@@ -8,7 +8,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 public class ProductSkuFixture {
 
-    private ProductSkuFixture() {}
+    private ProductSkuFixture() {
+    }
 
     public static ProductSku sku(Product product, Long price, Integer stock) {
         return ProductSku.create(

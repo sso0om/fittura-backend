@@ -43,7 +43,7 @@ public class OrderFacade {
         orderService.validateCartItems(cartItems);
 
         Order order = orderService.createOrder(memberId, reqDto);
-        for(CartItem cartItem : cartItems) {
+        for (CartItem cartItem : cartItems) {
             orderService.createOrderItem(cartItem, order);
         }
         orderService.createOrderAddress(order, reqDto.orderAddress());

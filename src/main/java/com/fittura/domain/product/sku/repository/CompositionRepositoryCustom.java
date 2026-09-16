@@ -6,5 +6,6 @@ import java.util.List;
 
 public interface CompositionRepositoryCustom {
     List<CompositionResDto> findCompositionDtosByProductId(Long productId);
+
     boolean isAnySkuReferencedByOther(Long productId);
 }

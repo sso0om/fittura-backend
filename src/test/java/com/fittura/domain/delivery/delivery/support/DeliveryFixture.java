@@ -5,7 +5,8 @@ import com.fittura.domain.product.product.constant.DeliveryType;
 
 public class DeliveryFixture {
 
-    private DeliveryFixture() {}
+    private DeliveryFixture() {
+    }
 
     public static Delivery parcel(Long orderId) {
         return Delivery.create(orderId, DeliveryType.PARCEL, 3000L);

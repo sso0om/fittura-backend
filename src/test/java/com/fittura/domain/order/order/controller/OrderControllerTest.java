@@ -49,16 +49,26 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class OrderControllerTest extends IntegrationTestBase {
 
-    @Autowired private MockMvc mockMvc;
-    @Autowired private OrderRepository orderRepository;
-    @Autowired private OrderItemRepository orderItemRepository;
-    @Autowired private OrderAddressRepository addressRepository;
-    @Autowired private CartRepository cartRepository;
-    @Autowired private CartItemRepository cartItemRepository;
-    @Autowired private CategoryRepository categoryRepository;
-    @Autowired private ProductRepository productRepository;
-    @Autowired private ProductSkuRepository productSkuRepository;
-    @Autowired private DeliveryRepository deliveryRepository;
+    @Autowired
+    private MockMvc mockMvc;
+    @Autowired
+    private OrderRepository orderRepository;
+    @Autowired
+    private OrderItemRepository orderItemRepository;
+    @Autowired
+    private OrderAddressRepository addressRepository;
+    @Autowired
+    private CartRepository cartRepository;
+    @Autowired
+    private CartItemRepository cartItemRepository;
+    @Autowired
+    private CategoryRepository categoryRepository;
+    @Autowired
+    private ProductRepository productRepository;
+    @Autowired
+    private ProductSkuRepository productSkuRepository;
+    @Autowired
+    private DeliveryRepository deliveryRepository;
 
     private static final String ORDER_URL = "/api/v1/orders";
     private static final LocalDate SEARCH_START = LocalDate.now().minusMonths(1);
@@ -264,20 +274,20 @@ class OrderControllerTest extends IntegrationTestBase {
         CartItem cartItem = cartItemRepository.save(CartItemFixture.cartItem(cart, sku, 2));
 
         String reqBody = """
-                {
-                    "cartItems": [%d],
-                    "pointUsedAmount": 1000,
-                    "orderAddress": {
-                        "receiverName": "홍길동",
-                        "phoneNumber": "01012341234",
-                        "zipCode": "12345",
-                        "address": "서울특별시 중구 서소문로 127",
-                        "addressDetail": "시청역",
-                        "sido": "서울특별시",
-                        "sigungu": "중구"
-                    }
+            {
+                "cartItems": [%d],
+                "pointUsedAmount": 1000,
+                "orderAddress": {
+                    "receiverName": "홍길동",
+                    "phoneNumber": "01012341234",
+                    "zipCode": "12345",
+                    "address": "서울특별시 중구 서소문로 127",
+                    "addressDetail": "시청역",
+                    "sido": "서울특별시",
+                    "sigungu": "중구"
                 }
-                """.formatted(cartItem.getId());
+            }
+            """.formatted(cartItem.getId());
 
         // when & then
         mockMvc.perform(post(ORDER_URL)
@@ -307,19 +317,19 @@ class OrderControllerTest extends IntegrationTestBase {
         CartItem cartItem2 = cartItemRepository.save(CartItemFixture.cartItem(cart, sku2, 3));
 
         String reqBody = """
-                {
-                    "cartItems": [%d, %d],
-                    "pointUsedAmount": 500,
-                    "orderAddress": {
-                        "receiverName": "홍길동",
-                        "phoneNumber": "01012341234",
-                        "zipCode": "12345",
-                        "address": "서울특별시 중구 서소문로 127",
-                        "sido": "서울특별시",
-                        "sigungu": "중구"
-                    }
+            {
+                "cartItems": [%d, %d],
+                "pointUsedAmount": 500,
+                "orderAddress": {
+                    "receiverName": "홍길동",
+                    "phoneNumber": "01012341234",
+                    "zipCode": "12345",
+                    "address": "서울특별시 중구 서소문로 127",
+                    "sido": "서울특별시",
+                    "sigungu": "중구"
                 }
-                """.formatted(cartItem1.getId(), cartItem2.getId());
+            }
+            """.formatted(cartItem1.getId(), cartItem2.getId());
 
         // when & then
         mockMvc.perform(post(ORDER_URL)
@@ -344,19 +354,19 @@ class OrderControllerTest extends IntegrationTestBase {
         CartItem ownerItem = cartItemRepository.save(CartItemFixture.cartItem(ownerCart, sku, 1));
 
         String reqBody = """
-                {
-                    "cartItems": [%d],
-                    "pointUsedAmount": 0,
-                    "orderAddress": {
-                        "receiverName": "홍길동",
-                        "phoneNumber": "01012341234",
-                        "zipCode": "12345",
-                        "address": "서울특별시 중구 서소문로 127",
-                        "sido": "서울특별시",
-                        "sigungu": "중구"
-                    }
+            {
+                "cartItems": [%d],
+                "pointUsedAmount": 0,
+                "orderAddress": {
+                    "receiverName": "홍길동",
+                    "phoneNumber": "01012341234",
+                    "zipCode": "12345",
+                    "address": "서울특별시 중구 서소문로 127",
+                    "sido": "서울특별시",
+                    "sigungu": "중구"
                 }
-                """.formatted(ownerItem.getId());
+            }
+            """.formatted(ownerItem.getId());
 
         // when & then
         mockMvc.perform(post(ORDER_URL)
@@ -375,19 +385,19 @@ class OrderControllerTest extends IntegrationTestBase {
         Long memberId = 10L;
 
         String reqBody = """
-                {
-                    "cartItems": [9999],
-                    "pointUsedAmount": 1000,
-                    "orderAddress": {
-                        "receiverName": "홍길동",
-                        "phoneNumber": "01012341234",
-                        "zipCode": "12345",
-                        "address": "서울특별시 중구 서소문로 127",
-                        "sido": "서울특별시",
-                        "sigungu": "중구"
-                    }
+            {
+                "cartItems": [9999],
+                "pointUsedAmount": 1000,
+                "orderAddress": {
+                    "receiverName": "홍길동",
+                    "phoneNumber": "01012341234",
+                    "zipCode": "12345",
+                    "address": "서울특별시 중구 서소문로 127",
+                    "sido": "서울특별시",
+                    "sigungu": "중구"
                 }
-                """;
+            }
+            """;
 
         // when & then
         mockMvc.perform(post(ORDER_URL)
@@ -416,19 +426,19 @@ class OrderControllerTest extends IntegrationTestBase {
         CartItem cartItem = cartItemRepository.save(CartItemFixture.cartItem(cart, sku, 1));
 
         String reqBody = """
-                {
-                    "cartItems": [%d],
-                    "pointUsedAmount": 1000,
-                    "orderAddress": {
-                        "receiverName": "홍길동",
-                        "phoneNumber": "01012341234",
-                        "zipCode": "12345",
-                        "address": "서울특별시 중구 서소문로 127",
-                        "sido": "서울특별시",
-                        "sigungu": "중구"
-                    }
+            {
+                "cartItems": [%d],
+                "pointUsedAmount": 1000,
+                "orderAddress": {
+                    "receiverName": "홍길동",
+                    "phoneNumber": "01012341234",
+                    "zipCode": "12345",
+                    "address": "서울특별시 중구 서소문로 127",
+                    "sido": "서울특별시",
+                    "sigungu": "중구"
                 }
-                """.formatted(cartItem.getId());
+            }
+            """.formatted(cartItem.getId());
 
         // when & then
         mockMvc.perform(post(ORDER_URL)
@@ -459,19 +469,19 @@ class OrderControllerTest extends IntegrationTestBase {
         CartItem cartItem = cartItemRepository.save(CartItemFixture.cartItem(cart, sku, 5));
 
         String reqBody = """
-                {
-                    "cartItems": [%d],
-                    "pointUsedAmount": 1000,
-                    "orderAddress": {
-                        "receiverName": "홍길동",
-                        "phoneNumber": "01012341234",
-                        "zipCode": "12345",
-                        "address": "서울특별시 중구 서소문로 127",
-                        "sido": "서울특별시",
-                        "sigungu": "중구"
-                    }
+            {
+                "cartItems": [%d],
+                "pointUsedAmount": 1000,
+                "orderAddress": {
+                    "receiverName": "홍길동",
+                    "phoneNumber": "01012341234",
+                    "zipCode": "12345",
+                    "address": "서울특별시 중구 서소문로 127",
+                    "sido": "서울특별시",
+                    "sigungu": "중구"
                 }
-                """.formatted(cartItem.getId());
+            }
+            """.formatted(cartItem.getId());
 
         // when & then
         mockMvc.perform(post(ORDER_URL)

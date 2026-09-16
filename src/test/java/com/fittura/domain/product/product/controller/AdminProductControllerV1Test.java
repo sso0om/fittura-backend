@@ -46,14 +46,22 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WithMockUser(roles = "ADMIN")
 class AdminProductControllerV1Test extends IntegrationTestBase {
 
-    @Autowired private MockMvc mockMvc;
-    @Autowired private CategoryRepository categoryRepository;
-    @Autowired private ProductRepository productRepository;
-    @Autowired private ProductSkuRepository productSkuRepository;
-    @Autowired private CompositionRepository compositionRepository;
-    @Autowired private ProductAttributeRepository productAttributeRepository;
-    @Autowired private ColorRepository colorRepository;
-    @Autowired private MaterialRepository materialRepository;
+    @Autowired
+    private MockMvc mockMvc;
+    @Autowired
+    private CategoryRepository categoryRepository;
+    @Autowired
+    private ProductRepository productRepository;
+    @Autowired
+    private ProductSkuRepository productSkuRepository;
+    @Autowired
+    private CompositionRepository compositionRepository;
+    @Autowired
+    private ProductAttributeRepository productAttributeRepository;
+    @Autowired
+    private ColorRepository colorRepository;
+    @Autowired
+    private MaterialRepository materialRepository;
 
     private static final String PRODUCT_ADMIN_URL = "/api/admin/v1/products";
 
@@ -203,29 +211,29 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
         long compositionCountBefore = compositionRepository.count();
 
         String reqBody = """
-            {
-                "categoryId": %d,
-                "name": "A Desk",
-                "productType": "COMPLETE",
-                "deliveryType": "PARCEL",
-                "weight": 10.5,
-                "width": 10.0,
-                "height": 10.0,
-                "depth": 10.0,
-                "skus": [{
-                    "price": 90000,
-                    "stockQuantity": 50,
-                    "colorId": %d,
-                    "materialId": %d
-                }],
-                "attributes": [],
-                "compositions": [{
-                    "childSkuId": %d,
-                    "quantity": 4,
-                    "sortOrder": 0
-                }]
-            }
-        """.formatted(category.getId(), white.getId(), wood.getId(), childSku.getId());
+                {
+                    "categoryId": %d,
+                    "name": "A Desk",
+                    "productType": "COMPLETE",
+                    "deliveryType": "PARCEL",
+                    "weight": 10.5,
+                    "width": 10.0,
+                    "height": 10.0,
+                    "depth": 10.0,
+                    "skus": [{
+                        "price": 90000,
+                        "stockQuantity": 50,
+                        "colorId": %d,
+                        "materialId": %d
+                    }],
+                    "attributes": [],
+                    "compositions": [{
+                        "childSkuId": %d,
+                        "quantity": 4,
+                        "sortOrder": 0
+                    }]
+                }
+            """.formatted(category.getId(), white.getId(), wood.getId(), childSku.getId());
 
         // when
         ResultActions resultActions = mockMvc
@@ -262,25 +270,25 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
         long compositionCountBefore = compositionRepository.count();
 
         String reqBody = """
-            {
-                "categoryId": %d,
-                "name": "Chair Leg",
-                "productType": "COMPONENT",
-                "deliveryType": "PARCEL",
-                "weight": 2.0,
-                "width": 10.0,
-                "height": 10.0,
-                "depth": 10.0,
-                "skus": [{
-                    "price": 4500,
-                    "stockQuantity": 100,
-                    "colorId": %d,
-                    "materialId": %d
-                }],
-                "attributes": [],
-                "compositions": []
-            }
-        """.formatted(category.getId(), white.getId(), wood.getId());
+                {
+                    "categoryId": %d,
+                    "name": "Chair Leg",
+                    "productType": "COMPONENT",
+                    "deliveryType": "PARCEL",
+                    "weight": 2.0,
+                    "width": 10.0,
+                    "height": 10.0,
+                    "depth": 10.0,
+                    "skus": [{
+                        "price": 4500,
+                        "stockQuantity": 100,
+                        "colorId": %d,
+                        "materialId": %d
+                    }],
+                    "attributes": [],
+                    "compositions": []
+                }
+            """.formatted(category.getId(), white.getId(), wood.getId());
 
         // when
         ResultActions resultActions = mockMvc
@@ -310,23 +318,23 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
     void createForbidden() throws Exception {
         // given
         String reqBody = """
-            {
-                "categoryId": %d,
-                "name": "Chair Leg",
-                "productType": "COMPONENT",
-                "deliveryType": "PARCEL",
-                "weight": 2.0,
-                "width": 10.0,
-                "height": 10.0,
-                "depth": 10.0,
-                "skus": [{
-                    "price": 4500,
-                    "stockQuantity": 100
-                }],
-                "attributes": [],
-                "compositions": []
-            }
-        """;
+                {
+                    "categoryId": %d,
+                    "name": "Chair Leg",
+                    "productType": "COMPONENT",
+                    "deliveryType": "PARCEL",
+                    "weight": 2.0,
+                    "width": 10.0,
+                    "height": 10.0,
+                    "depth": 10.0,
+                    "skus": [{
+                        "price": 4500,
+                        "stockQuantity": 100
+                    }],
+                    "attributes": [],
+                    "compositions": []
+                }
+            """;
 
         // when & then
         mockMvc.perform(post(PRODUCT_ADMIN_URL)
@@ -344,20 +352,20 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
     void createFail_validationError() throws Exception {
         // given - skus는 @Size(min=1) 제약이 있으므로 빈 배열은 실패
         String reqBody = """
-            {
-                "categoryId": 1,
-                "name": "A Desk",
-                "productType": "COMPLETE",
-                "deliveryType": "PARCEL",
-                "weight": 2.0,
-                "width": 10.0,
-                "height": 10.0,
-                "depth": 10.0,
-                "skus": [],
-                "attributes": [],
-                "compositions": []
-            }
-        """;
+                {
+                    "categoryId": 1,
+                    "name": "A Desk",
+                    "productType": "COMPLETE",
+                    "deliveryType": "PARCEL",
+                    "weight": 2.0,
+                    "width": 10.0,
+                    "height": 10.0,
+                    "depth": 10.0,
+                    "skus": [],
+                    "attributes": [],
+                    "compositions": []
+                }
+            """;
 
         // when & then
         mockMvc.perform(post(PRODUCT_ADMIN_URL)
@@ -376,23 +384,23 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
         Category category = categoryRepository.save(CategoryFixture.rootActive());
 
         String reqBody = """
-            {
-                "categoryId": %d,
-                "name": "A Desk",
-                "productType": "COMPLETE",
-                "deliveryType": "PARCEL",
-                "weight": 10.5,
-                "width": 10.0,
-                "height": 10.0,
-                "depth": 10.0,
-                "skus": [{
-                    "price": 90000,
-                    "stockQuantity": 50
-                }],
-                "attributes": [],
-                "compositions": []
-            }
-        """.formatted(category.getId());
+                {
+                    "categoryId": %d,
+                    "name": "A Desk",
+                    "productType": "COMPLETE",
+                    "deliveryType": "PARCEL",
+                    "weight": 10.5,
+                    "width": 10.0,
+                    "height": 10.0,
+                    "depth": 10.0,
+                    "skus": [{
+                        "price": 90000,
+                        "stockQuantity": 50
+                    }],
+                    "attributes": [],
+                    "compositions": []
+                }
+            """.formatted(category.getId());
 
         // when & then
         mockMvc.perform(post(PRODUCT_ADMIN_URL)
@@ -410,23 +418,23 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
     void createFail_categoryNotFound() throws Exception {
         // given
         String reqBody = """
-            {
-                "categoryId": 9999,
-                "name": "Chair Leg",
-                "productType": "COMPONENT",
-                "deliveryType": "PARCEL",
-                "weight": 2.0,
-                "width": 10.0,
-                "height": 10.0,
-                "depth": 10.0,
-                "skus": [{
-                    "price": 4500,
-                    "stockQuantity": 100
-                }],
-                "attributes": [],
-                "compositions": []
-            }
-        """;
+                {
+                    "categoryId": 9999,
+                    "name": "Chair Leg",
+                    "productType": "COMPONENT",
+                    "deliveryType": "PARCEL",
+                    "weight": 2.0,
+                    "width": 10.0,
+                    "height": 10.0,
+                    "depth": 10.0,
+                    "skus": [{
+                        "price": 4500,
+                        "stockQuantity": 100
+                    }],
+                    "attributes": [],
+                    "compositions": []
+                }
+            """;
 
         // when & then
         mockMvc.perform(post(PRODUCT_ADMIN_URL)
@@ -447,23 +455,23 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
         Category child = categoryRepository.save(CategoryFixture.childActive(root));
 
         String reqBody = """
-        {
-            "categoryId": %d,
-            "name": "Chair Leg",
-            "productType": "COMPONENT",
-            "deliveryType": "PARCEL",
-            "weight": 2.0,
-            "width": 10.0,
-            "height": 10.0,
-            "depth": 10.0,
-            "skus": [{
-                "price": 4500,
-                "stockQuantity": 100
-            }],
-            "attributes": [],
-            "compositions": []
-        }
-    """.formatted(root.getId());
+                {
+                    "categoryId": %d,
+                    "name": "Chair Leg",
+                    "productType": "COMPONENT",
+                    "deliveryType": "PARCEL",
+                    "weight": 2.0,
+                    "width": 10.0,
+                    "height": 10.0,
+                    "depth": 10.0,
+                    "skus": [{
+                        "price": 4500,
+                        "stockQuantity": 100
+                    }],
+                    "attributes": [],
+                    "compositions": []
+                }
+            """.formatted(root.getId());
 
         mockMvc.perform(post(PRODUCT_ADMIN_URL)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -484,25 +492,25 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
         ProductSku childSku = productSkuRepository.save(ProductSkuFixture.sku(componentProduct, 5000L, 100));
 
         String reqBody = """
-        {
-            "categoryId": %d,
-            "name": "Chair Leg",
-            "productType": "COMPONENT",
-            "deliveryType": "PARCEL",
-            "weight": 2.0,
-            "width": 10.0,
-            "height": 10.0,
-            "depth": 10.0,
-            "skus": [{
-                "price": 4500,
-                "stockQuantity": 100
-            }],
-            "attributes": [],
-            "compositions": [
-                { "childSkuId": %d, "quantity": 1, "sortOrder": 0 }
-            ]
-        }
-    """.formatted(category.getId(), childSku.getId());
+                {
+                    "categoryId": %d,
+                    "name": "Chair Leg",
+                    "productType": "COMPONENT",
+                    "deliveryType": "PARCEL",
+                    "weight": 2.0,
+                    "width": 10.0,
+                    "height": 10.0,
+                    "depth": 10.0,
+                    "skus": [{
+                        "price": 4500,
+                        "stockQuantity": 100
+                    }],
+                    "attributes": [],
+                    "compositions": [
+                        { "childSkuId": %d, "quantity": 1, "sortOrder": 0 }
+                    ]
+                }
+            """.formatted(category.getId(), childSku.getId());
 
         mockMvc.perform(post(PRODUCT_ADMIN_URL)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -525,27 +533,27 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
         ProductSku completeSku = productSkuRepository.save(ProductSkuFixture.sku(completeProduct, 10000L, 100));
 
         String reqBody = """
-            {
-                "categoryId": %d,
-                "name": "A Desk",
-                "productType": "COMPLETE",
-                "deliveryType": "PARCEL",
-                "weight": 2.0,
-                "width": 10.0,
-                "height": 10.0,
-                "depth": 10.0,
-                "skus": [{
-                    "price": 4500,
-                    "stockQuantity": 100,
-                    "colorId": %d,
-                    "materialId": %d
-                }],
-                "attributes": [],
-                "compositions": [
-                    { "childSkuId": %d, "quantity": 1, "sortOrder": 0 }
-                ]
-            }
-        """.formatted(category.getId(), white.getId(), wood.getId(), completeSku.getId());
+                {
+                    "categoryId": %d,
+                    "name": "A Desk",
+                    "productType": "COMPLETE",
+                    "deliveryType": "PARCEL",
+                    "weight": 2.0,
+                    "width": 10.0,
+                    "height": 10.0,
+                    "depth": 10.0,
+                    "skus": [{
+                        "price": 4500,
+                        "stockQuantity": 100,
+                        "colorId": %d,
+                        "materialId": %d
+                    }],
+                    "attributes": [],
+                    "compositions": [
+                        { "childSkuId": %d, "quantity": 1, "sortOrder": 0 }
+                    ]
+                }
+            """.formatted(category.getId(), white.getId(), wood.getId(), completeSku.getId());
 
         mockMvc.perform(post(PRODUCT_ADMIN_URL)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -573,26 +581,26 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
         ProductSku sku = productSkuRepository.save(ProductSkuFixture.sku(product, 45000L, 100));
 
         String reqBody = """
-            {
-                "categoryId": %d,
-                "name": "New Name",
-                "description": "새로운 설명",
-                "deliveryType": "PARCEL",
-                "weight": 40.5,
-                "width": 150.0,
-                "height": 100.0,
-                "depth": 50.0,
-                "skus": [{
-                    "id": %d,
-                    "price": 75000,
-                    "stockQuantity": 80,
-                    "colorId": %d,
-                    "materialId": %d
-                }],
-                "attributes": [],
-                "compositions": []
-            }
-        """.formatted(category.getId(), sku.getId(), black.getId(), metal.getId());
+                {
+                    "categoryId": %d,
+                    "name": "New Name",
+                    "description": "새로운 설명",
+                    "deliveryType": "PARCEL",
+                    "weight": 40.5,
+                    "width": 150.0,
+                    "height": 100.0,
+                    "depth": 50.0,
+                    "skus": [{
+                        "id": %d,
+                        "price": 75000,
+                        "stockQuantity": 80,
+                        "colorId": %d,
+                        "materialId": %d
+                    }],
+                    "attributes": [],
+                    "compositions": []
+                }
+            """.formatted(category.getId(), sku.getId(), black.getId(), metal.getId());
 
         // when & then
         mockMvc.perform(put(PRODUCT_ADMIN_URL + "/" + product.getId())
@@ -640,29 +648,29 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
         long compositionCountBefore = compositionRepository.count();
 
         String reqBody = """
-            {
-                "categoryId": %d,
-                "name": "A Desk Updated",
-                "deliveryType": "PARCEL",
-                "weight": 40.5,
-                "width": 150.0,
-                "height": 100.0,
-                "depth": 50.0,
-                "skus": [{
-                    "id": %d,
-                    "price": 90000,
-                    "stockQuantity": 50,
-                    "colorId": %d,
-                    "materialId": %d
-                }],
-                "attributes": [],
-                "compositions": [{
-                    "childSkuId": %d,
-                    "quantity": 2,
-                    "sortOrder": 0
-                }]
-            }
-        """.formatted(category.getId(), completeSku.getId(), white.getId(), wood.getId(), newChildSku.getId());
+                {
+                    "categoryId": %d,
+                    "name": "A Desk Updated",
+                    "deliveryType": "PARCEL",
+                    "weight": 40.5,
+                    "width": 150.0,
+                    "height": 100.0,
+                    "depth": 50.0,
+                    "skus": [{
+                        "id": %d,
+                        "price": 90000,
+                        "stockQuantity": 50,
+                        "colorId": %d,
+                        "materialId": %d
+                    }],
+                    "attributes": [],
+                    "compositions": [{
+                        "childSkuId": %d,
+                        "quantity": 2,
+                        "sortOrder": 0
+                    }]
+                }
+            """.formatted(category.getId(), completeSku.getId(), white.getId(), wood.getId(), newChildSku.getId());
 
         // when & then
         mockMvc.perform(put(PRODUCT_ADMIN_URL + "/" + completeProduct.getId())
@@ -695,28 +703,28 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
         ProductSku sku = productSkuRepository.save(ProductSkuFixture.sku(product, 45000L, 100));
 
         String reqBody = """
-            {
-                "categoryId": %d,
-                "name": "A Desk",
-                "deliveryType": "PARCEL",
-                "weight": 40.5,
-                "width": 150.0,
-                "height": 100.0,
-                "depth": 50.0,
-                "skus": [{
-                    "id": %d,
-                    "price": 45000,
-                    "stockQuantity": 100,
-                    "colorId": %d,
-                    "materialId": %d
-                }],
-                "attributes": [{
-                    "attributeKey": "SIZE_LABEL",
-                    "attributeValue": "L"
-                }],
-                "compositions": []
-            }
-        """.formatted(category.getId(), sku.getId(), white.getId(), wood.getId());
+                {
+                    "categoryId": %d,
+                    "name": "A Desk",
+                    "deliveryType": "PARCEL",
+                    "weight": 40.5,
+                    "width": 150.0,
+                    "height": 100.0,
+                    "depth": 50.0,
+                    "skus": [{
+                        "id": %d,
+                        "price": 45000,
+                        "stockQuantity": 100,
+                        "colorId": %d,
+                        "materialId": %d
+                    }],
+                    "attributes": [{
+                        "attributeKey": "SIZE_LABEL",
+                        "attributeValue": "L"
+                    }],
+                    "compositions": []
+                }
+            """.formatted(category.getId(), sku.getId(), white.getId(), wood.getId());
 
         // when & then
         mockMvc.perform(put(PRODUCT_ADMIN_URL + "/" + product.getId())
@@ -737,23 +745,23 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
         Category category = categoryRepository.save(CategoryFixture.rootActive());
 
         String reqBody = """
-            {
-                "categoryId": %d,
-                "name": "New Name",
-                "deliveryType": "PARCEL",
-                "weight": 40.5,
-                "width": 150.0,
-                "height": 100.0,
-                "depth": 50.0,
-                "skus": [{
-                    "id": null,
-                    "price": 75000,
-                    "stockQuantity": 80
-                }],
-                "attributes": [],
-                "compositions": []
-            }
-        """.formatted(category.getId());
+                {
+                    "categoryId": %d,
+                    "name": "New Name",
+                    "deliveryType": "PARCEL",
+                    "weight": 40.5,
+                    "width": 150.0,
+                    "height": 100.0,
+                    "depth": 50.0,
+                    "skus": [{
+                        "id": null,
+                        "price": 75000,
+                        "stockQuantity": 80
+                    }],
+                    "attributes": [],
+                    "compositions": []
+                }
+            """.formatted(category.getId());
 
         // when & then
         mockMvc.perform(put(PRODUCT_ADMIN_URL + "/9999")
@@ -770,19 +778,19 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
     void updateFail_validationError() throws Exception {
         // given
         String reqBody = """
-            {
-                "categoryId": 1,
-                "name": "New Name",
-                "deliveryType": "PARCEL",
-                "weight": 40.5,
-                "width": 150.0,
-                "height": 100.0,
-                "depth": 50.0,
-                "skus": [],
-                "attributes": [],
-                "compositions": []
-            }
-        """;
+                {
+                    "categoryId": 1,
+                    "name": "New Name",
+                    "deliveryType": "PARCEL",
+                    "weight": 40.5,
+                    "width": 150.0,
+                    "height": 100.0,
+                    "depth": 50.0,
+                    "skus": [],
+                    "attributes": [],
+                    "compositions": []
+                }
+            """;
 
         // when & then
         mockMvc.perform(put(PRODUCT_ADMIN_URL + "/1")
@@ -800,19 +808,19 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
     void updateFail_unauthorized() throws Exception {
         // given
         String reqBody = """
-            {
-                "categoryId": 1,
-                "name": "New Name",
-                "deliveryType": "PARCEL",
-                "weight": 40.5,
-                "width": 150.0,
-                "height": 100.0,
-                "depth": 50.0,
-                "skus": [{"price": 75000, "stockQuantity": 80}],
-                "attributes": [],
-                "compositions": []
-            }
-        """;
+                {
+                    "categoryId": 1,
+                    "name": "New Name",
+                    "deliveryType": "PARCEL",
+                    "weight": 40.5,
+                    "width": 150.0,
+                    "height": 100.0,
+                    "depth": 50.0,
+                    "skus": [{"price": 75000, "stockQuantity": 80}],
+                    "attributes": [],
+                    "compositions": []
+                }
+            """;
 
         // when & then
         mockMvc.perform(put(PRODUCT_ADMIN_URL + "/1")
@@ -834,23 +842,23 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
         ProductSku sku = productSkuRepository.save(ProductSkuFixture.sku(product, 45000L, 100));
 
         String reqBody = """
-            {
-                "categoryId": 9999,
-                "name": "New Name",
-                "deliveryType": "PARCEL",
-                "weight": 40.5,
-                "width": 150.0,
-                "height": 100.0,
-                "depth": 50.0,
-                "skus": [{
-                    "id": %d,
-                    "price": 45000,
-                    "stockQuantity": 100
-                }],
-                "attributes": [],
-                "compositions": []
-            }
-        """.formatted(sku.getId());
+                {
+                    "categoryId": 9999,
+                    "name": "New Name",
+                    "deliveryType": "PARCEL",
+                    "weight": 40.5,
+                    "width": 150.0,
+                    "height": 100.0,
+                    "depth": 50.0,
+                    "skus": [{
+                        "id": %d,
+                        "price": 45000,
+                        "stockQuantity": 100
+                    }],
+                    "attributes": [],
+                    "compositions": []
+                }
+            """.formatted(sku.getId());
 
         // when & then
         mockMvc.perform(put(PRODUCT_ADMIN_URL + "/" + product.getId())

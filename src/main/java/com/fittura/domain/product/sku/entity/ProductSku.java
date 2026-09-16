@@ -85,7 +85,7 @@ public class ProductSku extends BaseEntity {
     }
 
     public void reserveQuantity(Integer quantity) {
-        if(!isStockValid(quantity)) {
+        if (!isStockValid(quantity)) {
             throw new ServiceException(ProductErrorCode.STOCK_NOT_VALID);
         }
         this.reservedQuantity += quantity;

@@ -155,11 +155,14 @@ public class Order extends BaseEntity {
 
     public void validateCancel() {
         switch (status) {
-            case PAID, PREPARING: return;
-            case COMPLETED: throw new ServiceException(OrderErrorCode.COMPLETED_CAN_NOT_CANCEL);
+            case PAID, PREPARING:
+                return;
+            case COMPLETED:
+                throw new ServiceException(OrderErrorCode.COMPLETED_CAN_NOT_CANCEL);
             case PENDING, CANCELLED, RETURNED:
                 throw new ServiceException(OrderErrorCode.NOT_VALID_STATUS);
-            default: throw new ServiceException(CommonErrorCode.INTERNAL_SERVER_ERROR);
+            default:
+                throw new ServiceException(CommonErrorCode.INTERNAL_SERVER_ERROR);
         }
     }
 

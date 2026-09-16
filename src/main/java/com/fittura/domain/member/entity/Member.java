@@ -47,31 +47,31 @@ public class Member extends BaseEntity {
 
     public static Member createUser(String email, String name, String nickname, String password) {
         return Member.builder()
-                .email(email)
-                .name(name)
-                .nickname(nickname)
-                .password(password)
-                .roles(Set.of(Role.ROLE_USER))
-                .build();
+            .email(email)
+            .name(name)
+            .nickname(nickname)
+            .password(password)
+            .roles(Set.of(Role.ROLE_USER))
+            .build();
     }
 
     public static Member createAdmin(String email, String name, String nickname, String password) {
         return Member.builder()
-                .email(email)
-                .name(name)
-                .nickname(nickname)
-                .password(password)
-                .roles(Set.of(Role.ROLE_ADMIN))
-                .build();
+            .email(email)
+            .name(name)
+            .nickname(nickname)
+            .password(password)
+            .roles(Set.of(Role.ROLE_ADMIN))
+            .build();
     }
 
     public void grantRole(Role role) {
-        if(role == null) return;
+        if (role == null) return;
         this.roles.add(role);
     }
 
     public void revokeRole(Role role) {
-        if(role == null) return;
+        if (role == null) return;
         this.roles.remove(role);
     }
 

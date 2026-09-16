@@ -34,14 +34,14 @@ import java.util.Map;
 
 /**
  * 상품 시드 (기존 ProductInitData + ProductBulkTestData 통합).
- *
+ * <p>
  * "케이스만" 보여주는 최소 데이터:
- *  - COMPLETE(조립형)  : composition 2개 + 색/재질 다른 SKU  → 원형 식탁, 식탁 의자
- *  - COMPONENT(부품)   : composition 없음, 부품 카테고리      → 상판/다리/좌판·등받이/손잡이 등
- *  - COMPONENT(단품)   : composition 없음, 부품 아닌 완제품    → 3단 서랍장
- *  - 상태 다양화: DISCONTINUED/DISABLED 각 1, SKU 단종 1, "ACTIVE인데 재고 0"(일시품절) 다수
- *  - 페이징 확인용으로 "원형" 카테고리 하나만 20개 초과로 채움
- *
+ * - COMPLETE(조립형)  : composition 2개 + 색/재질 다른 SKU  → 원형 식탁, 식탁 의자
+ * - COMPONENT(부품)   : composition 없음, 부품 카테고리      → 상판/다리/좌판·등받이/손잡이 등
+ * - COMPONENT(단품)   : composition 없음, 부품 아닌 완제품    → 3단 서랍장
+ * - 상태 다양화: DISCONTINUED/DISABLED 각 1, SKU 단종 1, "ACTIVE인데 재고 0"(일시품절) 다수
+ * - 페이징 확인용으로 "원형" 카테고리 하나만 20개 초과로 채움
+ * <p>
  * color/material 은 아직 별도 생성 로직이 없어 여기서 레포지토리로 직접 마스터를 만든다.
  */
 @Component
@@ -101,13 +101,13 @@ public class ProductInitData implements ApplicationRunner {
         complete(getCat("원형"), "핏투라 원형 식탁 800", "L", DeliveryType.INSTALLATION,
             List.of(sku(139_000, 15, "오크", "원목"), sku(149_000, 10, "월넛", "원목")),
             List.of(comp(firstSkuId(tableTopId), 1, 0),
-                    comp(firstSkuId(tableLegId), 1, 1)));
+                comp(firstSkuId(tableLegId), 1, 1)));
         List<Long> padIds = pad(getCat("원형"), PAGING_PAD);
 
         complete(getCat("식탁 의자"), "핏투라 식탁 의자", "M", DeliveryType.PARCEL,
             List.of(sku(69_000, 40, "베이지", "패브릭")),
             List.of(comp(firstSkuId(chairBodyId), 1, 0),
-                    comp(firstSkuId(chairLegId), 1, 1)));
+                comp(firstSkuId(chairLegId), 1, 1)));
 
         // ===== 3. 단품(COMPONENT, 조립X 완제품) =====
         component(getCat("3단 서랍장"), "3단 원목 서랍장", "L",
@@ -143,7 +143,9 @@ public class ProductInitData implements ApplicationRunner {
         ));
     }
 
-    /** COMPLETE (조립형) — composition 필수 */
+    /**
+     * COMPLETE (조립형) — composition 필수
+     */
     private Long complete(
         Category category, String name, String sizeLabel, DeliveryType deliveryType,
         List<SkuCreateReqDto> skus, List<CompositionCreateReqDto> compositions
@@ -161,7 +163,9 @@ public class ProductInitData implements ApplicationRunner {
         ));
     }
 
-    /** 한 카테고리 페이징용 패딩 — COMPONENT(단품), 색/재질 다른 SKU 2개, 일부 재고 0/사이즈 없음 */
+    /**
+     * 한 카테고리 페이징용 패딩 — COMPONENT(단품), 색/재질 다른 SKU 2개, 일부 재고 0/사이즈 없음
+     */
     private List<Long> pad(Category category, int count) {
         List<Long> ids = new ArrayList<>();
         for (int i = 1; i <= count; i++) {
@@ -206,7 +210,9 @@ public class ProductInitData implements ApplicationRunner {
             ));
     }
 
-    /** 조합 childSkuId 용 — 해당 부품의 첫 SKU id */
+    /**
+     * 조합 childSkuId 용 — 해당 부품의 첫 SKU id
+     */
     private Long firstSkuId(Long productId) {
         return activeSkus(productId).stream()
             .findFirst()

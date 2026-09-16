@@ -3,8 +3,8 @@ name: PR 자동화
 
 on:
   pull_request:
-    branches: [develop]
-    types: [opened, synchronize]
+    branches: [ develop ]
+    types: [ opened, synchronize ]
 
 jobs:
   pr-automation:

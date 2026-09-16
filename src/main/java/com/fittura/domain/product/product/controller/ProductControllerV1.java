@@ -28,7 +28,7 @@ public class ProductControllerV1 {
 
     @GetMapping
     @Operation(summary = "제품 목록 조회", description = "제품 목록 조회 API - sort 예시: basePrice,desc / createdDate,desc")
-    public ResponseEntity<RsData<Page<ProductResDto>>> getProducts (
+    public ResponseEntity<RsData<Page<ProductResDto>>> getProducts(
         @ParameterObject ProductSearchReqDto reqDto,
         @ParameterObject Pageable pageable
     ) {

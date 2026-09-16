@@ -35,14 +35,22 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class ProductControllerV1Test extends IntegrationTestBase {
 
-    @Autowired private MockMvc mockMvc;
-    @Autowired private CategoryRepository categoryRepository;
-    @Autowired private ProductRepository productRepository;
-    @Autowired private ProductSkuRepository productSkuRepository;
-    @Autowired private ProductAttributeRepository attributeRepository;
-    @Autowired private CompositionRepository compositionRepository;
-    @Autowired private ColorRepository colorRepository;
-    @Autowired private MaterialRepository materialRepository;
+    @Autowired
+    private MockMvc mockMvc;
+    @Autowired
+    private CategoryRepository categoryRepository;
+    @Autowired
+    private ProductRepository productRepository;
+    @Autowired
+    private ProductSkuRepository productSkuRepository;
+    @Autowired
+    private ProductAttributeRepository attributeRepository;
+    @Autowired
+    private CompositionRepository compositionRepository;
+    @Autowired
+    private ColorRepository colorRepository;
+    @Autowired
+    private MaterialRepository materialRepository;
 
     private static final String PRODUCT_URL = "/api/v1/products";
 
@@ -129,8 +137,8 @@ class ProductControllerV1Test extends IntegrationTestBase {
     void getProducts_categoryId_includesDescendants() throws Exception {
         // given
         Category parent = categoryRepository.save(CategoryFixture.rootActive());
-        Category child  = categoryRepository.save(CategoryFixture.child("자식", 0, parent, CategoryStatus.ACTIVE));
-        Category other  = categoryRepository.save(CategoryFixture.rootActive());
+        Category child = categoryRepository.save(CategoryFixture.child("자식", 0, parent, CategoryStatus.ACTIVE));
+        Category other = categoryRepository.save(CategoryFixture.rootActive());
 
         Product parentProduct = ProductFixture.component(parent, "부모상품");
         parentProduct.activate();

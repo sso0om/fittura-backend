@@ -7,5 +7,6 @@ import java.util.List;
 
 public interface CartItemRepositoryCustom {
     List<CartItem> findAllWithSkuForUpdate(List<Long> itemIds, Long memberId);
+
     List<CartItemResDto> findCartItemDtosByCart(Long cartId);
 }

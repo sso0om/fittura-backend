@@ -102,7 +102,7 @@ public class CategoryService {
 
         List<Long> descendantIds = categoryRepository.findSelfAndDescendantIds(category.getId());
 
-        if(!descendantIds.isEmpty()) {
+        if (!descendantIds.isEmpty()) {
             categoryRepository.bulkUpdateStatus(descendantIds, CategoryStatus.ARCHIVED);
         }
     }
