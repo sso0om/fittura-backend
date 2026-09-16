@@ -36,8 +36,6 @@ import static lombok.AccessLevel.PROTECTED;
 @Builder(access = PRIVATE)
 public class Order extends BaseEntity {
 
-    private static final long DELIVERY_BASE_FEE = 4000L;
-
     @Column(nullable = false)
     private Long memberId;
 
@@ -90,7 +88,7 @@ public class Order extends BaseEntity {
             .totalAmount(0L)
             .discountAmount(0L)
             .pointUsedAmount(pointUsedAmount)
-            .deliveryFee(DELIVERY_BASE_FEE)
+            .deliveryFee(0L)
             .finalAmount(0L)
             .orderDate(now)
             .build();

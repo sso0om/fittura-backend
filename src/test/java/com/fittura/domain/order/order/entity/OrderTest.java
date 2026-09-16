@@ -101,7 +101,7 @@ class OrderTest {
         order.calcFinalAmount();
 
         // then
-        // finalAmount = 20000 - 0 - 1000 + 4000 = 23000
-        assertThat(order.getFinalAmount()).isEqualTo(23000L);
+        // finalAmount = 20000 - 0 - 1000 = 23000
+        assertThat(order.getFinalAmount()).isEqualTo(19000L);
     }
 }

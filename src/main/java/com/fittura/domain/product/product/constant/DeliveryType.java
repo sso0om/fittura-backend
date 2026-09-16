@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum DeliveryType {
     PARCEL(4000L),
-    INSTALLATION(50_000L);
+    INSTALLATION(30_000L);
 
     private final Long baseFee;
 }
