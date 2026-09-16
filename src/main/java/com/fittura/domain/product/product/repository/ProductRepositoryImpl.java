@@ -172,6 +172,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
         ProductWithSkuResDto productRow = queryFactory
             .select(Projections.constructor(ProductWithSkuResDto.class,
                 product.id,
+                product.category.id,
                 product.name,
                 product.description,
                 product.productType,
@@ -212,6 +213,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
 
         return Optional.of(new ProductWithSkuResDto(
             productRow.id(),
+            productRow.categoryId(),
             productRow.name(),
             productRow.description(),
             productRow.productType(),

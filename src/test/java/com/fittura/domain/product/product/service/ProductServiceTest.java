@@ -115,7 +115,7 @@ class ProductServiceTest {
             new SkuResDto(1L, 90000L, SkuStatus.ACTIVE, null, null)
         );
         ProductWithSkuResDto productWithSkuResDto = new ProductWithSkuResDto(
-            1L, "A Desk", null, ProductType.COMPONENT, DeliveryType.PARCEL, ProductStatus.ACTIVE,
+            1L, 1L, "A Desk", null, ProductType.COMPONENT, DeliveryType.PARCEL, ProductStatus.ACTIVE,
             50000L, 10.0, 100.0, 75.0, 50.0, false, skus
         );
 
