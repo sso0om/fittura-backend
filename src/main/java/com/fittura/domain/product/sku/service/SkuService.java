@@ -22,10 +22,7 @@ import com.fittura.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,6 +33,15 @@ public class SkuService {
     private final CompositionRepository compositionRepository;
     private final ColorRepository colorRepository;
     private final MaterialRepository materialRepository;
+
+    public List<ProductSku> getSkusById(Set<Long> skuIds) {
+        List<ProductSku> productSkus = productSkuRepository.findAllByIdInAndStatusNot(skuIds, SkuStatus.ARCHIVED);
+
+        if (productSkus.size() != skuIds.size()) {
+            throw new ServiceException(ProductErrorCode.NOT_FOUND_SKU);
+        }
+        return productSkus;
+    }
 
     public ProductSku getProductSku(Long skuId) {
         return productSkuRepository.findByIdAndStatusNot(skuId, SkuStatus.ARCHIVED)

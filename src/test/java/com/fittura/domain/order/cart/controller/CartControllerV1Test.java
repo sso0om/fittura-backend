@@ -131,10 +131,10 @@ class CartControllerV1Test extends IntegrationTestBase {
         ProductSku sku = savedDefaultSku();
 
         String reqBody = """
-            {
+            [{
                 "skuId": %d,
                 "quantity": 3
-            }
+            }]
             """.formatted(sku.getId());
 
         // when & then
@@ -145,7 +145,7 @@ class CartControllerV1Test extends IntegrationTestBase {
             .andDo(print())
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.code").value("S201-01"))
-            .andExpect(jsonPath("$.message").value("제품이 장바구니에 담겼습니다."));
+            .andExpect(jsonPath("$.message").value("장바구니에 담겼습니다."));
 
         Cart cart = cartRepository.findByMemberId(memberId).orElseThrow();
         CartItem cartItem = cartItemRepository.findByCartAndProductSku(cart, sku).orElseThrow();
@@ -163,10 +163,10 @@ class CartControllerV1Test extends IntegrationTestBase {
         cartItemRepository.save(CartItemFixture.cartItem(cart, sku, 2));
 
         String reqBody = """
-            {
+            [{
                 "skuId": %d,
                 "quantity": 3
-            }
+            }]
             """.formatted(sku.getId());
 
         // when & then
@@ -177,7 +177,7 @@ class CartControllerV1Test extends IntegrationTestBase {
             .andDo(print())
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.code").value("S201-01"))
-            .andExpect(jsonPath("$.message").value("제품이 장바구니에 담겼습니다."));
+            .andExpect(jsonPath("$.message").value("장바구니에 담겼습니다."));
 
         CartItem updatedItem = cartItemRepository.findByCartAndProductSku(cart, sku).orElseThrow();
         assertThat(updatedItem.getQuantity()).isEqualTo(5);
@@ -190,10 +190,10 @@ class CartControllerV1Test extends IntegrationTestBase {
         Long memberId = 3L;
 
         String reqBody = """
-            {
+            [{
                 "skuId": 9999,
                 "quantity": 1
-            }
+            }]
             """;
 
         // when & then

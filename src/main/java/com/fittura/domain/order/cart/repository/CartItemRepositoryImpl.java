@@ -1,6 +1,7 @@
 package com.fittura.domain.order.cart.repository;
 
 import com.fittura.domain.order.cart.dto.response.CartItemResDto;
+import com.fittura.domain.order.cart.entity.Cart;
 import com.fittura.domain.order.cart.entity.CartItem;
 import com.fittura.domain.product.product.constant.ProductStatus;
 import com.fittura.domain.product.sku.constant.SkuStatus;
@@ -10,6 +11,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Collection;
 import java.util.List;
 
 import static com.fittura.domain.order.cart.entity.QCartItem.cartItem;
@@ -97,6 +99,17 @@ public class CartItemRepositoryImpl implements CartItemRepositoryCustom {
                     .then(0)
                     .otherwise(1).asc(),
                 cartItem.modifiedDate.desc()
+            )
+            .fetch();
+    }
+
+    @Override
+    public List<CartItem> findAllByCartAndSkuIdIn(Cart cart, Collection<Long> skuIds) {
+        return queryFactory
+            .selectFrom(cartItem)
+            .where(
+                cartItem.cart.eq(cart),
+                cartItem.productSku.id.in(skuIds)
             )
             .fetch();
     }

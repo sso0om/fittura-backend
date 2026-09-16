@@ -14,6 +14,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/cart")
 @RequiredArgsConstructor
@@ -34,14 +36,14 @@ public class CartControllerV1 {
 
     @PostMapping("/items")
     @Operation(summary = "장바구니 담기", description = "장바구니 제품 담기 API")
-    public ResponseEntity<RsData<Void>> createCartItem(
+    public ResponseEntity<RsData<Void>> createCartItems(
         @LogInMemberId Long memberId,
-        @RequestBody @Valid CartItemCreateReqDto reqDto
+        @RequestBody @Valid List<CartItemCreateReqDto> reqDto
     ) {
-        cartFacade.createCartItem(memberId, reqDto);
+        cartFacade.createCartItems(memberId, reqDto);
         return ResponseEntity
             .status(HttpStatus.CREATED)
-            .body(RsData.createSuccess("제품이 장바구니에 담겼습니다."));
+            .body(RsData.createSuccess("장바구니에 담겼습니다."));
     }
 
     @PatchMapping("/items/{itemId}")
