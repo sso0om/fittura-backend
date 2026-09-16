@@ -16,6 +16,7 @@ public record ProductWithSkuResDto(
     String description,
     ProductType productType,
     DeliveryType deliveryType,
+    Long deliveryFee,
     ProductStatus status,
     Long basePrice,
     Double weight,
@@ -32,7 +33,7 @@ public record ProductWithSkuResDto(
         Long basePrice, Double weight, Double width,
         Double height, Double depth, boolean isSoldOut
     ) {
-        this(id, categoryId, name, description, productType, deliveryType, status,
+        this(id, categoryId, name, description, productType, deliveryType, deliveryType.getBaseFee(), status,
             basePrice, weight, width, height, depth, isSoldOut, List.of());
     }
 }

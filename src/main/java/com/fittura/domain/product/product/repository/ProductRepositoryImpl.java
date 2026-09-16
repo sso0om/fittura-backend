@@ -218,6 +218,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             productRow.description(),
             productRow.productType(),
             productRow.deliveryType(),
+            productRow.deliveryFee(),
             productRow.status(),
             productRow.basePrice(),
             productRow.weight(),
