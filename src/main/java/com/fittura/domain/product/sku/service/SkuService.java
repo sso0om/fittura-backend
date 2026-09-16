@@ -59,7 +59,7 @@ public class SkuService {
     }
 
     public void updateSku(Product product, List<SkuUpdateReqDto> reqDto) {
-        List<ProductSku> existing = getProductSkus(product.getId());
+        List<ProductSku> existing = getSkusByProductId(product.getId());
 
         Map<Long, ProductSku> existingMap = existing.stream()
             .collect(Collectors.toMap(ProductSku::getId, s -> s));
@@ -115,7 +115,7 @@ public class SkuService {
     }
 
     public void deleteSkus(Product product) {
-        for (ProductSku productSku : getProductSkus(product.getId())) {
+        for (ProductSku productSku : getSkusByProductId(product.getId())) {
             productSku.archive();
         }
     }
@@ -251,7 +251,7 @@ public class SkuService {
 
     // ===== 헬퍼 메서드 ====
 
-    private List<ProductSku> getProductSkus(Long productId) {
+    private List<ProductSku> getSkusByProductId(Long productId) {
         return productSkuRepository.findByProductIdAndStatusNot(productId, SkuStatus.ARCHIVED);
     }
 
