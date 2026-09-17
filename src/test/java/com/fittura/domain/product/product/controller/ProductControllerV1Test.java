@@ -11,9 +11,15 @@ import com.fittura.domain.product.product.repository.ProductAttributeRepository;
 import com.fittura.domain.product.product.repository.ProductRepository;
 import com.fittura.domain.product.product.support.ProductAttributeFixture;
 import com.fittura.domain.product.product.support.ProductFixture;
+import com.fittura.domain.product.sku.entity.Color;
+import com.fittura.domain.product.sku.entity.Material;
 import com.fittura.domain.product.sku.entity.ProductSku;
+import com.fittura.domain.product.sku.repository.ColorRepository;
 import com.fittura.domain.product.sku.repository.CompositionRepository;
+import com.fittura.domain.product.sku.repository.MaterialRepository;
 import com.fittura.domain.product.sku.repository.ProductSkuRepository;
+import com.fittura.domain.product.sku.support.ColorFixture;
+import com.fittura.domain.product.sku.support.MaterialFixture;
 import com.fittura.domain.product.sku.support.ProductCompositionFixture;
 import com.fittura.domain.product.sku.support.ProductSkuFixture;
 import com.fittura.global.IntegrationTestBase;
@@ -29,12 +35,22 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class ProductControllerV1Test extends IntegrationTestBase {
 
-    @Autowired private MockMvc mockMvc;
-    @Autowired private CategoryRepository categoryRepository;
-    @Autowired private ProductRepository productRepository;
-    @Autowired private ProductSkuRepository productSkuRepository;
-    @Autowired private ProductAttributeRepository attributeRepository;
-    @Autowired private CompositionRepository compositionRepository;
+    @Autowired
+    private MockMvc mockMvc;
+    @Autowired
+    private CategoryRepository categoryRepository;
+    @Autowired
+    private ProductRepository productRepository;
+    @Autowired
+    private ProductSkuRepository productSkuRepository;
+    @Autowired
+    private ProductAttributeRepository attributeRepository;
+    @Autowired
+    private CompositionRepository compositionRepository;
+    @Autowired
+    private ColorRepository colorRepository;
+    @Autowired
+    private MaterialRepository materialRepository;
 
     private static final String PRODUCT_URL = "/api/v1/products";
 
@@ -55,6 +71,8 @@ class ProductControllerV1Test extends IntegrationTestBase {
         discontinuedProduct.discontinue();
         productRepository.save(discontinuedProduct);
 
+        productRepository.save(ProductFixture.component(category, "Hidden Desk"));
+
         // when & then
         mockMvc.perform(get(PRODUCT_URL))
             .andDo(print())
@@ -72,13 +90,20 @@ class ProductControllerV1Test extends IntegrationTestBase {
         Product activeProduct = ProductFixture.component(category, "Active Desk");
         activeProduct.activate();
         productRepository.save(activeProduct);
+        productSkuRepository.save(ProductSkuFixture.sku(activeProduct, 50000L, 100));
+
+        Product soldOutProduct = ProductFixture.component(category, "Wood Brown Desk");
+        soldOutProduct.activate();
+        productRepository.save(soldOutProduct);
+        productSkuRepository.save(ProductSkuFixture.sku(soldOutProduct, 60000L, 0));
 
         Product discontinuedProduct = ProductFixture.component(category, "Discontinued Chair");
         discontinuedProduct.discontinue();
         productRepository.save(discontinuedProduct);
+        productSkuRepository.save(ProductSkuFixture.sku(discontinuedProduct, 70000L, 100));
 
         // when & then
-        mockMvc.perform(get(PRODUCT_URL).param("statuses", "ACTIVE"))
+        mockMvc.perform(get(PRODUCT_URL).param("inStockOnly", "true"))
             .andDo(print())
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.totalElements").value(1))
@@ -112,8 +137,8 @@ class ProductControllerV1Test extends IntegrationTestBase {
     void getProducts_categoryId_includesDescendants() throws Exception {
         // given
         Category parent = categoryRepository.save(CategoryFixture.rootActive());
-        Category child  = categoryRepository.save(CategoryFixture.child("자식", 0, parent, CategoryStatus.ACTIVE));
-        Category other  = categoryRepository.save(CategoryFixture.rootActive());
+        Category child = categoryRepository.save(CategoryFixture.child("자식", 0, parent, CategoryStatus.ACTIVE));
+        Category other = categoryRepository.save(CategoryFixture.rootActive());
 
         Product parentProduct = ProductFixture.component(parent, "부모상품");
         parentProduct.activate();
@@ -140,46 +165,36 @@ class ProductControllerV1Test extends IntegrationTestBase {
         // given
         Category category = categoryRepository.save(CategoryFixture.rootActive());
 
+        Color white = colorRepository.save(ColorFixture.color("White"));
+        Color brown = colorRepository.save(ColorFixture.color("Brown"));
+        Color black = colorRepository.save(ColorFixture.color("Black"));
+        Material wood = materialRepository.save(MaterialFixture.material("Wood"));
+        Material metal = materialRepository.save(MaterialFixture.material("Metal"));
+
         Product woodProduct = ProductFixture.component(category, "Wood White Desk");
         woodProduct.activate();
         productRepository.save(woodProduct);
-        productSkuRepository.save(ProductSkuFixture.sku(woodProduct, 50000L, 100, "White", "Wood"));
+        productSkuRepository.save(ProductSkuFixture.sku(woodProduct, 50000L, 100, white, wood));
 
         Product woodBrownProduct = ProductFixture.component(category, "Wood Brown Desk");
         woodBrownProduct.activate();
         productRepository.save(woodBrownProduct);
-        productSkuRepository.save(ProductSkuFixture.sku(woodBrownProduct, 60000L, 100, "Brown", "Wood"));
+        productSkuRepository.save(ProductSkuFixture.sku(woodBrownProduct, 60000L, 100, brown, wood));
 
         Product metalProduct = ProductFixture.component(category, "Metal Black Chair");
         metalProduct.activate();
         productRepository.save(metalProduct);
-        productSkuRepository.save(ProductSkuFixture.sku(metalProduct, 70000L, 100, "Black", "Metal"));
+        productSkuRepository.save(ProductSkuFixture.sku(metalProduct, 70000L, 100, black, metal));
 
         // when & then
         mockMvc.perform(get(PRODUCT_URL)
-                .param("colors", "White", "Brown")
-                .param("materials", "Wood"))
+                .param("colors", String.valueOf(white.getId()), String.valueOf(brown.getId()))
+                .param("materials", String.valueOf(wood.getId())))
             .andDo(print())
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.totalElements").value(2))
             .andExpect(jsonPath("$.data.content[0].name").value("Wood Brown Desk"))
             .andExpect(jsonPath("$.data.content[1].name").value("Wood White Desk"));
-    }
-
-    @Test
-    @DisplayName("상품 목록 조회 - DISABLED 상품은 조회 안 됨")
-    void getProducts_excludesDisabled() throws Exception {
-        // given
-        Category category = categoryRepository.save(CategoryFixture.rootActive());
-
-        // DISABLED는 Product.create()의 기본 상태
-        productRepository.save(ProductFixture.component(category, "Hidden Desk"));
-
-        // when & then
-        mockMvc.perform(get(PRODUCT_URL))
-            .andDo(print())
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.totalElements").value(0));
     }
 
     @Test
@@ -257,10 +272,13 @@ class ProductControllerV1Test extends IntegrationTestBase {
     void getProductSuccess() throws Exception {
         // given
         Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Color white = colorRepository.save(ColorFixture.color("White"));
+        Material wood = materialRepository.save(MaterialFixture.material("Wood"));
+
         Product product = ProductFixture.component(category, "A Desk");
         product.activate();
         productRepository.save(product);
-        productSkuRepository.save(ProductSkuFixture.sku(product, 45000L, 100));
+        productSkuRepository.save(ProductSkuFixture.sku(product, 45000L, 100, white, wood));
 
         // when & then
         mockMvc.perform(get(PRODUCT_URL + "/" + product.getId()))
@@ -419,5 +437,21 @@ class ProductControllerV1Test extends IntegrationTestBase {
             .andDo(print())
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.code").value(ProductErrorCode.NOT_FOUND_PRODUCT.getCode()));
+    }
+
+    @Test
+    @DisplayName("필터링 옵션 조회 성공")
+    void getProductFiltersSuccess() throws Exception {
+        colorRepository.save(ColorFixture.color("White"));
+        colorRepository.save(ColorFixture.color("Brown"));
+        colorRepository.save(ColorFixture.color("Black"));
+        materialRepository.save(MaterialFixture.material("Wood"));
+        materialRepository.save(MaterialFixture.material("Metal"));
+
+        mockMvc.perform(get(PRODUCT_URL + "/filters"))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.colors.length()").value(3))
+            .andExpect(jsonPath("$.data.materials.length()").value(2));
     }
 }

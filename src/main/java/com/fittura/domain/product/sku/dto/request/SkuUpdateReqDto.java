@@ -4,7 +4,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
-import jakarta.validation.constraints.Size;
 
 @Schema(description = "SKU 수정 요청 DTO")
 public record SkuUpdateReqDto(
@@ -21,12 +20,12 @@ public record SkuUpdateReqDto(
     @NotNull @PositiveOrZero
     Integer stockQuantity,
 
-    @Schema(example = "화이트")
-    @Size(max = 50)
-    String color,
+    @Schema(example = "1")
+    @Positive
+    Long colorId,
 
-    @Schema(example = "원목")
-    @Size(max = 50)
-    String material
+    @Schema(example = "1")
+    @Positive
+    Long materialId
 ) {
 }

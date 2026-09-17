@@ -1,12 +1,8 @@
 package com.fittura.domain.product.product.controller;
 
 import com.fittura.domain.product.facade.ProductFacade;
-import com.fittura.domain.product.product.constant.ProductStatus;
 import com.fittura.domain.product.product.dto.request.ProductSearchReqDto;
-import com.fittura.domain.product.product.dto.response.CompositionResDto;
-import com.fittura.domain.product.product.dto.response.ProductAttributeResDto;
-import com.fittura.domain.product.product.dto.response.ProductResDto;
-import com.fittura.domain.product.product.dto.response.ProductWithSkuResDto;
+import com.fittura.domain.product.product.dto.response.*;
 import com.fittura.global.rsdata.RsData;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -32,16 +28,11 @@ public class ProductControllerV1 {
 
     @GetMapping
     @Operation(summary = "제품 목록 조회", description = "제품 목록 조회 API - sort 예시: basePrice,desc / createdDate,desc")
-    public ResponseEntity<RsData<Page<ProductResDto>>> getProducts (
+    public ResponseEntity<RsData<Page<ProductResDto>>> getProducts(
         @ParameterObject ProductSearchReqDto reqDto,
         @ParameterObject Pageable pageable
     ) {
-        List<ProductStatus> statuses = (reqDto.statuses() == null || reqDto.statuses().isEmpty())
-            ? List.of(ProductStatus.ACTIVE, ProductStatus.DISCONTINUED)
-            : reqDto.statuses();
-
-        Page<ProductResDto> resDtos = productFacade.getProducts(statuses, reqDto, pageable);
-
+        Page<ProductResDto> resDtos = productFacade.getProducts(reqDto, pageable);
         return ResponseEntity
             .ok(RsData.success("제품 목록이 조회되었습니다.", resDtos));
     }
@@ -77,5 +68,13 @@ public class ProductControllerV1 {
 
         return ResponseEntity
             .ok(RsData.success("상품 구성 정보가 조회되었습니다.", resDto));
+    }
+
+    @GetMapping("/filters")
+    @Operation(summary = "상품 필터링 옵션 조회", description = "색상/재질 필터 옵션 목록 조회 API")
+    public ResponseEntity<RsData<ProductFilterResDto>> getProductFilter() {
+        ProductFilterResDto resDto = productFacade.getProductFilter();
+        return ResponseEntity
+            .ok(RsData.success("필터 옵션이 조회되었습니다.", resDto));
     }
 }

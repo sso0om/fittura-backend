@@ -11,10 +11,12 @@ import java.util.List;
 @Schema(description = "제품 응답 DTO")
 public record ProductWithSkuResDto(
     Long id,
+    Long categoryId,
     String name,
     String description,
     ProductType productType,
     DeliveryType deliveryType,
+    Long deliveryFee,
     ProductStatus status,
     Long basePrice,
     Double weight,
@@ -23,15 +25,15 @@ public record ProductWithSkuResDto(
     Double depth,
     boolean isSoldOut,
     List<SkuResDto> skus
-){
+) {
     // Projection 전용 생성자
     public ProductWithSkuResDto(
-        Long id, String name, String description,
+        Long id, Long categoryId, String name, String description,
         ProductType productType, DeliveryType deliveryType, ProductStatus status,
         Long basePrice, Double weight, Double width,
         Double height, Double depth, boolean isSoldOut
     ) {
-        this(id, name, description, productType, deliveryType, status,
+        this(id, categoryId, name, description, productType, deliveryType, deliveryType.getBaseFee(), status,
             basePrice, weight, width, height, depth, isSoldOut, List.of());
     }
 }

@@ -1,15 +1,15 @@
 package com.fittura.domain.product.product.dto.request;
 
 import com.fittura.domain.product.product.constant.ProductStatus;
-import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
 public record ProductSearchCondition(
+    boolean inStockOnly,
     List<ProductStatus> includedStatuses,
     List<Long> categoryIds,
     String keyword,
-    List<String> colors,
-    List<String> materials
+    List<Long> colors,
+    List<Long> materials
 ) {
 }

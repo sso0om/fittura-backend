@@ -72,7 +72,7 @@ public class Payment extends BaseEntity {
 
     // ===== 생성 =====
 
-    public static Payment create(Long orderId, PgProvider pgProvider, PaymentMethod paymentMethod,Long totalAmount) {
+    public static Payment create(Long orderId, PgProvider pgProvider, PaymentMethod paymentMethod, Long totalAmount) {
         Objects.requireNonNull(orderId, "orderID must not be null");
 
         LocalDateTime now = LocalDateTime.now();

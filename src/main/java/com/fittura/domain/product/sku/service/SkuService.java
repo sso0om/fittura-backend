@@ -1,6 +1,8 @@
 package com.fittura.domain.product.sku.service;
 
+import com.fittura.domain.product.product.dto.response.ColorResDto;
 import com.fittura.domain.product.product.dto.response.CompositionResDto;
+import com.fittura.domain.product.product.dto.response.MaterialResDto;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.error.ProductErrorCode;
 import com.fittura.domain.product.sku.constant.SkuStatus;
@@ -8,18 +10,19 @@ import com.fittura.domain.product.sku.dto.request.CompositionCreateReqDto;
 import com.fittura.domain.product.sku.dto.request.CompositionUpdateReqDto;
 import com.fittura.domain.product.sku.dto.request.SkuCreateReqDto;
 import com.fittura.domain.product.sku.dto.request.SkuUpdateReqDto;
+import com.fittura.domain.product.sku.entity.Color;
+import com.fittura.domain.product.sku.entity.Material;
 import com.fittura.domain.product.sku.entity.ProductComposition;
 import com.fittura.domain.product.sku.entity.ProductSku;
+import com.fittura.domain.product.sku.repository.ColorRepository;
 import com.fittura.domain.product.sku.repository.CompositionRepository;
+import com.fittura.domain.product.sku.repository.MaterialRepository;
 import com.fittura.domain.product.sku.repository.ProductSkuRepository;
 import com.fittura.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,6 +31,17 @@ public class SkuService {
 
     private final ProductSkuRepository productSkuRepository;
     private final CompositionRepository compositionRepository;
+    private final ColorRepository colorRepository;
+    private final MaterialRepository materialRepository;
+
+    public List<ProductSku> getSkusById(Set<Long> skuIds) {
+        List<ProductSku> productSkus = productSkuRepository.findAllByIdInAndStatusNot(skuIds, SkuStatus.ARCHIVED);
+
+        if (productSkus.size() != skuIds.size()) {
+            throw new ServiceException(ProductErrorCode.NOT_FOUND_SKU);
+        }
+        return productSkus;
+    }
 
     public ProductSku getProductSku(Long skuId) {
         return productSkuRepository.findByIdAndStatusNot(skuId, SkuStatus.ARCHIVED)
@@ -36,20 +50,22 @@ public class SkuService {
 
     public void createSkus(Product product, List<SkuCreateReqDto> skuDtos) {
         for (SkuCreateReqDto skuDto : skuDtos) {
+            Color color = getColor(skuDto.colorId());
+            Material material = getMaterial(skuDto.materialId());
 
             ProductSku productSku = ProductSku.create(
                 product,
                 skuDto.price(),
                 skuDto.stockQuantity(),
-                skuDto.color(),
-                skuDto.material()
+                color,
+                material
             );
             productSkuRepository.save(productSku);
         }
     }
 
     public void updateSku(Product product, List<SkuUpdateReqDto> reqDto) {
-        List<ProductSku> existing = getProductSkus(product.getId());
+        List<ProductSku> existing = getSkusByProductId(product.getId());
 
         Map<Long, ProductSku> existingMap = existing.stream()
             .collect(Collectors.toMap(ProductSku::getId, s -> s));
@@ -71,18 +87,21 @@ public class SkuService {
             .forEach(ProductSku::archive);
 
         for (SkuUpdateReqDto dto : reqDto) {
+            Color color = getColor(dto.colorId());
+            Material material = getMaterial(dto.materialId());
+
             if (dto.id() == null) {
                 ProductSku newSku = ProductSku.create(
                     product,
                     dto.price(),
                     dto.stockQuantity(),
-                    dto.color(),
-                    dto.material()
+                    color,
+                    material
                 );
                 productSkuRepository.save(newSku);
             } else {
                 ProductSku sku = existingMap.get(dto.id());
-                sku.update(dto.price(), dto.stockQuantity(), dto.color(), dto.material());
+                sku.update(dto.price(), dto.stockQuantity(), color, material);
             }
         }
     }
@@ -102,7 +121,7 @@ public class SkuService {
     }
 
     public void deleteSkus(Product product) {
-        for (ProductSku productSku : getProductSkus(product.getId())) {
+        for (ProductSku productSku : getSkusByProductId(product.getId())) {
             productSku.archive();
         }
     }
@@ -184,12 +203,41 @@ public class SkuService {
     }
 
 
+    // ===== color, material ====
+
+    public List<ColorResDto> getColors() {
+        return colorRepository.findAll()
+            .stream()
+            .map(ColorResDto::from)
+            .toList();
+    }
+
+    public Color getColor(Long colorId) {
+        if (colorId == null) return null;
+        return colorRepository.findById(colorId)
+            .orElseThrow(() -> new ServiceException(ProductErrorCode.NOT_FOUND_COLOR));
+    }
+
+    public List<MaterialResDto> getMaterials() {
+        return materialRepository.findAll()
+            .stream()
+            .map(MaterialResDto::from)
+            .toList();
+    }
+
+    public Material getMaterial(Long materialId) {
+        if (materialId == null) return null;
+        return materialRepository.findById(materialId)
+            .orElseThrow(() -> new ServiceException(ProductErrorCode.NOT_FOUND_MATERIAL));
+    }
+
+
     // ===== 유효성 검사 메서드 ====
 
     public void validateDeletableSku(Product product) {
         if (product.isComplete()) return;
 
-        if(compositionRepository.isAnySkuReferencedByOther(product.getId())) {
+        if (compositionRepository.isAnySkuReferencedByOther(product.getId())) {
             throw new ServiceException(ProductErrorCode.PRODUCT_SKU_REFERENCED_BY_OTHER);
         }
     }
@@ -209,7 +257,7 @@ public class SkuService {
 
     // ===== 헬퍼 메서드 ====
 
-    private List<ProductSku> getProductSkus(Long productId) {
+    private List<ProductSku> getSkusByProductId(Long productId) {
         return productSkuRepository.findByProductIdAndStatusNot(productId, SkuStatus.ARCHIVED);
     }
 

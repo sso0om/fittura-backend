@@ -16,7 +16,6 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.JPAExpressions;
-import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -39,19 +38,14 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
 
     @Override
     public Page<ProductResDto> findProducts(ProductSearchCondition condition, Pageable pageable) {
-        BooleanExpression colorCond = colorIn(condition.colors());
-        BooleanExpression materialCond = materialIn(condition.materials());
-        boolean skuFilterExists = colorCond != null || materialCond != null;
-
         BooleanExpression[] conditions = {
             statusIn(condition.includedStatuses()),
             categoryIn(condition.categoryIds()),
             keywordContains(condition.keyword()),
-            colorCond,
-            materialCond
+            skuOptionMatches(condition.colors(), condition.materials(), condition.inStockOnly())
         };
 
-        JPAQuery<ProductResDto> query = queryFactory
+        List<ProductResDto> products = queryFactory
             .select(Projections.constructor(ProductResDto.class,
                 product.id,
                 product.name,
@@ -62,30 +56,17 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
                 isSoldOut(),
                 product.mainImage.imageUrl
             ))
-            .distinct()
             .from(product)
-            .leftJoin(product.mainImage);
-
-        if (skuFilterExists) {
-            query.leftJoin(productSku).on(productSku.product.id.eq(product.id));
-        }
-
-        List<ProductResDto> products = query
+            .leftJoin(product.mainImage)
             .where(conditions)
             .orderBy(getOrderSpecifier(pageable))
             .offset(pageable.getOffset())
             .limit(pageable.getPageSize())
             .fetch();
 
-        JPAQuery<Long> countQuery = queryFactory
-            .select(product.countDistinct())
-            .from(product);
-
-        if (skuFilterExists) {
-            countQuery.leftJoin(productSku).on(productSku.product.id.eq(product.id));
-        }
-
-        Long total = countQuery
+        Long total = queryFactory
+            .select(product.count())
+            .from(product)
             .where(conditions)
             .fetchOne();
 
@@ -127,10 +108,12 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
                 productSku.stockQuantity,
                 productSku.reservedQuantity,
                 productSku.status,
-                productSku.color,
-                productSku.material
+                productSku.color.name,
+                productSku.material.name
             ))
             .from(productSku)
+            .leftJoin(productSku.color)
+            .leftJoin(productSku.material)
             .where(
                 productSku.product.id.eq(id),
                 productSku.status.ne(SkuStatus.ARCHIVED)
@@ -189,6 +172,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
         ProductWithSkuResDto productRow = queryFactory
             .select(Projections.constructor(ProductWithSkuResDto.class,
                 product.id,
+                product.category.id,
                 product.name,
                 product.description,
                 product.productType,
@@ -215,10 +199,12 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
                 productSku.id,
                 productSku.price,
                 productSku.status,
-                productSku.color,
-                productSku.material
+                productSku.color.name,
+                productSku.material.name
             ))
             .from(productSku)
+            .leftJoin(productSku.color)
+            .leftJoin(productSku.material)
             .where(
                 productSku.product.id.eq(id),
                 productSku.status.ne(SkuStatus.ARCHIVED)
@@ -227,10 +213,12 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
 
         return Optional.of(new ProductWithSkuResDto(
             productRow.id(),
+            productRow.categoryId(),
             productRow.name(),
             productRow.description(),
             productRow.productType(),
             productRow.deliveryType(),
+            productRow.deliveryFee(),
             productRow.status(),
             productRow.basePrice(),
             productRow.weight(),
@@ -259,16 +247,27 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
         return StringUtils.hasText(keyword) ? product.name.containsIgnoreCase(keyword) : null;
     }
 
-    private BooleanExpression colorIn(List<String> colors) {
-        return (colors == null || colors.isEmpty())
-            ? null
-            : productSku.color.in(colors);
-    }
+    private BooleanExpression skuOptionMatches(List<Long> colorIds, List<Long> materialIds, boolean inStockOnly) {
+        boolean hasColor = colorIds != null && !colorIds.isEmpty();
+        boolean hasMaterial = materialIds != null && !materialIds.isEmpty();
+        if (!hasColor && !hasMaterial && !inStockOnly) return null;
 
-    private BooleanExpression materialIn(List<String> materials) {
-        return (materials == null || materials.isEmpty())
-            ? null
-            : productSku.material.in(materials);
+        QProductSku sku = new QProductSku("filterSku");
+
+        BooleanExpression cond = sku.product.id.eq(product.id);
+        if (hasColor) cond = cond.and(sku.color.id.in(colorIds));
+        if (hasMaterial) cond = cond.and(sku.material.id.in(materialIds));
+        if (inStockOnly) {
+            cond = cond
+                .and(sku.status.eq(SkuStatus.ACTIVE))
+                .and(sku.stockQuantity.subtract(sku.reservedQuantity).gt(0));
+        }
+
+        return JPAExpressions
+            .selectOne()
+            .from(sku)
+            .where(cond)
+            .exists();
     }
 
     private BooleanExpression isSoldOut() {
@@ -279,7 +278,8 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             .from(subSku)
             .where(
                 subSku.product.id.eq(product.id),
-                subSku.status.eq(SkuStatus.ACTIVE)
+                subSku.status.eq(SkuStatus.ACTIVE),
+                subSku.stockQuantity.subtract(subSku.reservedQuantity).gt(0)
             )
             .notExists();
     }

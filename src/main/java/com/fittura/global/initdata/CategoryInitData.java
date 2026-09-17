@@ -50,13 +50,10 @@ public class CategoryInitData implements ApplicationRunner {
 
         Category chairParts = createChild("부품", 3, chair);
         createChild("의자 좌판", 1, chairParts);
-        createChild("의자 등받이", 2, chairParts);
-        createChild("의자 다리", 3, chairParts);
+        createChild("의자 다리", 2, chairParts);
 
         Category drawerParts = createChild("부품", 3, drawer);
-        createChild("서랍장 상판", 1, drawerParts);
-        createChild("서랍장 서랍", 2, drawerParts);
-        createChild("서랍장 손잡이", 3, drawerParts);
+        createChild("서랍장 손잡이", 1, drawerParts);
     }
 
     private Category createRoot(String name, int order) {

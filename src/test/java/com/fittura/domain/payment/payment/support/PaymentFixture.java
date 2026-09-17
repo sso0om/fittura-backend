@@ -7,7 +7,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 public class PaymentFixture {
 
-    private PaymentFixture() {}
+    private PaymentFixture() {
+    }
 
     public static Payment payment(Long orderId) {
         return Payment.create(orderId, PgProvider.TOSS, PaymentMethod.CARD, 10000L);

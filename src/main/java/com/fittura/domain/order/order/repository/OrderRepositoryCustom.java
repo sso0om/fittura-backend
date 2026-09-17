@@ -10,5 +10,6 @@ import java.util.Optional;
 
 public interface OrderRepositoryCustom {
     Page<OrderWithDeliveryResDto> findOrders(Long memberId, OrderSearchCondition searchCondition, Pageable pageable);
+
     Optional<OrderWithAllResDto> findWithAllByIdAndMemberId(Long orderId, Long memberId);
 }

@@ -25,7 +25,7 @@ public class JwtTokenProvider {
     private static final String ROLES_CLAIM_KEY = "roles";
     private static final String TOKEN_TYPE_CLAIM_KEY = "token_type";
     private static final String TOKEN_TYPE_ACCESS = "ACCESS";
-    private static final String TOKEN_TYPE_REFRESH= "REFRESH";
+    private static final String TOKEN_TYPE_REFRESH = "REFRESH";
 
     private final SecretKey key;
     private final long accessTokenValidityInMilliseconds;
@@ -34,9 +34,9 @@ public class JwtTokenProvider {
     private final JwtParser jwtParser;
 
     public JwtTokenProvider(
-            @Value("${jwt.secret}") String secretKey,
-            @Value("${jwt.access-token-validity-in-seconds}") long accessTokenValidityInSeconds,
-            @Value("${jwt.refresh-token-validity-in-seconds}") long refreshTokenValidityInSeconds
+        @Value("${jwt.secret}") String secretKey,
+        @Value("${jwt.access-token-validity-in-seconds}") long accessTokenValidityInSeconds,
+        @Value("${jwt.refresh-token-validity-in-seconds}") long refreshTokenValidityInSeconds
     ) {
         // Base64로 인코딩된 secretKey를 디코딩하여 byte 배열로 변환
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
@@ -102,9 +102,9 @@ public class JwtTokenProvider {
 
         Collection<String> roles = claims.get(ROLES_CLAIM_KEY, Collection.class);
         Collection<? extends GrantedAuthority> authorities = roles
-                .stream()
-                .map(SimpleGrantedAuthority::new)
-                .toList();
+            .stream()
+            .map(SimpleGrantedAuthority::new)
+            .toList();
 
         // 인증된 사용자
         Long userId = Long.parseLong(claims.getSubject());

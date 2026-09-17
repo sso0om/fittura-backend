@@ -24,8 +24,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WithMockUser(roles = "ADMIN")
 class AdminCategoryControllerV1Test extends IntegrationTestBase {
 
-    @Autowired private MockMvc mockMvc;
-    @Autowired private CategoryRepository categoryRepository;
+    @Autowired
+    private MockMvc mockMvc;
+    @Autowired
+    private CategoryRepository categoryRepository;
 
     private static final String CATEGORY_ADMIN_URL = "/api/admin/v1/categories";
     private static final String CATEGORY_USER_URL = "/api/v1/categories";
@@ -173,12 +175,12 @@ class AdminCategoryControllerV1Test extends IntegrationTestBase {
 
         // given
         String reqBody = """
-            {
-                "name" : "하위 카테고리1",
-                "parentId" : %d,
-                "sortOrder" : 1
-            }
-        """.formatted(parent.getId());
+                {
+                    "name" : "하위 카테고리1",
+                    "parentId" : %d,
+                    "sortOrder" : 1
+                }
+            """.formatted(parent.getId());
 
         // when & then
         ResultActions resultActions = mockMvc
@@ -246,11 +248,11 @@ class AdminCategoryControllerV1Test extends IntegrationTestBase {
 
         // given
         String reqBody = """
-            {
-                "name" : "카테고리 변경",
-                "sortOrder" : 2
-            }
-        """;
+                {
+                    "name" : "카테고리 변경",
+                    "sortOrder" : 2
+                }
+            """;
 
         // when & then
         ResultActions resultActions = mockMvc
@@ -287,12 +289,12 @@ class AdminCategoryControllerV1Test extends IntegrationTestBase {
 
         // given
         String reqBody = """
-            {
-                "name" : "자식 변경",
-                "parentId" : %d,
-                "sortOrder" : 3
-            }
-        """.formatted(root2.getId());
+                {
+                    "name" : "자식 변경",
+                    "parentId" : %d,
+                    "sortOrder" : 3
+                }
+            """.formatted(root2.getId());
 
         // when & then
         ResultActions resultActions = mockMvc
@@ -328,11 +330,11 @@ class AdminCategoryControllerV1Test extends IntegrationTestBase {
 
         // given
         String reqBody = """
-            {
-                "name" : "루트2",
-                "sortOrder" : 1
-            }
-        """;
+                {
+                    "name" : "루트2",
+                    "sortOrder" : 1
+                }
+            """;
 
         // when & then
         ResultActions resultActions = mockMvc
@@ -371,13 +373,13 @@ class AdminCategoryControllerV1Test extends IntegrationTestBase {
 
         // given
         String reqBody = """
-            {
-                "name" : "카테고리 변경",
-                "parentId" : %d,
-                "sortOrder" : 1,
-                "status" : "ACTIVE"
-            }
-        """.formatted(category.getId());
+                {
+                    "name" : "카테고리 변경",
+                    "parentId" : %d,
+                    "sortOrder" : 1,
+                    "status" : "ACTIVE"
+                }
+            """.formatted(category.getId());
 
         // when & then
         ResultActions resultActions = mockMvc

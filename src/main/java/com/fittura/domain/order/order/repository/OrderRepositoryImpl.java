@@ -170,7 +170,6 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
     // ========== BooleanExpression ==========
 
 
-
     private BooleanExpression orderNumberEq(String orderNumber) {
         if (!StringUtils.hasText(orderNumber)) return null;
         return order.orderNumber.eq(orderNumber.trim());

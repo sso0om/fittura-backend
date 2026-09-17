@@ -1,9 +1,8 @@
 package com.fittura.domain.product.product.controller;
 
 import com.fittura.domain.product.facade.ProductFacade;
-import com.fittura.domain.product.product.constant.ProductStatus;
+import com.fittura.domain.product.product.dto.request.AdminProductSearchReqDto;
 import com.fittura.domain.product.product.dto.request.ProductCreateReqDto;
-import com.fittura.domain.product.product.dto.request.ProductSearchReqDto;
 import com.fittura.domain.product.product.dto.request.ProductUpdateReqDto;
 import com.fittura.domain.product.product.dto.response.ProductResDto;
 import com.fittura.domain.product.product.dto.response.ProductWithAllResDto;
@@ -20,8 +19,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @PreAuthorize("hasRole('ADMIN')")
 @RestController
 @RequestMapping("/api/admin/v1/products")
@@ -33,15 +30,11 @@ public class AdminProductControllerV1 {
 
     @GetMapping
     @Operation(summary = "제품 목록 조회", description = "관리자용 제품 목록 조회 API - sort 예시: basePrice,desc / createdDate,desc")
-    public ResponseEntity<RsData<Page<ProductResDto>>> getProducts (
-        @ParameterObject ProductSearchReqDto reqDto,
+    public ResponseEntity<RsData<Page<ProductResDto>>> getProducts(
+        @ParameterObject AdminProductSearchReqDto reqDto,
         @ParameterObject Pageable pageable
     ) {
-        List<ProductStatus> statuses = (reqDto.statuses() == null || reqDto.statuses().isEmpty())
-            ? List.of(ProductStatus.ACTIVE, ProductStatus.DISABLED, ProductStatus.DISCONTINUED)
-            : reqDto.statuses();
-
-        Page<ProductResDto> resDtos = productFacade.getProducts(statuses, reqDto, pageable);
+        Page<ProductResDto> resDtos = productFacade.getProductsForAdmin(reqDto, pageable);
 
         return ResponseEntity
             .ok(RsData.success("제품 목록이 조회되었습니다.", resDtos));

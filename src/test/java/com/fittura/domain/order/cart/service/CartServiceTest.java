@@ -1,6 +1,5 @@
 package com.fittura.domain.order.cart.service;
 
-import com.fittura.domain.order.cart.dto.request.CartItemCreateReqDto;
 import com.fittura.domain.order.cart.dto.request.CartItemUpdateReqDto;
 import com.fittura.domain.order.cart.dto.response.CartItemResDto;
 import com.fittura.domain.order.cart.dto.response.CartResDto;
@@ -25,6 +24,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -165,19 +165,18 @@ class CartServiceTest {
         Long memberId = 1L;
         Product product = ProductFixture.component("A Desk");
         ProductSku sku = ProductSkuFixture.skuWithId(1L, product);
-        CartItemCreateReqDto reqDto = new CartItemCreateReqDto(1L, 3);
 
         Cart newCart = CartFixture.cart(memberId);
         given(cartRepository.findByMemberId(memberId)).willReturn(Optional.empty());
         given(cartRepository.save(any(Cart.class))).willReturn(newCart);
-        given(cartItemRepository.findByCartAndProductSku(newCart, sku)).willReturn(Optional.empty());
+        given(cartItemRepository.findAllByCartAndSkuIdIn(newCart, List.of(sku.getId()))).willReturn(List.of());
 
         // when
-        cartService.createCartItem(memberId, sku, reqDto);
+        cartService.addCartItems(memberId, List.of(sku), Map.of(sku.getId(), 3));
 
         // then
         verify(cartRepository).save(any(Cart.class));
-        verify(cartItemRepository).save(any(CartItem.class));
+        verify(cartItemRepository).saveAll(any());
     }
 
     @Test
@@ -187,18 +186,17 @@ class CartServiceTest {
         Long memberId = 1L;
         Product product = ProductFixture.component("A Desk");
         ProductSku sku = ProductSkuFixture.skuWithId(1L, product);
-        CartItemCreateReqDto reqDto = new CartItemCreateReqDto(1L, 2);
 
         Cart existingCart = CartFixture.cartWithId(10L, memberId);
         given(cartRepository.findByMemberId(memberId)).willReturn(Optional.of(existingCart));
-        given(cartItemRepository.findByCartAndProductSku(existingCart, sku)).willReturn(Optional.empty());
+        given(cartItemRepository.findAllByCartAndSkuIdIn(existingCart, List.of(sku.getId()))).willReturn(List.of());
 
         // when
-        cartService.createCartItem(memberId, sku, reqDto);
+        cartService.addCartItems(memberId, List.of(sku), Map.of(sku.getId(), 2));
 
         // then
         verify(cartRepository, never()).save(any(Cart.class));
-        verify(cartItemRepository).save(any(CartItem.class));
+        verify(cartItemRepository).saveAll(any());
     }
 
     @Test
@@ -208,21 +206,20 @@ class CartServiceTest {
         Long memberId = 1L;
         Product product = ProductFixture.component("A Desk");
         ProductSku sku = ProductSkuFixture.skuWithId(1L, product);
-        CartItemCreateReqDto reqDto = new CartItemCreateReqDto(1L, 3);
 
         Cart existingCart = CartFixture.cartWithId(10L, memberId);
         CartItem existingCartItem = CartItemFixture.cartItem(existingCart, sku, 2);
 
         given(cartRepository.findByMemberId(memberId)).willReturn(Optional.of(existingCart));
-        given(cartItemRepository.findByCartAndProductSku(existingCart, sku)).willReturn(Optional.of(existingCartItem));
+        given(cartItemRepository.findAllByCartAndSkuIdIn(existingCart, List.of(sku.getId()))).willReturn(List.of(existingCartItem));
 
         // when
-        cartService.createCartItem(memberId, sku, reqDto);
+        cartService.addCartItems(memberId, List.of(sku), Map.of(sku.getId(), 3));
 
         // then
         assertThat(existingCartItem.getQuantity()).isEqualTo(5);
         verify(cartRepository, never()).save(any(Cart.class));
-        verify(cartItemRepository).save(existingCartItem);
+        verify(cartItemRepository, never()).saveAll(any());
     }
 
 

@@ -36,7 +36,7 @@ public class PaymentService {
 
     public PaymentPrepareResDto createPayment(Order order, PaymentPrepareReqDto reqDto) {
         order.validatePayable();
-        
+
         Payment payment = Payment.create(
             order.getId(), reqDto.pgProvider(), reqDto.paymentMethod(), order.getFinalAmount());
         paymentRepository.save(payment);
@@ -72,8 +72,7 @@ public class PaymentService {
         boolean detailMissing = switch (method) {
             case CARD -> paymentRes.card() == null;
             // TODO: 지원 방식 추가
-            case TRANSFER, EASY_PAY, PHONE
-                -> throw new ServiceException(PaymentErrorCode.UNSUPPORTED_PAYMENT_METHOD);
+            case TRANSFER, EASY_PAY, PHONE -> throw new ServiceException(PaymentErrorCode.UNSUPPORTED_PAYMENT_METHOD);
         };
 
         if (detailMissing) {

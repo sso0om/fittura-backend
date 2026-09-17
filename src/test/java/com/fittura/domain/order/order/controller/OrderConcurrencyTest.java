@@ -47,16 +47,26 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
 public class OrderConcurrencyTest extends IntegrationTestBase {
 
-    @Autowired private OrderFacade orderFacade;
-    @Autowired private OrderAddressRepository addressRepository;
-    @Autowired private OrderItemRepository orderItemRepository;
-    @Autowired private OrderRepository orderRepository;
-    @Autowired private CategoryRepository categoryRepository;
-    @Autowired private ProductRepository productRepository;
-    @Autowired private ProductSkuRepository skuRepository;
-    @Autowired private CartRepository cartRepository;
-    @Autowired private CartItemRepository cartItemRepository;
-    @Autowired private PlatformTransactionManager transactionManager;
+    @Autowired
+    private OrderFacade orderFacade;
+    @Autowired
+    private OrderAddressRepository addressRepository;
+    @Autowired
+    private OrderItemRepository orderItemRepository;
+    @Autowired
+    private OrderRepository orderRepository;
+    @Autowired
+    private CategoryRepository categoryRepository;
+    @Autowired
+    private ProductRepository productRepository;
+    @Autowired
+    private ProductSkuRepository skuRepository;
+    @Autowired
+    private CartRepository cartRepository;
+    @Autowired
+    private CartItemRepository cartItemRepository;
+    @Autowired
+    private PlatformTransactionManager transactionManager;
 
     private Category category;
 
@@ -233,8 +243,8 @@ public class OrderConcurrencyTest extends IntegrationTestBase {
         long holdMillis = 2000L;
 
         Product chair = createActiveProduct("의자");
-        ProductSku chairRed = createSku(chair, 5, "red");
-        ProductSku chairBlue = createSku(chair, 5, "blue");
+        ProductSku chairRed = createSku(chair, 5);
+        ProductSku chairBlue = createSku(chair, 5);
 
         Long memberX = 92001L;
         Long memberY = 92002L;
@@ -296,7 +306,8 @@ public class OrderConcurrencyTest extends IntegrationTestBase {
 
     // ========== 헬퍼 메서드 ==========
 
-    private record OrderTask(Long memberId, List<Long> cartItemIds) {}
+    private record OrderTask(Long memberId, List<Long> cartItemIds) {
+    }
 
     private AddressCreateReqDto addressDto() {
         return new AddressCreateReqDto(
@@ -312,14 +323,14 @@ public class OrderConcurrencyTest extends IntegrationTestBase {
         return product;
     }
 
-    private ProductSku createSku(Product product, int stock, String color) {
-        ProductSku sku = ProductSkuFixture.sku(product, 100_000L, stock, color, null);
+    private ProductSku createSku(Product product, int stock) {
+        ProductSku sku = ProductSkuFixture.sku(product, 100_000L, stock);
         skuRepository.save(sku);
         return sku;
     }
 
     private ProductSku getProductSku(String productName, int stock) {
-        return createSku(createActiveProduct(productName), stock, null);
+        return createSku(createActiveProduct(productName), stock);
     }
 
     private boolean isDeadlockRelated(Throwable e) {

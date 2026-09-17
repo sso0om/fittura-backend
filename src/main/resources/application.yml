@@ -25,6 +25,7 @@ spring:
 
 springdoc:
   default-produces-media-type: application/json;charset=UTF-8
+  writer-with-order-by-keys: true
 
 logging:
   level:

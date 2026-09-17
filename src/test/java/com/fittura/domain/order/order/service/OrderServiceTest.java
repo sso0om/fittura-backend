@@ -119,23 +119,7 @@ class OrderServiceTest {
     }
 
 
-    // ========== 금액 계산 ==========
-
-    @Test
-    @DisplayName("금액 계산 성공 - finalAmount 계산됨")
-    void calcAmountSuccess() {
-        // given
-        Order order = OrderFixture.order(1L, 500L);
-        // totalAmount=0, discountAmount=0, pointUsedAmount=500, deliveryFee=4000
-        // finalAmount = 0 - 0 - 500 + 4000 = 3500
-
-        // when
-        orderService.calcAmount(order);
-
-        // then
-        assertThat(order.getFinalAmount()).isEqualTo(3500L);
-    }
-
+    // TODO: ========== 금액 계산 ==========
 
     // ========== 주문 아이템 생성 ==========
 

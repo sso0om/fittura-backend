@@ -11,7 +11,7 @@ public record CartItemCreateReqDto(
     Long skuId,
 
     @Schema(example = "1")
-    @Positive
+    @NotNull @Positive
     Integer quantity
 ) {
 }

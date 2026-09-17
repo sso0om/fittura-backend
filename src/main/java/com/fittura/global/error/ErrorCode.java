@@ -6,7 +6,9 @@ import java.util.Objects;
 
 public interface ErrorCode {
     HttpStatus getStatus();
+
     String getCode();
+
     String getMessage();
 
     default HttpStatus httpStatus() {

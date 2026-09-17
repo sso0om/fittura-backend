@@ -36,11 +36,15 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 class PaymentServiceTest {
 
-    @Mock private PaymentRepository paymentRepository;
-    @Mock private PaymentCardRepository paymentCardRepository;
-    @Mock private InstitutionCodeRepository institutionCodeRepository;
+    @Mock
+    private PaymentRepository paymentRepository;
+    @Mock
+    private PaymentCardRepository paymentCardRepository;
+    @Mock
+    private InstitutionCodeRepository institutionCodeRepository;
 
-    @InjectMocks private PaymentService paymentService;
+    @InjectMocks
+    private PaymentService paymentService;
 
     // ========== 결제 생성 ==========
 

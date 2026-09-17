@@ -6,7 +6,8 @@ import com.fittura.domain.product.sku.entity.ProductSku;
 
 public class ProductCompositionFixture {
 
-    private ProductCompositionFixture() {}
+    private ProductCompositionFixture() {
+    }
 
     public static ProductComposition composition(
         Product parentProduct,

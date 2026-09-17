@@ -1,6 +1,5 @@
 package com.fittura.domain.order.cart.service;
 
-import com.fittura.domain.order.cart.dto.request.CartItemCreateReqDto;
 import com.fittura.domain.order.cart.dto.request.CartItemUpdateReqDto;
 import com.fittura.domain.order.cart.dto.response.CartItemResDto;
 import com.fittura.domain.order.cart.dto.response.CartResDto;
@@ -14,9 +13,9 @@ import com.fittura.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -54,18 +53,34 @@ public class CartService {
         return cartItems;
     }
 
-    public void createCartItem(Long memberId, ProductSku sku, CartItemCreateReqDto reqDto) {
+    public void addCartItems(Long memberId, List<ProductSku> skus, Map<Long, Integer> quantityBySkuId) {
         Cart cart = getCartOrCreate(memberId);
 
-        Optional<CartItem> opCartItem = getOpItemByCartAndSku(cart, sku);
-        CartItem cartItem;
-        if (opCartItem.isPresent()) {
-            cartItem = opCartItem.get();
-            cartItem.addQuantity(reqDto.quantity());
-        } else {
-            cartItem = CartItem.create(cart, sku, reqDto.quantity());
+        List<Long> skuIds = skus.stream()
+            .map(ProductSku::getId)
+            .toList();
+
+        Map<Long, CartItem> existingItemBySkuId = cartItemRepository.findAllByCartAndSkuIdIn(cart, skuIds).stream()
+            .collect(Collectors.toMap(
+                item -> item.getProductSku().getId(),
+                Function.identity()
+            ));
+
+        List<CartItem> itemsToSave = new ArrayList<>();
+        for (ProductSku sku : skus) {
+            Integer quantity = quantityBySkuId.get(sku.getId());
+            CartItem item = existingItemBySkuId.get(sku.getId());
+
+            if (item != null) {
+                item.addQuantity(quantity);
+            } else {
+                itemsToSave.add(CartItem.create(cart, sku, quantity));
+            }
         }
-        cartItemRepository.save(cartItem);
+
+        if (!itemsToSave.isEmpty()) {
+            cartItemRepository.saveAll(itemsToSave);
+        }
     }
 
     public void updateCartItem(Long memberId, Long itemId, CartItemUpdateReqDto reqDto) {

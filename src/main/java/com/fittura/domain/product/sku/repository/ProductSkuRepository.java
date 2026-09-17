@@ -10,9 +10,13 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 public interface ProductSkuRepository extends JpaRepository<ProductSku, Long> {
+
+    List<ProductSku> findAllByIdInAndStatusNot(Set<Long> skuIds, SkuStatus skuStatus);
+
     List<ProductSku> findByProductIdAndStatusNot(Long productId, SkuStatus status);
 
     Optional<ProductSku> findByIdAndStatusNot(Long skuId, SkuStatus status);

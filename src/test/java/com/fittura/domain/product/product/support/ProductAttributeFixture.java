@@ -6,7 +6,8 @@ import com.fittura.domain.product.product.constant.AttributeKey;
 
 public class ProductAttributeFixture {
 
-    private ProductAttributeFixture() {}
+    private ProductAttributeFixture() {
+    }
 
     public static ProductAttribute productAttribute(Product product, AttributeKey key, String value) {
         return ProductAttribute.create(product, key, value);

@@ -18,8 +18,8 @@ public enum CategoryErrorCode implements ErrorCode {
     ARCHIVED_CATEGORY(HttpStatus.BAD_REQUEST, "CT400-06", "ARCHIVED 카테고리는 사용불가 합니다."),
 
     // 404
-    NOT_FOUND_CATEGORY(HttpStatus.NOT_FOUND,  "CT404-01", "존재하지 않는 카테고리입니다."),
-    NOT_FOUND_PARENT_CATEGORY(HttpStatus.NOT_FOUND,  "CT404-02", "존재하지 않는 상위 카테고리입니다.");
+    NOT_FOUND_CATEGORY(HttpStatus.NOT_FOUND, "CT404-01", "존재하지 않는 카테고리입니다."),
+    NOT_FOUND_PARENT_CATEGORY(HttpStatus.NOT_FOUND, "CT404-02", "존재하지 않는 상위 카테고리입니다.");
 
     private final HttpStatus status;
     private final String code;

@@ -36,8 +36,6 @@ import static lombok.AccessLevel.PROTECTED;
 @Builder(access = PRIVATE)
 public class Order extends BaseEntity {
 
-    private static final long DELIVERY_BASE_FEE = 4000L;
-
     @Column(nullable = false)
     private Long memberId;
 
@@ -90,7 +88,7 @@ public class Order extends BaseEntity {
             .totalAmount(0L)
             .discountAmount(0L)
             .pointUsedAmount(pointUsedAmount)
-            .deliveryFee(DELIVERY_BASE_FEE)
+            .deliveryFee(0L)
             .finalAmount(0L)
             .orderDate(now)
             .build();
@@ -157,11 +155,14 @@ public class Order extends BaseEntity {
 
     public void validateCancel() {
         switch (status) {
-            case PAID, PREPARING: return;
-            case COMPLETED: throw new ServiceException(OrderErrorCode.COMPLETED_CAN_NOT_CANCEL);
+            case PAID, PREPARING:
+                return;
+            case COMPLETED:
+                throw new ServiceException(OrderErrorCode.COMPLETED_CAN_NOT_CANCEL);
             case PENDING, CANCELLED, RETURNED:
                 throw new ServiceException(OrderErrorCode.NOT_VALID_STATUS);
-            default: throw new ServiceException(CommonErrorCode.INTERNAL_SERVER_ERROR);
+            default:
+                throw new ServiceException(CommonErrorCode.INTERNAL_SERVER_ERROR);
         }
     }
 

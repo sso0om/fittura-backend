@@ -2,10 +2,7 @@ package com.fittura.domain.product.facade;
 
 import com.fittura.domain.category.service.CategoryService;
 import com.fittura.domain.product.product.constant.ProductStatus;
-import com.fittura.domain.product.product.dto.request.ProductCreateReqDto;
-import com.fittura.domain.product.product.dto.request.ProductSearchCondition;
-import com.fittura.domain.product.product.dto.request.ProductSearchReqDto;
-import com.fittura.domain.product.product.dto.request.ProductUpdateReqDto;
+import com.fittura.domain.product.product.dto.request.*;
 import com.fittura.domain.product.product.dto.response.*;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.service.ProductService;
@@ -29,9 +26,32 @@ public class ProductFacade {
     // ========== 상품 ==========
 
     @Transactional(readOnly = true)
-    public Page<ProductResDto> getProducts(List<ProductStatus> statuses, ProductSearchReqDto reqDto, Pageable pageable) {
+    public Page<ProductResDto> getProductsForAdmin(AdminProductSearchReqDto reqDto, Pageable pageable) {
+        List<ProductStatus> statuses = (reqDto.statuses() == null || reqDto.statuses().isEmpty())
+            ? List.of(ProductStatus.ACTIVE, ProductStatus.DISABLED, ProductStatus.DISCONTINUED)
+            : reqDto.statuses();
         List<Long> categoryIds = categoryService.getCategoryIdWithDescendant(reqDto.categoryId());
+
         ProductSearchCondition searchCondition = new ProductSearchCondition(
+            false,
+            statuses,
+            categoryIds,
+            reqDto.keyword(),
+            reqDto.colors(),
+            reqDto.materials()
+        );
+        return productService.getProducts(searchCondition, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ProductResDto> getProducts(ProductSearchReqDto reqDto, Pageable pageable) {
+        List<ProductStatus> statuses = Boolean.TRUE.equals(reqDto.inStockOnly())
+            ? List.of(ProductStatus.ACTIVE)
+            : List.of(ProductStatus.ACTIVE, ProductStatus.DISCONTINUED);
+        List<Long> categoryIds = categoryService.getCategoryIdWithDescendant(reqDto.categoryId());
+
+        ProductSearchCondition searchCondition = new ProductSearchCondition(
+            reqDto.inStockOnly(),
             statuses,
             categoryIds,
             reqDto.keyword(),
@@ -137,5 +157,15 @@ public class ProductFacade {
     public List<CompositionResDto> getProductCompositions(Long productId) {
         productService.validateProductExists(productId);
         return skuService.getProductCompositionDtos(productId);
+    }
+
+
+    // ========== 필터 ==========
+
+    @Transactional(readOnly = true)
+    public ProductFilterResDto getProductFilter() {
+        List<ColorResDto> colors = skuService.getColors();
+        List<MaterialResDto> materials = skuService.getMaterials();
+        return new ProductFilterResDto(colors, materials);
     }
 }
