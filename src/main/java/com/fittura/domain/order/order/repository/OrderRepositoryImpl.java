@@ -32,8 +32,8 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
     public Page<OrderWithDeliveryResDto> findOrders(Long memberId, OrderSearchCondition condition, Pageable pageable) {
         BooleanExpression[] conditions = {
             order.memberId.eq(memberId),
-            order.orderDate.goe(condition.startDate()),
-            order.orderDate.lt(condition.endDate()),
+            order.orderDate.goe(condition.startDateTime()),
+            order.orderDate.lt(condition.endDateTime()),
             order.status.in(PAID, PREPARING, COMPLETED, CANCELLED, RETURNED),
             orderNumberEq(condition.orderNumber()),
             productNameContains(condition.productName())
@@ -168,7 +168,6 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
 
 
     // ========== BooleanExpression ==========
-
 
 
     private BooleanExpression orderNumberEq(String orderNumber) {

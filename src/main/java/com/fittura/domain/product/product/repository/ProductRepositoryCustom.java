@@ -11,6 +11,8 @@ import java.util.Optional;
 
 public interface ProductRepositoryCustom {
     Page<ProductResDto> findProducts(ProductSearchCondition condition, Pageable pageable);
+
     Optional<ProductWithAllResDto> findWithAllById(Long id);
+
     Optional<ProductWithSkuResDto> findWithSkuById(Long id);
 }

@@ -49,14 +49,22 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
 public class PaymentConcurrencyTest extends IntegrationTestBase {
 
-    @Autowired private PaymentFacade paymentFacade;
-    @Autowired private PaymentCardRepository paymentCardRepository;
-    @Autowired private PaymentRepository paymentRepository;
-    @Autowired private ProductRepository productRepository;
-    @Autowired private OrderItemRepository orderItemRepository;
-    @Autowired private OrderRepository orderRepository;
-    @Autowired private ProductSkuRepository skuRepository;
-    @Autowired private CategoryRepository categoryRepository;
+    @Autowired
+    private PaymentFacade paymentFacade;
+    @Autowired
+    private PaymentCardRepository paymentCardRepository;
+    @Autowired
+    private PaymentRepository paymentRepository;
+    @Autowired
+    private ProductRepository productRepository;
+    @Autowired
+    private OrderItemRepository orderItemRepository;
+    @Autowired
+    private OrderRepository orderRepository;
+    @Autowired
+    private ProductSkuRepository skuRepository;
+    @Autowired
+    private CategoryRepository categoryRepository;
 
     private Category category;
 
@@ -93,7 +101,7 @@ public class PaymentConcurrencyTest extends IntegrationTestBase {
         // ===== 동시 실행 =====
         int threadCnt = 5;
         ExecutorService executor = Executors.newFixedThreadPool(threadCnt);
-        CountDownLatch readyLatch  = new CountDownLatch(threadCnt);
+        CountDownLatch readyLatch = new CountDownLatch(threadCnt);
         CountDownLatch startLatch = new CountDownLatch(1);
         CountDownLatch doneLatch = new CountDownLatch(threadCnt);
         List<Throwable> failures = Collections.synchronizedList(new ArrayList<>());
@@ -107,7 +115,7 @@ public class PaymentConcurrencyTest extends IntegrationTestBase {
                     paymentFacade.approvePayment(
                         memberId,
                         payment.getId(),
-                        new  PaymentApproveReqDto(paymentKey)
+                        new PaymentApproveReqDto(paymentKey)
                     );
                     successCnt.incrementAndGet();
                 } catch (Throwable e) {
@@ -141,7 +149,7 @@ public class PaymentConcurrencyTest extends IntegrationTestBase {
         Order paidOrder = orderRepository.findById(order.getId()).orElseThrow();
         assertThat(paidOrder.getStatus()).isEqualTo(OrderStatus.PAID);
 
-        ProductSku result =skuRepository.findById(sku.getId()).orElseThrow();
+        ProductSku result = skuRepository.findById(sku.getId()).orElseThrow();
         assertThat(result.getStockQuantity()).isEqualTo(initialStock - orderQty);
         assertThat(result.getReservedQuantity()).isEqualTo(0);
     }
@@ -173,8 +181,8 @@ public class PaymentConcurrencyTest extends IntegrationTestBase {
         // ===== 동시 실행 =====
         ExecutorService executor = Executors.newFixedThreadPool(tasks.size());
         CountDownLatch readyLatch = new CountDownLatch(tasks.size());
-        CountDownLatch startLatch  = new CountDownLatch(1);
-        CountDownLatch doneLatch  = new CountDownLatch(tasks.size());
+        CountDownLatch startLatch = new CountDownLatch(1);
+        CountDownLatch doneLatch = new CountDownLatch(tasks.size());
         List<Throwable> failures = Collections.synchronizedList(new ArrayList<>());
 
         for (PayTask task : tasks) {
@@ -210,7 +218,7 @@ public class PaymentConcurrencyTest extends IntegrationTestBase {
         }
         assertThat(failures).isEmpty();
 
-        ProductSku result =skuRepository.findById(sku.getId()).orElseThrow();
+        ProductSku result = skuRepository.findById(sku.getId()).orElseThrow();
         assertThat(result.getStockQuantity()).isEqualTo(initialStock - qtyA - qtyB);
         assertThat(result.getReservedQuantity()).isEqualTo(0);
     }
@@ -218,7 +226,8 @@ public class PaymentConcurrencyTest extends IntegrationTestBase {
 
     // ========== 헬퍼 메서드 ==========
 
-    private record PayTask(Long memberId, Long paymentId, String paymentKey) {}
+    private record PayTask(Long memberId, Long paymentId, String paymentKey) {
+    }
 
     private ProductSku getProductSku(String name, int stock) {
         return createSku(createActiveProduct(name), stock);

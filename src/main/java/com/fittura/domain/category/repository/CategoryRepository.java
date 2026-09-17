@@ -19,8 +19,9 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
         LEFT JOIN c.parent p
         WHERE c.status = :status
         AND (p IS NULL OR p.status = :status)
+        ORDER BY c.depth ASC, c.sortOrder ASC
         """)
-    // ACTIVE인 루트이거나 부모와 자신 모두 ACTIVE인 카테고리만 조회
+        // ACTIVE인 루트이거나 부모와 자신 모두 ACTIVE인 카테고리만 조회
     List<Category> findAllVisible(@Param("status") CategoryStatus status);
 
     @Query(value = """
@@ -32,9 +33,11 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
         )
         SELECT id FROM descendants
         """, nativeQuery = true)
-    List<Long> findDescendantIds(@Param("parentId") Long parentId);
+    List<Long> findSelfAndDescendantIds(@Param("parentId") Long parentId);
 
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Category c SET c.status = :status WHERE c.id IN :ids")
     void bulkUpdateStatus(@Param("ids") List<Long> ids, @Param("status") CategoryStatus status);
+
+    List<Category> findByStatusNot(CategoryStatus categoryStatus);
 }

@@ -6,7 +6,8 @@ import com.fittura.domain.order.order.entity.OrderAddress;
 
 public class OrderAddressFixture {
 
-    private OrderAddressFixture() {}
+    private OrderAddressFixture() {
+    }
 
     public static AddressCreateReqDto addressReqDto() {
         return new AddressCreateReqDto(

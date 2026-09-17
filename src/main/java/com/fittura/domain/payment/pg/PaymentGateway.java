@@ -4,5 +4,6 @@ import com.fittura.domain.payment.payment.constant.PgProvider;
 
 public interface PaymentGateway {
     PgProvider pgProvider();
+
     PgPaymentResponse confirm(PgConfirmCommand command);
 }

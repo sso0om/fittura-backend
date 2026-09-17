@@ -13,7 +13,7 @@ import java.util.Optional;
 import java.util.Set;
 
 @Repository
-public interface CartItemRepository extends JpaRepository<CartItem,Long>, CartItemRepositoryCustom {
+public interface CartItemRepository extends JpaRepository<CartItem, Long>, CartItemRepositoryCustom {
 
     Optional<CartItem> findByCartAndProductSku(Cart cart, ProductSku sku);
 

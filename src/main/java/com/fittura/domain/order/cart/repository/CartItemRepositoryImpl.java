@@ -1,6 +1,7 @@
 package com.fittura.domain.order.cart.repository;
 
 import com.fittura.domain.order.cart.dto.response.CartItemResDto;
+import com.fittura.domain.order.cart.entity.Cart;
 import com.fittura.domain.order.cart.entity.CartItem;
 import com.fittura.domain.product.product.constant.ProductStatus;
 import com.fittura.domain.product.sku.constant.SkuStatus;
@@ -10,10 +11,13 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Collection;
 import java.util.List;
 
 import static com.fittura.domain.order.cart.entity.QCartItem.cartItem;
 import static com.fittura.domain.product.product.entity.QProduct.product;
+import static com.fittura.domain.product.sku.entity.QColor.color;
+import static com.fittura.domain.product.sku.entity.QMaterial.material;
 import static com.fittura.domain.product.sku.entity.QProductSku.productSku;
 
 @RequiredArgsConstructor
@@ -51,6 +55,8 @@ public class CartItemRepositoryImpl implements CartItemRepositoryCustom {
             .selectFrom(cartItem)
             .join(cartItem.productSku, productSku).fetchJoin()
             .join(productSku.product, product).fetchJoin()
+            .leftJoin(productSku.color, color).fetchJoin()
+            .leftJoin(productSku.material, material).fetchJoin()
             .where(
                 cartItem.id.in(itemIds),
                 cartItem.cart.memberId.eq(memberId),
@@ -69,17 +75,19 @@ public class CartItemRepositoryImpl implements CartItemRepositoryCustom {
                 product.id,
                 product.name,
                 productSku.id,
-                productSku.color,
-                productSku.material,
+                color.name,
+                material.name,
                 productSku.price,
                 cartItem.quantity,
                 productSku.price.multiply(cartItem.quantity),
                 product.status,
                 productSku.status
-                ))
+            ))
             .from(cartItem)
             .join(cartItem.productSku, productSku)
             .join(productSku.product, product)
+            .leftJoin(productSku.color, color)
+            .leftJoin(productSku.material, material)
             .where(
                 cartItem.cart.id.eq(cartId),
                 productSku.status.ne(SkuStatus.ARCHIVED),
@@ -91,6 +99,17 @@ public class CartItemRepositoryImpl implements CartItemRepositoryCustom {
                     .then(0)
                     .otherwise(1).asc(),
                 cartItem.modifiedDate.desc()
+            )
+            .fetch();
+    }
+
+    @Override
+    public List<CartItem> findAllByCartAndSkuIdIn(Cart cart, Collection<Long> skuIds) {
+        return queryFactory
+            .selectFrom(cartItem)
+            .where(
+                cartItem.cart.eq(cart),
+                cartItem.productSku.id.in(skuIds)
             )
             .fetch();
     }

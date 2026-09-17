@@ -47,7 +47,7 @@ public class Payment extends BaseEntity {
     @Column(nullable = false, length = 20)
     private PaymentMethod paymentMethod;
 
-    @Column(unique = true, length = 100)
+    @Column(unique = true, length = 200)
     private String pgTransactionId;
 
     @Column(nullable = false)
@@ -72,7 +72,7 @@ public class Payment extends BaseEntity {
 
     // ===== 생성 =====
 
-    public static Payment create(Long orderId, PgProvider pgProvider, PaymentMethod paymentMethod,Long totalAmount) {
+    public static Payment create(Long orderId, PgProvider pgProvider, PaymentMethod paymentMethod, Long totalAmount) {
         Objects.requireNonNull(orderId, "orderID must not be null");
 
         LocalDateTime now = LocalDateTime.now();

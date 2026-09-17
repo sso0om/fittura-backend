@@ -15,7 +15,7 @@ public enum MemberErrorCode implements ErrorCode {
     EXPIRED_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "A401-03", "토큰이 만료되었습니다. 다시 로그인해 주세요."),
 
     // 404
-    NOT_FOUND_MEMBER(HttpStatus.NOT_FOUND,  "A404-01", "존재하지 않는 회원입니다."),
+    NOT_FOUND_MEMBER(HttpStatus.NOT_FOUND, "A404-01", "존재하지 않는 회원입니다."),
 
     // 409
     DUPLICATED_EMAIL(HttpStatus.CONFLICT, "A409-01", "이미 사용중인 이메일입니다."),

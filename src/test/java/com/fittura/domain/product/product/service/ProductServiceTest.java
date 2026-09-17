@@ -67,11 +67,11 @@ class ProductServiceTest {
     @DisplayName("상품 목록 조회 성공")
     void getProductsSuccess() {
         // given
-        ProductSearchCondition condition = new ProductSearchCondition(List.of(ProductStatus.ACTIVE, ProductStatus.DISCONTINUED), null, null, null, null);
+        ProductSearchCondition condition = new ProductSearchCondition(false, List.of(ProductStatus.ACTIVE, ProductStatus.DISCONTINUED), null, null, null, null);
         Pageable pageable = PageRequest.of(0, 10);
         List<ProductResDto> content = List.of(
-            new ProductResDto(1L, "A Desk", 50000L, ProductStatus.ACTIVE, ProductType.COMPONENT, null, false),
-            new ProductResDto(2L, "A Chair", 30000L, ProductStatus.DISCONTINUED, ProductType.COMPONENT, null, false)
+            new ProductResDto(1L, "A Desk", 50000L, ProductStatus.ACTIVE, ProductType.COMPONENT, null, false, "image.png"),
+            new ProductResDto(2L, "A Chair", 30000L, ProductStatus.DISCONTINUED, ProductType.COMPONENT, null, false, "image.png")
         );
         Page<ProductResDto> page = new PageImpl<>(content, pageable, 2);
 
@@ -90,7 +90,7 @@ class ProductServiceTest {
     @DisplayName("상품 목록 조회 성공 - 결과 없음")
     void getProductsSuccess_empty() {
         // given
-        ProductSearchCondition condition = new ProductSearchCondition(List.of(ProductStatus.ACTIVE), null, "없는상품", null, null);
+        ProductSearchCondition condition = new ProductSearchCondition(true, List.of(ProductStatus.ACTIVE), null, "없는상품", null, null);
         Pageable pageable = PageRequest.of(0, 10);
         Page<ProductResDto> emptyPage = Page.empty(pageable);
 
@@ -104,32 +104,6 @@ class ProductServiceTest {
         assertThat(result.getTotalElements()).isZero();
     }
 
-    @Test
-    @DisplayName("상품 목록 조회 성공 - colors, materials 필터")
-    void getProductsSuccess_withColorsAndMaterials() {
-        // given
-        ProductSearchCondition condition = new ProductSearchCondition(
-            List.of(ProductStatus.ACTIVE, ProductStatus.DISCONTINUED),
-            null, null,
-            List.of("White"), List.of("Wood")
-        );
-        Pageable pageable = PageRequest.of(0, 10);
-        List<ProductResDto> content = List.of(
-            new ProductResDto(1L, "Wood Desk", 50000L, ProductStatus.ACTIVE, ProductType.COMPONENT, null, false)
-        );
-        Page<ProductResDto> page = new PageImpl<>(content, pageable, 1);
-
-        given(productRepository.findProducts(condition, pageable)).willReturn(page);
-
-        // when
-        Page<ProductResDto> result = productService.getProducts(condition, pageable);
-
-        // then
-        assertThat(result.getContent()).hasSize(1);
-        assertThat(result.getTotalElements()).isEqualTo(1);
-        assertThat(result.getContent().get(0).name()).isEqualTo("Wood Desk");
-    }
-
 
     // ========== 사용자 상품 조회 ==========
 
@@ -141,7 +115,8 @@ class ProductServiceTest {
             new SkuResDto(1L, 90000L, SkuStatus.ACTIVE, null, null)
         );
         ProductWithSkuResDto productWithSkuResDto = new ProductWithSkuResDto(
-            1L, "A Desk", null, ProductType.COMPONENT, DeliveryType.PARCEL, ProductStatus.ACTIVE,
+            1L, 1L, "A Desk", null, ProductType.COMPONENT,
+            DeliveryType.PARCEL, DeliveryType.PARCEL.getBaseFee(), ProductStatus.ACTIVE,
             50000L, 10.0, 100.0, 75.0, 50.0, false, skus
         );
 
@@ -585,7 +560,7 @@ class ProductServiceTest {
     // ========== 핼퍼 메서드 ==========
 
     private SkuCreateReqDto skuDto() {
-        return new SkuCreateReqDto(10000L, 100, "White", "Wood");
+        return new SkuCreateReqDto(10000L, 100, 1L, 1L);
     }
 
     private AttributeCreateReqDto attributeDto() {
@@ -597,7 +572,7 @@ class ProductServiceTest {
     }
 
     private SkuUpdateReqDto skuUpdateDto(Long id) {
-        return new SkuUpdateReqDto(id, 10000L, 100, "White", "Wood");
+        return new SkuUpdateReqDto(id, 10000L, 100, 1L, 1L);
     }
 
     private void givenCategoryNotFound(Long categoryId) {

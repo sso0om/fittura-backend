@@ -13,7 +13,8 @@ public class ProductFixture {
     private static final Dimension DEFAULT_DIMENSION = Dimension.of(40.5, 150.0, 100.0, 50.0);
     private static final Category DEFAULT_CATEGORY = CategoryFixture.rootActive();
 
-    private ProductFixture() {}
+    private ProductFixture() {
+    }
 
     public static Product product(Category category, String name, ProductType productType) {
         return Product.create(category, name, "상품 설명", productType, DeliveryType.PARCEL, DEFAULT_DIMENSION);

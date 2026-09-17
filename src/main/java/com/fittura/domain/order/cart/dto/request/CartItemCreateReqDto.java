@@ -4,13 +4,14 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
+@Schema(description = "장바구니 상품 추가 요청 DTO")
 public record CartItemCreateReqDto(
     @Schema(example = "1")
     @NotNull @Positive
     Long skuId,
 
     @Schema(example = "1")
-    @Positive
+    @NotNull @Positive
     Integer quantity
 ) {
 }

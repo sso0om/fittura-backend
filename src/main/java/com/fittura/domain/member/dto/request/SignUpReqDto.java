@@ -1,10 +1,12 @@
 package com.fittura.domain.member.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+@Schema(description = "회원가입 요청 DTO")
 public record SignUpReqDto(
     @Email @NotBlank @Size(min = 6, max = 254)
     String email,

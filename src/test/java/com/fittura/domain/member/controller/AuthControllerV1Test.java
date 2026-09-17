@@ -31,11 +31,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class AuthControllerV1Test extends IntegrationTestBase {
 
-    @Autowired private MockMvc mockMvc;
-    @Autowired private AppProperties appProperties;
-    @Autowired private JwtTokenProvider jwtTokenProvider;
-    @Autowired private MemberRepository memberRepository;
-    @Autowired private PasswordEncoder passwordEncoder;
+    @Autowired
+    private MockMvc mockMvc;
+    @Autowired
+    private AppProperties appProperties;
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
+    @Autowired
+    private MemberRepository memberRepository;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     private static final String SIGN_UP_URL = "/api/v1/auth/signup";
     private static final String SIGN_IN_URL = "/api/v1/auth/signin";
@@ -50,13 +55,13 @@ class AuthControllerV1Test extends IntegrationTestBase {
     void signUpSuccess() throws Exception {
         // given
         String reqBody = """
-             {
-                 "email": "test@email.com",
-                 "name": "테스트 유저",
-                 "nickname": "테스터1",
-                 "password": "password123!"
-             }
-             """;
+            {
+                "email": "test@email.com",
+                "name": "테스트 유저",
+                "nickname": "테스터1",
+                "password": "password123!"
+            }
+            """;
 
         // when & then
         ResultActions resultActions = mockMvc
@@ -119,13 +124,13 @@ class AuthControllerV1Test extends IntegrationTestBase {
             passwordEncoder.encode("password123!")
         );
         memberRepository.save(member);
-        
+
         String reqBody = """
-             {
-                 "email": "test@email.com",
-                 "password": "password123!"
-             }
-             """;
+            {
+                "email": "test@email.com",
+                "password": "password123!"
+            }
+            """;
 
         // when & then
         ResultActions resultActions = mockMvc
@@ -159,11 +164,11 @@ class AuthControllerV1Test extends IntegrationTestBase {
         memberRepository.save(member);
 
         String reqBody = """
-             {
-                 "email": "otherTest@email.com",
-                 "password": "password123!"
-             }
-             """;
+            {
+                "email": "otherTest@email.com",
+                "password": "password123!"
+            }
+            """;
 
         // when & then
         ResultActions resultActions = mockMvc
@@ -190,11 +195,11 @@ class AuthControllerV1Test extends IntegrationTestBase {
         memberRepository.save(member);
 
         String reqBody = """
-             {
-                 "email": "test@email.com",
-                 "password": "password"
-             }
-             """;
+            {
+                "email": "test@email.com",
+                "password": "password"
+            }
+            """;
 
         // when & then
         ResultActions resultActions = mockMvc
@@ -358,15 +363,15 @@ class AuthControllerV1Test extends IntegrationTestBase {
         return Stream.of(
             Arguments.of(
                 """
-                 {"email":"test@email.com","name":"유저","nickname":"다른 유저","password":"password123!"}
-                 """,
+                    {"email":"test@email.com","name":"유저","nickname":"다른 유저","password":"password123!"}
+                    """,
                 "중복 이메일",
                 MemberErrorCode.DUPLICATED_EMAIL
             ),
             Arguments.of(
                 """
-                 {"email":"otherTest@email.com","name":"유저","nickname":"테스트 유저","password":"password123!"}
-                 """,
+                    {"email":"otherTest@email.com","name":"유저","nickname":"테스트 유저","password":"password123!"}
+                    """,
                 "중복 닉네임",
                 MemberErrorCode.DUPLICATED_NICKNAME
             )

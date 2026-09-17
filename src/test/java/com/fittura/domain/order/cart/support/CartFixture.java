@@ -5,7 +5,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 public class CartFixture {
 
-    private CartFixture() {}
+    private CartFixture() {
+    }
 
     public static Cart cart(Long memberId) {
         return Cart.create(memberId);

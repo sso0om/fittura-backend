@@ -17,8 +17,8 @@ public record SkuResDto(
             sku.getId(),
             sku.getPrice(),
             sku.getStatus(),
-            sku.getColor(),
-            sku.getMaterial()
+            sku.getColor() != null ? sku.getColor().getName() : null,
+            sku.getMaterial() != null ? sku.getMaterial().getName() : null
         );
     }
 }

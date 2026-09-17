@@ -65,6 +65,10 @@ public class Product extends BaseEntity {
     @OneToMany(mappedBy = "product", cascade = CascadeType.PERSIST)
     private List<ProductAttribute> attributes = new ArrayList<>();
 
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "main_image_id")
+    private ProductImage mainImage;
+
     // ===== 생성 =====
 
     public static Product create(

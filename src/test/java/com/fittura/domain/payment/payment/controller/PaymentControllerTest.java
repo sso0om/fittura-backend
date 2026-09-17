@@ -48,16 +48,26 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class PaymentControllerTest extends IntegrationTestBase {
 
-    @Autowired private MockMvc mockMvc;
-    @Autowired private OrderRepository orderRepository;
-    @Autowired private PaymentRepository paymentRepository;
-    @Autowired private CategoryRepository categoryRepository;
-    @Autowired private ProductRepository productRepository;
-    @Autowired private ProductSkuRepository productSkuRepository;
-    @Autowired private CartRepository cartRepository;
-    @Autowired private CartItemRepository cartItemRepository;
-    @Autowired private EntityManager entityManager;
-    @Autowired private MockPaymentGateway mockGateway;
+    @Autowired
+    private MockMvc mockMvc;
+    @Autowired
+    private OrderRepository orderRepository;
+    @Autowired
+    private PaymentRepository paymentRepository;
+    @Autowired
+    private CategoryRepository categoryRepository;
+    @Autowired
+    private ProductRepository productRepository;
+    @Autowired
+    private ProductSkuRepository productSkuRepository;
+    @Autowired
+    private CartRepository cartRepository;
+    @Autowired
+    private CartItemRepository cartItemRepository;
+    @Autowired
+    private EntityManager entityManager;
+    @Autowired
+    private MockPaymentGateway mockGateway;
 
     private static final String PAYMENT_URL = "/api/v1/payments";
     private static final String PAYMENT_KEY = "MOCK_PAYMENT_NUMBER_123";
@@ -78,12 +88,12 @@ class PaymentControllerTest extends IntegrationTestBase {
         Order order = createOrderWithItem(memberId, sku, 10);
 
         String reqBody = """
-                {
-                    "orderId": %d,
-                    "pgProvider": "TOSS",
-                    "paymentMethod": "CARD"
-                }
-                """.formatted(order.getId());
+            {
+                "orderId": %d,
+                "pgProvider": "TOSS",
+                "paymentMethod": "CARD"
+            }
+            """.formatted(order.getId());
 
         // when & then
         mockMvc.perform(post(PAYMENT_URL)
@@ -109,12 +119,12 @@ class PaymentControllerTest extends IntegrationTestBase {
         Long memberId = 2L;
 
         String reqBody = """
-                {
-                    "orderId": 999999,
-                    "pgProvider": "TOSS",
-                    "paymentMethod": "CARD"
-                }
-                """;
+            {
+                "orderId": 999999,
+                "pgProvider": "TOSS",
+                "paymentMethod": "CARD"
+            }
+            """;
 
         // when & then
         mockMvc.perform(post(PAYMENT_URL)
@@ -138,12 +148,12 @@ class PaymentControllerTest extends IntegrationTestBase {
         Order order = createOrderWithItem(ownerMemberId, sku, 10);
 
         String reqBody = """
-                {
-                    "orderId": %d,
-                    "pgProvider": "TOSS",
-                    "paymentMethod": "CARD"
-                }
-                """.formatted(order.getId());
+            {
+                "orderId": %d,
+                "pgProvider": "TOSS",
+                "paymentMethod": "CARD"
+            }
+            """.formatted(order.getId());
 
         // when & then
         mockMvc.perform(post(PAYMENT_URL)
@@ -167,12 +177,12 @@ class PaymentControllerTest extends IntegrationTestBase {
         order.prepare();
 
         String reqBody = """
-                {
-                    "orderId": %d,
-                    "pgProvider": "TOSS",
-                    "paymentMethod": "CARD"
-                }
-                """.formatted(order.getId());
+            {
+                "orderId": %d,
+                "pgProvider": "TOSS",
+                "paymentMethod": "CARD"
+            }
+            """.formatted(order.getId());
 
         // when & then
         mockMvc.perform(post(PAYMENT_URL)
@@ -204,10 +214,10 @@ class PaymentControllerTest extends IntegrationTestBase {
         Payment payment = savedPayment(order);
 
         String reqBody = """
-                {
-                    "paymentKey": "%s"
-                }
-                """.formatted(PAYMENT_KEY);
+            {
+                "paymentKey": "%s"
+            }
+            """.formatted(PAYMENT_KEY);
 
         // when & then
         mockMvc.perform(post(PAYMENT_URL + "/" + payment.getId())
@@ -242,10 +252,10 @@ class PaymentControllerTest extends IntegrationTestBase {
         Long memberId = 7L;
 
         String reqBody = """
-                {
-                    "paymentKey": "%s"
-                }
-                """.formatted(PAYMENT_KEY);
+            {
+                "paymentKey": "%s"
+            }
+            """.formatted(PAYMENT_KEY);
 
         // when & then
         mockMvc.perform(post(PAYMENT_URL + "/999999")
@@ -268,10 +278,10 @@ class PaymentControllerTest extends IntegrationTestBase {
         ReflectionTestUtils.setField(payment, "status", PaymentStatus.APPROVED);
 
         String reqBody = """
-                {
-                    "paymentKey": "%s"
-                }
-                """.formatted(PAYMENT_KEY);
+            {
+                "paymentKey": "%s"
+            }
+            """.formatted(PAYMENT_KEY);
 
         // when & then
         mockMvc.perform(post(PAYMENT_URL + "/" + payment.getId())
@@ -295,10 +305,10 @@ class PaymentControllerTest extends IntegrationTestBase {
             pgPaymentResponse(PAYMENT_KEY, payment.getPaymentNumber(), order.getFinalAmount() + 10000L));
 
         String reqBody = """
-                {
-                    "paymentKey": "%s"
-                }
-                """.formatted(PAYMENT_KEY);
+            {
+                "paymentKey": "%s"
+            }
+            """.formatted(PAYMENT_KEY);
 
         // when & then
         mockMvc.perform(post(PAYMENT_URL + "/" + payment.getId())
@@ -326,10 +336,10 @@ class PaymentControllerTest extends IntegrationTestBase {
         Payment payment = savedPayment(order);
 
         String reqBody = """
-                {
-                    "paymentKey": "%s"
-                }
-                """.formatted(PAYMENT_KEY);
+            {
+                "paymentKey": "%s"
+            }
+            """.formatted(PAYMENT_KEY);
 
         // when & then
         mockMvc.perform(post(PAYMENT_URL + "/" + payment.getId())
@@ -352,10 +362,10 @@ class PaymentControllerTest extends IntegrationTestBase {
         order.prepare();
 
         String reqBody = """
-                {
-                    "paymentKey": "%s"
-                }
-                """.formatted(PAYMENT_KEY);
+            {
+                "paymentKey": "%s"
+            }
+            """.formatted(PAYMENT_KEY);
 
         // when & then
         mockMvc.perform(post(PAYMENT_URL + "/" + payment.getId())

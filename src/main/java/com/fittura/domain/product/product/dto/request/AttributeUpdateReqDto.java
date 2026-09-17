@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
+@Schema(description = "Product 요소 수정 요청 DTO")
 public record AttributeUpdateReqDto(
 
     @Schema(example = "1")

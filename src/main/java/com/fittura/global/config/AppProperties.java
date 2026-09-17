@@ -12,5 +12,6 @@ public record AppProperties(Cookie cookie) {
         boolean secure,
         boolean httpOnly,
         String sameSite
-    ) {}
+    ) {
+    }
 }

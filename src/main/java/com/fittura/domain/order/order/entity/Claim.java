@@ -99,7 +99,8 @@ public class Claim extends BaseEntity {
         this.status = ClaimStatus.COMPLETED;
     }
 
-    public void reject() {}
+    public void reject() {
+    }
 
     public boolean isConfirmed() {
         return status != ClaimStatus.REJECTED;
