@@ -74,7 +74,7 @@ public class OrderController {
             .body(RsData.createSuccess("주문이 생성되었습니다.", orderId));
     }
 
-    @PostMapping("{orderId}/cancel")
+    @PostMapping("/{orderId}/cancel")
     @Operation(summary = "주문 취소", description = "주문 취소 API")
     public ResponseEntity<RsData<Void>> updateOrder(
         @LogInMemberId Long memberId,
