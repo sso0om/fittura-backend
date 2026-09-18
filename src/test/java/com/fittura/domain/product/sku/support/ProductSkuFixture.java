@@ -11,33 +11,29 @@ public class ProductSkuFixture {
     private ProductSkuFixture() {
     }
 
-    public static ProductSku sku(Product product, Long price, Integer stock) {
+    public static ProductSku sku(Product product, Long price, Long salePrice, Integer stock) {
         return ProductSku.create(
             product,
             price,
+            salePrice,
             stock,
             null,
             null
         );
     }
 
+    public static ProductSku sku(Product product, Long price, Integer stock) {
+        return sku(product, price, null, stock);
+    }
+
     public static ProductSku sku(Product product, Long price, Integer stock, Color color, Material material) {
         return ProductSku.create(
             product,
             price,
+            null,
             stock,
             color,
             material
-        );
-    }
-
-    public static ProductSku skuWithOption(Product product, String color, String material) {
-        return ProductSku.create(
-            product,
-            10000L,
-            100,
-            color != null ? Color.create(color) : null,
-            material != null ? Material.create(material) : null
         );
     }
 
@@ -45,15 +41,20 @@ public class ProductSkuFixture {
         return ProductSku.create(
             product,
             10000L,
+            null,
             100,
             null,
             null
         );
     }
 
-    public static ProductSku skuWithId(Long id, Product product) {
-        ProductSku sku = sku(product, 20000L, 50);
+    public static ProductSku skuWithId(Long id, Product product, Long price) {
+        ProductSku sku = sku(product, price, 50);
         ReflectionTestUtils.setField(sku, "id", id);
         return sku;
+    }
+
+    public static ProductSku skuWithId(Long id, Product product) {
+        return skuWithId(id, product, null);
     }
 }

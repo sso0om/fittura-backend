@@ -452,7 +452,7 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
     void createFail_notLeafCategory() throws Exception {
         // given
         Category root = categoryRepository.save(CategoryFixture.rootActive());
-        Category child = categoryRepository.save(CategoryFixture.childActive(root));
+        categoryRepository.save(CategoryFixture.childActive(root));
 
         String reqBody = """
                 {
@@ -575,9 +575,7 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
         Color black = colorRepository.save(ColorFixture.color("Black"));
         Material metal = materialRepository.save(MaterialFixture.material("Metal"));
 
-        Product product = productRepository.save(
-            ProductFixture.component(category, "Old Name")
-        );
+        Product product = productRepository.save(ProductFixture.component(category, "Old Name"));
         ProductSku sku = productSkuRepository.save(ProductSkuFixture.sku(product, 45000L, 100));
 
         String reqBody = """
@@ -624,6 +622,56 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
     }
 
     @Test
+    @DisplayName("단품 수정 성공 - salePrice 포함")
+    void updateComponentSuccess_withSalePrice() throws Exception {
+        // given
+        Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Color black = colorRepository.save(ColorFixture.color("Black"));
+        Material metal = materialRepository.save(MaterialFixture.material("Metal"));
+
+        Product product = productRepository.save(ProductFixture.component(category, "Old Name"));
+        ProductSku sku = productSkuRepository.save(ProductSkuFixture.sku(product, 45000L, 100));
+
+        String reqBody = """
+            {
+                "categoryId": %d,
+                "name": "New Name",
+                "deliveryType": "PARCEL",
+                "weight": 40.5,
+                "width": 150.0,
+                "height": 100.0,
+                "depth": 50.0,
+                "skus": [{
+                    "id": %d,
+                    "price": 75000,
+                    "salePrice": 60000,
+                    "stockQuantity": 80,
+                    "colorId": %d,
+                    "materialId": %d
+                }],
+                "attributes": [],
+                "compositions": []
+            }
+        """.formatted(category.getId(), sku.getId(), black.getId(), metal.getId());
+
+        // when & then
+        mockMvc.perform(put(PRODUCT_ADMIN_URL + "/" + product.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody)
+            )
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.message").value("제품이 수정되었습니다."));
+
+        Product updated = productRepository.findById(product.getId()).orElseThrow();
+        assertThat(updated.getBasePrice()).isEqualTo(60000L);
+
+        ProductSku updatedSku = productSkuRepository.findById(sku.getId()).orElseThrow();
+        assertThat(updatedSku.getPrice()).isEqualTo(75000L);
+        assertThat(updatedSku.getSalePrice()).isEqualTo(60000L);
+    }
+
+    @Test
     @DisplayName("완제품 수정 성공 - 구성품 변경")
     void updateCompleteSuccess_withCompositions() throws Exception {
         // given
@@ -633,9 +681,7 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
         Material wood = materialRepository.save(MaterialFixture.material("Wood"));
         Material metal = materialRepository.save(MaterialFixture.material("Metal"));
 
-        Product componentProduct = productRepository.save(
-            ProductFixture.component(category, "Chair Leg")
-        );
+        Product componentProduct = productRepository.save(ProductFixture.component(category, "Chair Leg"));
         ProductSku oldChildSku = productSkuRepository.save(ProductSkuFixture.sku(componentProduct, 5000L, 100));
         ProductSku newChildSku = productSkuRepository.save(ProductSkuFixture.sku(componentProduct, 5000L, 100, black, metal));
 
@@ -685,8 +731,8 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
 
         List<ProductComposition> compositions = compositionRepository.findByParentProductId(completeProduct.getId());
         assertThat(compositions).hasSize(1);
-        assertThat(compositions.get(0).getChildSku().getId()).isEqualTo(newChildSku.getId());
-        assertThat(compositions.get(0).getQuantity()).isEqualTo(2);
+        assertThat(compositions.getFirst().getChildSku().getId()).isEqualTo(newChildSku.getId());
+        assertThat(compositions.getFirst().getQuantity()).isEqualTo(2);
     }
 
     @Test
@@ -697,9 +743,7 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
         Color white = colorRepository.save(ColorFixture.color("White"));
         Material wood = materialRepository.save(MaterialFixture.material("Wood"));
 
-        Product product = productRepository.save(
-            ProductFixture.component(category, "A Desk")
-        );
+        Product product = productRepository.save(ProductFixture.component(category, "A Desk"));
         ProductSku sku = productSkuRepository.save(ProductSkuFixture.sku(product, 45000L, 100));
 
         String reqBody = """
@@ -735,7 +779,7 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
             .andExpect(status().isOk());
 
         assertThat(productAttributeRepository.findByProductId(product.getId())).hasSize(1);
-        assertThat(productAttributeRepository.findByProductId(product.getId()).get(0).getAttributeValue()).isEqualTo("L");
+        assertThat(productAttributeRepository.findByProductId(product.getId()).getFirst().getAttributeValue()).isEqualTo("L");
     }
 
     @Test

@@ -187,7 +187,7 @@ public class ProductInitData implements ApplicationRunner {
     // ========== 헬퍼 ==========
 
     private SkuCreateReqDto sku(long price, int stockQuantity, String colorName, String materialName) {
-        return new SkuCreateReqDto(price, stockQuantity, colorIds.get(colorName), materialIds.get(materialName));
+        return new SkuCreateReqDto(price, null, stockQuantity, colorIds.get(colorName), materialIds.get(materialName));
     }
 
     private CompositionCreateReqDto comp(Long childSkuId, int quantity, int sortOrder) {

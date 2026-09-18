@@ -127,8 +127,8 @@ public class Product extends BaseEntity {
 
     public void syncBasePrice() {
         this.basePrice = productSkus.stream()
-            .filter(s -> !s.isArchived())
-            .mapToLong(ProductSku::getPrice)
+            .filter(ProductSku::isActive)
+            .mapToLong(ProductSku::getEffectivePrice)
             .min()
             .orElseThrow(() -> new ServiceException(ProductErrorCode.PRODUCT_HAVA_SKU));
     }

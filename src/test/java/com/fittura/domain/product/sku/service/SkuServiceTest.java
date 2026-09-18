@@ -69,8 +69,8 @@ class SkuServiceTest {
         // given
         Product product = ProductFixture.component("Chair Leg");
         List<SkuCreateReqDto> skuDtos = List.of(
-            new SkuCreateReqDto(4500L, 100, 1L, 1L),
-            new SkuCreateReqDto(4800L, 50, 2L, 2L)
+            new SkuCreateReqDto(4500L, null, 100, 1L, 1L),
+            new SkuCreateReqDto(4800L, null, 50, 2L, 2L)
         );
 
         givenColor(1L, "White");
@@ -101,7 +101,7 @@ class SkuServiceTest {
         givenMaterial(2L, "Metal");
 
         List<SkuUpdateReqDto> reqDto = List.of(
-            new SkuUpdateReqDto(1L, 9000L, 80, 2L, 2L)
+            new SkuUpdateReqDto(1L, 9000L, null, 80, 2L, 2L)
         );
 
         // when
@@ -126,8 +126,8 @@ class SkuServiceTest {
         givenMaterial(1L, "Wood");
 
         List<SkuUpdateReqDto> reqDto = List.of(
-            new SkuUpdateReqDto(1L, 20000L, 50, 1L, 1L),
-            new SkuUpdateReqDto(null, 15000L, 30, 1L, 1L)
+            new SkuUpdateReqDto(1L, 20000L, null, 50, 1L, 1L),
+            new SkuUpdateReqDto(null, 15000L, null, 30, 1L, 1L)
         );
 
         // when
@@ -151,7 +151,7 @@ class SkuServiceTest {
         givenMaterial(1L, "Wood");
 
         List<SkuUpdateReqDto> reqDto = List.of(
-            new SkuUpdateReqDto(2L, 20000L, 50, 1L, 1L)
+            new SkuUpdateReqDto(2L, 20000L, null, 50, 1L, 1L)
         );
 
         // when

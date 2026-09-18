@@ -49,28 +49,14 @@ class ProductTest {
     }
 
     @Test
-    @DisplayName("basePrice 동기화 성공 - 여러 SKU 중 최솟값으로 설정")
+    @DisplayName("basePrice 동기화 성공 - ACTIVE 상태의 SKU 중 최솟값으로 설정")
     void syncBasePrice_multipleSkus() {
         // given
         Product product = ProductFixture.component("책상");
         ProductSkuFixture.sku(product, 50000L, 10);
-        ProductSkuFixture.sku(product, 30000L, 5);
-        ProductSkuFixture.sku(product, 40000L, 3);
-
-        // when
-        product.syncBasePrice();
-
-        // then
-        assertThat(product.getBasePrice()).isEqualTo(30000L);
-    }
-
-    @Test
-    @DisplayName("basePrice 동기화 성공 - ARCHIVED SKU 제외하고 최솟값으로 설정")
-    void syncBasePrice_excludesArchivedSku() {
-        // given
-        Product product = ProductFixture.component("책상");
-        ProductSkuFixture.sku(product, 50000L, 10);
-        ProductSku archivedSku = ProductSkuFixture.sku(product, 10000L, 5);
+        ProductSku discontinuedSku = ProductSkuFixture.sku(product, 4000L, 5);
+        ReflectionTestUtils.setField(discontinuedSku, "status", SkuStatus.DISCONTINUED);
+        ProductSku archivedSku = ProductSkuFixture.sku(product, 3000L, 5);
         ReflectionTestUtils.setField(archivedSku, "status", SkuStatus.ARCHIVED);
 
         // when
@@ -78,6 +64,21 @@ class ProductTest {
 
         // then
         assertThat(product.getBasePrice()).isEqualTo(50000L);
+    }
+
+    @Test
+    @DisplayName("basePrice 동기화 성공 - SKU의 price, salePrice 중 최솟값으로 설정")
+    void syncBasePrice_usesEffectivePriceWithSalePrice() {
+        // given
+        Product product = ProductFixture.component("책상");
+        ProductSkuFixture.sku(product, 40000L, 10);
+        ProductSkuFixture.sku(product, 50000L, 30000L, 5);
+
+        // when
+        product.syncBasePrice();
+
+        // then
+        assertThat(product.getBasePrice()).isEqualTo(30000L);
     }
 
     @Test
