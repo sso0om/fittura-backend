@@ -39,7 +39,7 @@ import java.util.Map;
  * - COMPLETE(조립형)  : composition 2개 + 색/재질 다른 SKU  → 원형 식탁, 식탁 의자
  * - COMPONENT(부품)   : composition 없음, 부품 카테고리      → 상판/다리/좌판·등받이/손잡이 등
  * - COMPONENT(단품)   : composition 없음, 부품 아닌 완제품    → 3단 서랍장
- * - 상태 다양화: DISCONTINUED/DISABLED 각 1, SKU 단종 1, "ACTIVE인데 재고 0"(일시품절) 다수
+ * - 상태 다양화: DISCONTINUED/DISABLED 각 1, SKU 단종 1, SKU 일시중단 1, "ACTIVE인데 재고 0"(일시품절) 다수
  * - 페이징 확인용으로 "원형" 카테고리 하나만 20개 초과로 채움
  * <p>
  * color/material 은 아직 별도 생성 로직이 없어 여기서 레포지토리로 직접 마스터를 만든다.
@@ -124,6 +124,7 @@ public class ProductInitData implements ApplicationRunner {
         productRepository.findById(padIds.get(0)).ifPresent(Product::discontinue); // 단종
         productRepository.findById(padIds.get(1)).ifPresent(Product::disable);     // 일시 숨김
         discontinueOneSku(padIds.get(2));                                          // SKU 단종
+        pauseOneSku(padIds.get(3));                                                // SKU 일시중단
     }
 
 
@@ -223,11 +224,18 @@ public class ProductInitData implements ApplicationRunner {
     private void discontinueOneSku(Long productId) {
         List<ProductSku> skus = activeSkus(productId);
         if (skus.size() > 1) {
-            skus.get(0).discontinue(); // 여러 SKU 중 하나만 단종
+            skus.getFirst().discontinue(); // 여러 SKU 중 하나만 단종
         }
     }
 
     private List<ProductSku> activeSkus(Long productId) {
         return productSkuRepository.findByProductIdAndStatusNot(productId, SkuStatus.ARCHIVED);
+    }
+
+    private void pauseOneSku(Long productId) {
+        List<ProductSku> skus = activeSkus(productId);
+        if (skus.size() > 1) {
+            skus.getFirst().pause(); // 여러 SKU 중 하나만 일시중단
+        }
     }
 }

@@ -132,8 +132,8 @@ public class ProductFacade {
     // ========== SKU ==========
 
     @Transactional
-    public void soldOutSku(Long productId, Long skuId) {
-        skuService.soldOutSku(productId, skuId);
+    public void pauseSku(Long productId, Long skuId) {
+        skuService.pauseSku(productId, skuId);
     }
 
     @Transactional

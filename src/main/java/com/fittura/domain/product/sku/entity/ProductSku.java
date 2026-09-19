@@ -103,8 +103,8 @@ public class ProductSku extends BaseEntity {
 
     // ===== 상태 =====
 
-    public void soldOut() {
-        this.status = SkuStatus.SOLDOUT;
+    public void pause() {
+        this.status = SkuStatus.PAUSED;
     }
 
     public void discontinue() {

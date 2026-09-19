@@ -21,13 +21,13 @@ public class AdminSkuControllerV1 {
 
     private final ProductFacade productFacade;
 
-    @PatchMapping("/{skuId}/soldout")
-    @Operation(summary = "SKU 일시품절", description = "SKU 일시품절 직접 처리")
-    public ResponseEntity<RsData<Void>> soldOutSku(
+    @PatchMapping("/{skuId}/pause")
+    @Operation(summary = "SKU 일시 중단", description = "SKU 일시 중단 API")
+    public ResponseEntity<RsData<Void>> pauseSku(
         @PathVariable Long productId,
         @PathVariable Long skuId
     ) {
-        productFacade.soldOutSku(productId, skuId);
+        productFacade.pauseSku(productId, skuId);
 
         return ResponseEntity.ok(RsData.success("SKU가 일시품절되었습니다.", null));
     }

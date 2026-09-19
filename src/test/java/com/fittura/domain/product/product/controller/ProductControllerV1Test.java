@@ -255,7 +255,7 @@ class ProductControllerV1Test extends IntegrationTestBase {
         Product product = productRepository.save(ProductFixture.component(category, "Chair"));
         product.activate();
         ProductSku sku = productSkuRepository.save(ProductSkuFixture.sku(product, 5000L, 0));
-        sku.soldOut();
+        sku.pause();
         productSkuRepository.save(sku);
 
         // when & then
@@ -298,9 +298,7 @@ class ProductControllerV1Test extends IntegrationTestBase {
         product.activate();
         productRepository.save(product);
 
-        ProductSku sku = productSkuRepository.save(ProductSkuFixture.sku(product, 5000L, 0));
-        sku.soldOut();
-        productSkuRepository.save(sku);
+        productSkuRepository.save(ProductSkuFixture.sku(product, 5000L, 0));
 
         // when & then
         mockMvc.perform(get(PRODUCT_URL + "/" + product.getId()))

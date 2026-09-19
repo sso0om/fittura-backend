@@ -162,11 +162,11 @@ class SkuServiceTest {
     }
 
 
-    // ========== SKU 일시품절 ==========
+    // ========== SKU 일시 중단 ==========
 
     @Test
-    @DisplayName("SKU 일시품절 성공")
-    void soldOutSkuSuccess() {
+    @DisplayName("SKU 일시 중단 성공")
+    void pauseSkuSuccess() {
         // given
         Product product = ProductFixture.componentWithId(1L, "Chair");
         ProductSku sku = ProductSkuFixture.skuWithId(1L, product);
@@ -175,20 +175,20 @@ class SkuServiceTest {
         givenSkuFound(1L, sku);
 
         // when
-        skuService.soldOutSku(1L, 1L);
+        skuService.pauseSku(1L, 1L);
 
         // then
-        assertThat(sku.getStatus()).isEqualTo(SkuStatus.SOLDOUT);
+        assertThat(sku.getStatus()).isEqualTo(SkuStatus.PAUSED);
     }
 
     @Test
     @DisplayName("SKU 일시품절 실패 - SKU가 해당 상품에 속하지 않음")
-    void soldOutSkuFail_skuNotBelongsToProduct() {
+    void pauseSkuFail_skuNotBelongsToProduct() {
         // given
         given(productSkuRepository.existsByProductIdAndId(1L, 99L)).willReturn(false);
 
         // when & then
-        assertThatThrownBy(() -> skuService.soldOutSku(1L, 99L))
+        assertThatThrownBy(() -> skuService.pauseSku(1L, 99L))
             .isInstanceOf(ServiceException.class)
             .extracting(e -> ((ServiceException) e).getErrorCode())
             .isEqualTo(ProductErrorCode.SKU_NOT_BELONGS_TO_PRODUCT);
@@ -196,13 +196,13 @@ class SkuServiceTest {
 
     @Test
     @DisplayName("SKU 일시품절 실패 - ARCHIVED SKU")
-    void soldOutSkuFail_skuArchived() {
+    void pauseSkuFail_skuArchived() {
         // given
         given(productSkuRepository.existsByProductIdAndId(1L, 1L)).willReturn(true);
         givenSkuNotFound(1L);
 
         // when & then
-        assertThatThrownBy(() -> skuService.soldOutSku(1L, 1L))
+        assertThatThrownBy(() -> skuService.pauseSku(1L, 1L))
             .isInstanceOf(ServiceException.class)
             .extracting(e -> ((ServiceException) e).getErrorCode())
             .isEqualTo(ProductErrorCode.NOT_FOUND_SKU);

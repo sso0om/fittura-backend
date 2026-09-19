@@ -108,11 +108,11 @@ public class SkuService {
         }
     }
 
-    public void soldOutSku(Long productId, Long skuId) {
+    public void pauseSku(Long productId, Long skuId) {
         validateSkuOwnedByProduct(productId, skuId);
 
         ProductSku sku = getProductSku(skuId);
-        sku.soldOut();
+        sku.pause();
     }
 
     public void discontinueSku(Long productId, Long skuId) {
