@@ -3,6 +3,7 @@ package com.fittura.domain.product.sku.entity;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.error.ProductErrorCode;
 import com.fittura.domain.product.sku.constant.SkuStatus;
+import com.fittura.domain.product.sku.util.PriceCalculator;
 import com.fittura.global.exception.ServiceException;
 import com.fittura.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
@@ -101,7 +102,7 @@ public class ProductSku extends BaseEntity {
     }
 
 
-    // ===== 상태 =====
+    // ===== status =====
 
     public void pause() {
         this.status = SkuStatus.PAUSED;
@@ -143,12 +144,11 @@ public class ProductSku extends BaseEntity {
     }
 
     public Long getDiscountRate() {
-        if (salePrice == null) return 0L;
-        return (price - salePrice) / price;
+        return PriceCalculator.discountRate(price, salePrice);
     }
 
     public Long getEffectivePrice() {
-        return salePrice == null ? price : salePrice;
+        return PriceCalculator.effectivePrice(price, salePrice);
     }
 
 

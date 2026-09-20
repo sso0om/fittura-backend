@@ -133,6 +133,9 @@ public class Product extends BaseEntity {
             .orElseThrow(() -> new ServiceException(ProductErrorCode.PRODUCT_HAVA_SKU));
     }
 
+
+    // ===== status =====
+
     public void activate() {
         this.status = ProductStatus.ACTIVE;
     }
@@ -148,9 +151,6 @@ public class Product extends BaseEntity {
     public void archive() {
         this.status = ProductStatus.ARCHIVED;
     }
-
-
-    // ===== 필드 확인 =====
 
     public boolean isComplete() {
         return productType == ProductType.COMPLETE;
