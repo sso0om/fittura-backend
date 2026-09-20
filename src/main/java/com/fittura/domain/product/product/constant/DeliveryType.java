@@ -11,4 +11,8 @@ public enum DeliveryType {
 
     private final Long baseFee;
     private final Long freeShippingThreshold;
+
+    public Long calcItemFee(Integer quantity) {
+        return this == INSTALLATION ? baseFee * quantity : 0L;
+    }
 }

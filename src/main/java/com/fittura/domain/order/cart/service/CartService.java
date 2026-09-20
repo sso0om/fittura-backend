@@ -33,11 +33,8 @@ public class CartService {
         }
 
         List<CartItemResDto> items = cartItemRepository.findCartItemDtosByCart(cart.get().getId());
-        Long totalPrice = items.stream()
-            .mapToLong(CartItemResDto::itemTotalPrice)
-            .sum();
 
-        return CartResDto.from(cart.get(), items, totalPrice);
+        return CartResDto.from(cart.get(), items);
     }
 
 

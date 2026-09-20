@@ -74,18 +74,21 @@ public class CartItemRepositoryImpl implements CartItemRepositoryCustom {
                 cartItem.id,
                 product.id,
                 product.name,
+                product.mainImage.imageUrl,
+                product.status,
+                product.deliveryType,
                 productSku.id,
                 color.name,
                 material.name,
                 productSku.price,
+                productSku.salePrice,
                 cartItem.quantity,
-                productSku.price.multiply(cartItem.quantity),
-                product.status,
                 productSku.status
             ))
             .from(cartItem)
             .join(cartItem.productSku, productSku)
             .join(productSku.product, product)
+            .leftJoin(product.mainImage)
             .leftJoin(productSku.color, color)
             .leftJoin(productSku.material, material)
             .where(
@@ -95,10 +98,12 @@ public class CartItemRepositoryImpl implements CartItemRepositoryCustom {
             )
             .orderBy(
                 new CaseBuilder()
-                    .when(productSku.status.eq(SkuStatus.ACTIVE))
+                    .when(productSku.status.eq(SkuStatus.ACTIVE)
+                        .and(product.status.eq(ProductStatus.ACTIVE))
+                    )
                     .then(0)
                     .otherwise(1).asc(),
-                cartItem.modifiedDate.desc()
+                cartItem.createdDate.desc()
             )
             .fetch();
     }
