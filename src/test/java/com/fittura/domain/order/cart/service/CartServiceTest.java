@@ -333,7 +333,7 @@ class CartServiceTest {
             id, id, "A Desk", null,
             ProductStatus.ACTIVE, deliveryType,
             id, "White", "Wood",
-            price, salePrice, quantity, SkuStatus.ACTIVE
+            price, salePrice, quantity, SkuStatus.ACTIVE, false
         );
     }
 }

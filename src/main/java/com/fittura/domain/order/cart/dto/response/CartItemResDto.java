@@ -23,14 +23,15 @@ public record CartItemResDto(
     Long discountRate,
     Integer quantity,
     Long itemTotalPrice,
-    SkuStatus skuStatus
+    SkuStatus skuStatus,
+    Boolean isSoldOut
 ) {
     // Projection 전용 생성자
     public CartItemResDto(
         Long cartItemId, Long productId, String productName, String mainImageUrl,
         ProductStatus productStatus, DeliveryType deliveryType,
         Long skuId, String color, String material,
-        Long price, Long salePrice, Integer quantity, SkuStatus skuStatus
+        Long price, Long salePrice, Integer quantity, SkuStatus skuStatus, Boolean isSoldOut
     ) {
         this(
             cartItemId, productId, productName, mainImageUrl, productStatus,
@@ -42,7 +43,8 @@ public record CartItemResDto(
             PriceCalculator.discountRate(price, salePrice),
             quantity,
             PriceCalculator.effectivePrice(price, salePrice) * quantity,
-            skuStatus
+            skuStatus,
+            isSoldOut
         );
     }
 }
