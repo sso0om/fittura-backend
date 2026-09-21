@@ -1,7 +1,7 @@
 package com.fittura.domain.delivery.delivery.support;
 
 import com.fittura.domain.delivery.delivery.entitiy.Delivery;
-import com.fittura.domain.product.product.constant.DeliveryType;
+import com.fittura.domain.delivery.delivery.constant.DeliveryType;
 
 public class DeliveryFixture {
 

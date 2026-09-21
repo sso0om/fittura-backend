@@ -1,7 +1,7 @@
 package com.fittura.domain.delivery.delivery.entitiy;
 
 import com.fittura.domain.delivery.delivery.constant.DeliveryStatus;
-import com.fittura.domain.product.product.constant.DeliveryType;
+import com.fittura.domain.delivery.delivery.constant.DeliveryType;
 import com.fittura.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

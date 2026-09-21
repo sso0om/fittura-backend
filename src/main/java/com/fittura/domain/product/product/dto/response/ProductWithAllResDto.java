@@ -1,6 +1,6 @@
 package com.fittura.domain.product.product.dto.response;
 
-import com.fittura.domain.product.product.constant.DeliveryType;
+import com.fittura.domain.delivery.delivery.constant.DeliveryType;
 import com.fittura.domain.product.product.constant.ProductStatus;
 import com.fittura.domain.product.product.constant.ProductType;
 import com.fittura.domain.product.sku.dto.response.SkuWithStockResDto;

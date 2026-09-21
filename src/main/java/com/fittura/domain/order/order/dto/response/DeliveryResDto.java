@@ -1,7 +1,7 @@
 package com.fittura.domain.order.order.dto.response;
 
 import com.fittura.domain.delivery.delivery.constant.DeliveryStatus;
-import com.fittura.domain.product.product.constant.DeliveryType;
+import com.fittura.domain.delivery.delivery.constant.DeliveryType;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "배송 정보 DTO")

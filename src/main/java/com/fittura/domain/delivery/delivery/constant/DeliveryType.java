@@ -1,4 +1,4 @@
-package com.fittura.domain.product.product.constant;
+package com.fittura.domain.delivery.delivery.constant;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

@@ -1,7 +1,7 @@
 package com.fittura.domain.product.product.entity;
 
 import com.fittura.domain.category.entity.Category;
-import com.fittura.domain.product.product.constant.DeliveryType;
+import com.fittura.domain.delivery.delivery.constant.DeliveryType;
 import com.fittura.domain.product.product.constant.ProductStatus;
 import com.fittura.domain.product.product.constant.ProductType;
 import com.fittura.domain.product.product.error.ProductErrorCode;

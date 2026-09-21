@@ -1,6 +1,6 @@
 package com.fittura.domain.product.product.dto.request;
 
-import com.fittura.domain.product.product.constant.DeliveryType;
+import com.fittura.domain.delivery.delivery.constant.DeliveryType;
 import com.fittura.domain.product.sku.dto.request.CompositionUpdateReqDto;
 import com.fittura.domain.product.sku.dto.request.SkuUpdateReqDto;
 import io.swagger.v3.oas.annotations.media.Schema;
