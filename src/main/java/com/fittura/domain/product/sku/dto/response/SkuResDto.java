@@ -1,7 +1,6 @@
 package com.fittura.domain.product.sku.dto.response;
 
 import com.fittura.domain.product.sku.constant.SkuStatus;
-import com.fittura.domain.product.sku.entity.ProductSku;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "SKU 응답 DTO")
@@ -10,15 +9,7 @@ public record SkuResDto(
     Long price,
     SkuStatus status,
     String color,
-    String material
+    String material,
+    Boolean isSoldOut
 ) {
-    public static SkuResDto from(ProductSku sku) {
-        return new SkuResDto(
-            sku.getId(),
-            sku.getPrice(),
-            sku.getStatus(),
-            sku.getColor() != null ? sku.getColor().getName() : null,
-            sku.getMaterial() != null ? sku.getMaterial().getName() : null
-        );
-    }
 }

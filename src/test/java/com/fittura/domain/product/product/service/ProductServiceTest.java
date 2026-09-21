@@ -112,7 +112,7 @@ class ProductServiceTest {
     void getProductWithSkuSuccess() {
         // given
         List<SkuResDto> skus = List.of(
-            new SkuResDto(1L, 90000L, SkuStatus.ACTIVE, null, null)
+            new SkuResDto(1L, 90000L, SkuStatus.ACTIVE, null, null, false)
         );
         ProductWithSkuResDto productWithSkuResDto = new ProductWithSkuResDto(
             1L, 1L, "A Desk", null, ProductType.COMPONENT,
@@ -151,7 +151,7 @@ class ProductServiceTest {
     void getProductWithAllSuccess() {
         // given
         List<SkuWithStockResDto> skus = List.of(
-            new SkuWithStockResDto(1L, 90000L, 50, 0, SkuStatus.ACTIVE, null, null)
+            new SkuWithStockResDto(1L, 90000L, 50, 0, SkuStatus.ACTIVE, null, null, false)
         );
         List<ProductAttributeResDto> attributes = List.of(
             new ProductAttributeResDto(1L, AttributeKey.SIZE_LABEL, "XL")

@@ -5,8 +5,8 @@ import com.fittura.domain.order.cart.entity.Cart;
 import com.fittura.domain.order.cart.entity.CartItem;
 import com.fittura.domain.product.product.constant.ProductStatus;
 import com.fittura.domain.product.sku.constant.SkuStatus;
+import com.fittura.domain.product.sku.repository.ProductSkuExpressions;
 import com.querydsl.core.types.Projections;
-import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.LockModeType;
@@ -85,9 +85,7 @@ public class CartItemRepositoryImpl implements CartItemRepositoryCustom {
                 productSku.salePrice,
                 cartItem.quantity,
                 productSku.status,
-                new CaseBuilder()
-                    .when(isSkuSoldOut()).then(true)
-                    .otherwise(false)
+                ProductSkuExpressions.isSoldOut(productSku)
             ))
             .from(cartItem)
             .join(cartItem.productSku, productSku)
@@ -104,7 +102,7 @@ public class CartItemRepositoryImpl implements CartItemRepositoryCustom {
                 new CaseBuilder()
                     .when(productSku.status.eq(SkuStatus.ACTIVE)
                         .and(product.status.eq(ProductStatus.ACTIVE))
-                        .and(isSkuSoldOut()).not()
+                        .and(ProductSkuExpressions.hasAvailableStock(productSku))
                     )
                     .then(0)
                     .otherwise(1).asc(),
@@ -122,9 +120,5 @@ public class CartItemRepositoryImpl implements CartItemRepositoryCustom {
                 cartItem.productSku.id.in(skuIds)
             )
             .fetch();
-    }
-
-    private BooleanExpression isSkuSoldOut() {
-        return productSku.stockQuantity.subtract(productSku.reservedQuantity).loe(0);
     }
 }

@@ -9,6 +9,7 @@ import com.fittura.domain.product.sku.constant.SkuStatus;
 import com.fittura.domain.product.sku.dto.response.SkuResDto;
 import com.fittura.domain.product.sku.dto.response.SkuWithStockResDto;
 import com.fittura.domain.product.sku.entity.QProductSku;
+import com.fittura.domain.product.sku.repository.ProductSkuExpressions;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
@@ -109,7 +110,8 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
                 productSku.reservedQuantity,
                 productSku.status,
                 productSku.color.name,
-                productSku.material.name
+                productSku.material.name,
+                ProductSkuExpressions.isSoldOut(productSku)
             ))
             .from(productSku)
             .leftJoin(productSku.color)
@@ -200,7 +202,8 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
                 productSku.price,
                 productSku.status,
                 productSku.color.name,
-                productSku.material.name
+                productSku.material.name,
+                ProductSkuExpressions.isSoldOut(productSku)
             ))
             .from(productSku)
             .leftJoin(productSku.color)
