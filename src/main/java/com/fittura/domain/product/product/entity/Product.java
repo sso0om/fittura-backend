@@ -15,6 +15,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
@@ -54,6 +55,9 @@ public class Product extends BaseEntity {
     @Column(nullable = false)
     private Long basePrice = 0L;
 
+    @Column(nullable = false)
+    private Long baseSalePrice = 0L;
+
     @Embedded
     private Dimension dimension;
 
@@ -89,6 +93,7 @@ public class Product extends BaseEntity {
             .productType(productType)
             .deliveryType(deliveryType)
             .basePrice(0L)
+            .baseSalePrice(0L)
             .dimension(dimension)
             .status(ProductStatus.DISABLED)
             .build();
@@ -126,11 +131,13 @@ public class Product extends BaseEntity {
     }
 
     public void syncBasePrice() {
-        this.basePrice = productSkus.stream()
+        ProductSku baseSku = productSkus.stream()
             .filter(ProductSku::isActive)
-            .mapToLong(ProductSku::getEffectivePrice)
-            .min()
+            .min(Comparator.comparing(ProductSku::getEffectivePrice))
             .orElseThrow(() -> new ServiceException(ProductErrorCode.PRODUCT_HAVA_SKU));
+
+        this.basePrice = baseSku.getPrice();
+        this.baseSalePrice = baseSku.getEffectivePrice();
     }
 
 

@@ -67,7 +67,7 @@ class ProductTest {
     }
 
     @Test
-    @DisplayName("basePrice 동기화 성공 - SKU의 price, salePrice 중 최솟값으로 설정")
+    @DisplayName("basePrice 동기화 성공 - price, salePrice 중 최솟값인 SKU")
     void syncBasePrice_usesEffectivePriceWithSalePrice() {
         // given
         Product product = ProductFixture.component("책상");
@@ -78,7 +78,8 @@ class ProductTest {
         product.syncBasePrice();
 
         // then
-        assertThat(product.getBasePrice()).isEqualTo(30000L);
+        assertThat(product.getBasePrice()).isEqualTo(50000L);
+        assertThat(product.getBaseSalePrice()).isEqualTo(30000L);
     }
 
     @Test

@@ -664,7 +664,8 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
             .andExpect(jsonPath("$.message").value("제품이 수정되었습니다."));
 
         Product updated = productRepository.findById(product.getId()).orElseThrow();
-        assertThat(updated.getBasePrice()).isEqualTo(60000L);
+        assertThat(updated.getBasePrice()).isEqualTo(75000L);
+        assertThat(updated.getBaseSalePrice()).isEqualTo(60000L);
 
         ProductSku updatedSku = productSkuRepository.findById(sku.getId()).orElseThrow();
         assertThat(updatedSku.getPrice()).isEqualTo(75000L);

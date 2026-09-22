@@ -4,6 +4,7 @@ import com.fittura.domain.delivery.delivery.constant.DeliveryType;
 import com.fittura.domain.product.product.constant.ProductStatus;
 import com.fittura.domain.product.product.constant.ProductType;
 import com.fittura.domain.product.sku.dto.response.SkuWithStockResDto;
+import com.fittura.domain.product.sku.util.PriceCalculator;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
@@ -15,8 +16,11 @@ public record ProductWithAllResDto(
     String description,
     ProductType productType,
     DeliveryType deliveryType,
+    Long deliveryFee,
     ProductStatus status,
     Long basePrice,
+    Long baseSalePrice,
+    Long discountRate,
     Double weight,
     Double width,
     Double height,
@@ -30,11 +34,12 @@ public record ProductWithAllResDto(
     public ProductWithAllResDto(
         Long id, String name, String description,
         ProductType productType, DeliveryType deliveryType, ProductStatus status,
-        Long basePrice, Double weight, Double width,
-        Double height, Double depth, boolean isSoldOut
+        Long basePrice, Long baseSalePrice,
+        Double weight, Double width, Double height, Double depth, boolean isSoldOut
     ) {
-        this(id, name, description, productType, deliveryType, status,
-            basePrice, weight, width, height, depth, isSoldOut,
-            List.of(), List.of(), List.of());
+        this(id, name, description,
+            productType, deliveryType, deliveryType.getBaseFee(), status,
+            basePrice, baseSalePrice, PriceCalculator.discountRate(basePrice, baseSalePrice),
+            weight, width, height, depth, isSoldOut, List.of(), List.of(), List.of());
     }
 }
