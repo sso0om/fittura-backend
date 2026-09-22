@@ -87,11 +87,14 @@ public class ProductInitData implements ApplicationRunner {
 
         // ===== 1. 부품(COMPONENT) =====
         Long tableTopId = component(getCat("식탁 상판"), "원목 상판 800X800", "L",
-            sku(89_000, 30, "오크", "원목"), sku(99_000, 20, "월넛", "원목"));
+            saleSku(89_000, 79_000, 30, "오크", "원목"),
+            sku(99_000, 20, "월넛", "원목"));
         Long tableLegId = component(getCat("식탁 다리"), "철제 테이블 다리 4개 세트", "L",
-            sku(49_000, 40, "블랙", "스틸"), sku(52_000, 0, "실버", "스틸"));
+            sku(49_000, 40, "블랙", "스틸"),
+            sku(52_000, 0, "실버", "스틸"));
         Long chairBodyId = component(getCat("의자 좌판"), "패브릭 좌판·등받이 일체형", "M",
-            sku(59_000, 50, "베이지", "패브릭"), sku(59_000, 35, "차콜", "패브릭"));
+            saleSku(59_000, 47_000, 50, "베이지", "패브릭"),
+            sku(59_000, 35, "차콜", "패브릭"));
         Long chairLegId = component(getCat("의자 다리"), "원목 의자 다리 프레임", null,
             sku(29_000, 60, "오크", "원목"));
         component(getCat("서랍장 손잡이"), "알루미늄 손잡이", "S",
@@ -99,7 +102,8 @@ public class ProductInitData implements ApplicationRunner {
 
         // ===== 2. 완제품(COMPLETE, 조립형) =====
         complete(getCat("원형"), "핏투라 원형 식탁 800", "L", DeliveryType.INSTALLATION,
-            List.of(sku(139_000, 15, "오크", "원목"), sku(149_000, 10, "월넛", "원목")),
+            List.of(saleSku(139_000, 119_000, 15, "오크", "원목"),
+                sku(149_000, 10, "월넛", "원목")),
             List.of(comp(firstSkuId(tableTopId), 1, 0),
                 comp(firstSkuId(tableLegId), 1, 1)));
         List<Long> padIds = pad(getCat("원형"), PAGING_PAD);
@@ -111,11 +115,13 @@ public class ProductInitData implements ApplicationRunner {
 
         // ===== 3. 단품(COMPONENT, 조립X 완제품) =====
         component(getCat("3단 서랍장"), "3단 원목 서랍장", "L",
-            sku(119_000, 10, "오크", "원목"), sku(129_000, 0, "월넛", "원목"));
+            sku(119_000, 10, "오크", "원목"),
+            saleSku(129_000, 109_000, 0, "월넛", "원목"));
 
         // 전체 일시품절 케이스
         component(getCat("5단 서랍장"), "5단 수납 서랍장 (전체 품절)", "XL",
-            sku(159_000, 0, "오크", "원목"), sku(169_000, 0, "월넛", "원목"));
+            sku(159_000, 0, "오크", "원목"),
+            sku(169_000, 0, "월넛", "원목"));
 
         // ===== 4. 전체 활성화 =====
         productRepository.findAll().forEach(Product::activate);
@@ -237,5 +243,9 @@ public class ProductInitData implements ApplicationRunner {
         if (skus.size() > 1) {
             skus.getFirst().pause(); // 여러 SKU 중 하나만 일시중단
         }
+    }
+
+    private SkuCreateReqDto saleSku(long price, long salePrice, int stockQuantity, String colorName, String materialName) {
+        return new SkuCreateReqDto(price, salePrice, stockQuantity, colorIds.get(colorName), materialIds.get(materialName));
     }
 }
