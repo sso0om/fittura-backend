@@ -1,8 +1,10 @@
 package com.fittura.domain.order.facade;
 
 import com.fittura.domain.order.cart.dto.request.CartItemCreateReqDto;
+import com.fittura.domain.order.cart.dto.request.CartItemSkuUpdateReqDto;
 import com.fittura.domain.order.cart.dto.request.CartItemUpdateReqDto;
 import com.fittura.domain.order.cart.dto.response.CartResDto;
+import com.fittura.domain.order.cart.entity.CartItem;
 import com.fittura.domain.order.cart.service.CartService;
 import com.fittura.domain.product.sku.entity.ProductSku;
 import com.fittura.domain.product.sku.service.SkuService;
@@ -36,6 +38,13 @@ public class CartFacade {
     @Transactional
     public void updateCartItem(Long memberId, Long itemId, CartItemUpdateReqDto reqDto) {
         cartService.updateCartItem(memberId, itemId, reqDto);
+    }
+
+    @Transactional
+    public void updateCartItemSku(Long memberId, Long itemId, CartItemSkuUpdateReqDto reqDto) {
+        CartItem item = cartService.getCartItem(memberId, itemId);
+        ProductSku changeSku = skuService.getSellableSku(item.getProductSku().getProduct().getId(), reqDto.skuId());
+        cartService.updateCartItemSku(item, changeSku, reqDto.quantity());
     }
 
     @Transactional

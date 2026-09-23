@@ -131,6 +131,10 @@ public class ProductSku extends BaseEntity {
         return status == SkuStatus.ARCHIVED;
     }
 
+    public boolean isSellable() {
+        return isActive() && product.isActive();
+    }
+
 
     // ===== getter =====
 

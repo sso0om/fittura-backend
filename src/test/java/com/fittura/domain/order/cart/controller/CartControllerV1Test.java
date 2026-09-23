@@ -379,6 +379,131 @@ class CartControllerV1Test extends IntegrationTestBase {
     }
 
 
+    // ========== 장바구니 아이템 옵션(SKU) 변경 ==========
+
+    @Test
+    @DisplayName("장바구니 아이템 옵션 변경 성공 - 같은 상품의 다른 SKU로 변경, 수량도 함께 변경")
+    void updateCartItemSkuSuccess() throws Exception {
+        // given
+        Long memberId = 30L;
+        Product product = savedActiveProduct("A Desk");
+        ProductSku sku = productSkuRepository.save(ProductSkuFixture.sku(product, 10_000L, 100));
+        ProductSku changeSku = productSkuRepository.save(ProductSkuFixture.sku(product, 12_000L, 100));
+
+        Cart cart = cartRepository.save(CartFixture.cart(memberId));
+        CartItem cartItem = cartItemRepository.save(CartItemFixture.cartItem(cart, sku, 2));
+
+        String reqBody = """
+            {
+                "skuId": %d,
+                "quantity": 5
+            }
+            """.formatted(changeSku.getId());
+
+        // when & then
+        mockMvc.perform(patch(CART_URL + "/items/" + cartItem.getId() + "/sku")
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isOk());
+
+        CartItem updated = cartItemRepository.findById(cartItem.getId()).orElseThrow();
+        assertThat(updated.getProductSku().getId()).isEqualTo(changeSku.getId());
+        assertThat(updated.getQuantity()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("장바구니 아이템 옵션 변경 실패 - 이미 장바구니에 담긴 SKU")
+    void updateCartItemSkuFail_duplicate() throws Exception {
+        // given
+        Long memberId = 31L;
+        Product product = savedActiveProduct("A Desk");
+        ProductSku sku = productSkuRepository.save(ProductSkuFixture.sku(product, 10_000L, 100));
+        ProductSku otherSku = productSkuRepository.save(ProductSkuFixture.sku(product, 12_000L, 100));
+
+        Cart cart = cartRepository.save(CartFixture.cart(memberId));
+        CartItem cartItem = cartItemRepository.save(CartItemFixture.cartItem(cart, sku, 2));
+        cartItemRepository.save(CartItemFixture.cartItem(cart, otherSku, 1));
+
+        String reqBody = """
+            {
+                "skuId": %d,
+                "quantity": 2
+            }
+            """.formatted(otherSku.getId());
+
+        // when & then
+        mockMvc.perform(patch(CART_URL + "/items/" + cartItem.getId() + "/sku")
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value(CartErrorCode.DUPLICATE_CART_ITEM.getCode()));
+    }
+
+    @Test
+    @DisplayName("장바구니 아이템 옵션 변경 실패 - 판매 중지된 SKU")
+    void updateCartItemSkuFail_notSellable() throws Exception {
+        // given
+        Long memberId = 32L;
+        Product product = savedActiveProduct("A Desk");
+        ProductSku sku = productSkuRepository.save(ProductSkuFixture.sku(product, 10_000L, 100));
+
+        ProductSku pausedSku = ProductSkuFixture.sku(product, 12_000L, 100);
+        pausedSku.pause();
+        productSkuRepository.save(pausedSku);
+
+        Cart cart = cartRepository.save(CartFixture.cart(memberId));
+        CartItem cartItem = cartItemRepository.save(CartItemFixture.cartItem(cart, sku, 2));
+
+        String reqBody = """
+            {
+                "skuId": %d,
+                "quantity": 2
+            }
+            """.formatted(pausedSku.getId());
+
+        // when & then
+        mockMvc.perform(patch(CART_URL + "/items/" + cartItem.getId() + "/sku")
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value(ProductErrorCode.NOT_ACTIVE_SKU.getCode()));
+    }
+
+    @Test
+    @DisplayName("장바구니 아이템 옵션 변경 실패 - 다른 상품의 SKU")
+    void updateCartItemSkuFail_otherProductSku() throws Exception {
+        // given
+        Long memberId = 33L;
+        ProductSku sku = savedSku("A Desk", DeliveryType.PARCEL, 10_000L, null);
+        ProductSku otherProductSku = savedSku("B Chair", DeliveryType.PARCEL, 20_000L, null);
+
+        Cart cart = cartRepository.save(CartFixture.cart(memberId));
+        CartItem cartItem = cartItemRepository.save(CartItemFixture.cartItem(cart, sku, 2));
+
+        String reqBody = """
+            {
+                "skuId": %d,
+                "quantity": 2
+            }
+            """.formatted(otherProductSku.getId());
+
+        // when & then
+        mockMvc.perform(patch(CART_URL + "/items/" + cartItem.getId() + "/sku")
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value(ProductErrorCode.NOT_FOUND_SKU.getCode()));
+    }
+
+
     // ========== 장바구니 아이템 삭제 ==========
 
     @Test
@@ -435,6 +560,13 @@ class CartControllerV1Test extends IntegrationTestBase {
 
 
     // ========== 헬퍼 메서드 ==========
+
+    private Product savedActiveProduct(String name) {
+        Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Product product = ProductFixture.product(category, name, ProductType.COMPONENT, DeliveryType.PARCEL);
+        product.activate();
+        return productRepository.save(product);
+    }
 
     private ProductSku savedDefaultSku() {
         return savedSku("A Desk", DeliveryType.PARCEL, 10_000L, null);

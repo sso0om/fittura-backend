@@ -21,6 +21,7 @@ public enum ProductErrorCode implements ErrorCode {
     SKU_NOT_BELONGS_TO_PRODUCT(HttpStatus.BAD_REQUEST, "P400-09", "해당 SKU가 상품에 속하지 않습니다."),
     STOCK_NOT_VALID(HttpStatus.BAD_REQUEST, "P400-10", "재고가 부족합니다."),
     SALE_PRICE_LESS_THAN_PRICE(HttpStatus.BAD_REQUEST, "P400-11", "할인가는 정상가보다 낮아야 합니다."),
+    NOT_ACTIVE_SKU(HttpStatus.BAD_REQUEST, "P400-12", "판매중인 상품이 아닙니다." ),
 
     // 404
     NOT_FOUND_PRODUCT(HttpStatus.NOT_FOUND, "P404-01", "존재하지 않는 상품입니다."),

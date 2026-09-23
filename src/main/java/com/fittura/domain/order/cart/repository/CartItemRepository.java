@@ -3,6 +3,7 @@ package com.fittura.domain.order.cart.repository;
 import com.fittura.domain.order.cart.entity.Cart;
 import com.fittura.domain.order.cart.entity.CartItem;
 import com.fittura.domain.product.sku.entity.ProductSku;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -17,6 +18,7 @@ public interface CartItemRepository extends JpaRepository<CartItem, Long>, CartI
 
     Optional<CartItem> findByCartAndProductSku(Cart cart, ProductSku sku);
 
+    @EntityGraph(attributePaths = "productSku")
     Optional<CartItem> findByIdAndCart_MemberId(Long itemId, Long memberId);
 
     @Modifying
@@ -26,4 +28,6 @@ public interface CartItemRepository extends JpaRepository<CartItem, Long>, CartI
         AND ci.productSku.id IN :skuIds
         """)
     void deleteByMemberIdAndSkuIds(@Param("memberId") Long memberId, @Param("skuIds") Set<Long> skuIds);
+
+    boolean existsByCart_IdAndProductSku_Id(Long cartId, Long productSkuId);
 }

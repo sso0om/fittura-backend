@@ -40,6 +40,11 @@ public class CartService {
 
     // ========== 장바구니 제품 ==========
 
+    public CartItem getCartItem(Long memberId, Long itemId) {
+        return cartItemRepository.findByIdAndCart_MemberId(itemId, memberId)
+            .orElseThrow(() -> new ServiceException(CartErrorCode.NOT_FOUND_ITEM));
+    }
+
     public List<CartItem> getItemsByIdAndMember(List<Long> itemIds, Long memberId) {
         List<Long> distinctIds = itemIds.stream().distinct().toList();
         List<CartItem> cartItems = cartItemRepository.findAllWithSkuForUpdate(distinctIds, memberId);
@@ -85,6 +90,17 @@ public class CartService {
         cartitem.changeQuantity(reqDto.quantity());
     }
 
+    public void updateCartItemSku(CartItem item, ProductSku changeSku, Integer quantity) {
+        if (item.getProductSku().getId().equals(changeSku.getId())) {
+            item.changeQuantity(quantity);
+            return;
+        }
+        if (hasItemWithSku(item.getCart().getId(), changeSku.getId())) {
+            throw new ServiceException(CartErrorCode.DUPLICATE_CART_ITEM);
+        }
+        item.changeSkuAndQuantity(changeSku, quantity);
+    }
+
     public void deleteCartItems(Long memberId, Set<Long> skuIds) {
         cartItemRepository.deleteByMemberIdAndSkuIds(memberId, skuIds);
     }
@@ -106,12 +122,12 @@ public class CartService {
             .orElseGet(() -> cartRepository.save(Cart.create(memberId)));
     }
 
-    private Optional<CartItem> getOpItemByCartAndSku(Cart cart, ProductSku sku) {
-        return cartItemRepository.findByCartAndProductSku(cart, sku);
-    }
-
     private CartItem getItemByIdAndMember(Long itemId, Long memberId) {
         return cartItemRepository.findByIdAndCart_MemberId(itemId, memberId)
             .orElseThrow(() -> new ServiceException(CartErrorCode.NOT_FOUND_ITEM));
+    }
+
+    private boolean hasItemWithSku(Long cartId, Long skuId) {
+        return cartItemRepository.existsByCart_IdAndProductSku_Id(cartId, skuId);
     }
 }

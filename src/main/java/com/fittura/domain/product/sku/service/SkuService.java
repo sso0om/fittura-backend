@@ -44,7 +44,14 @@ public class SkuService {
         if (productSkus.size() != skuIds.size()) {
             throw new ServiceException(ProductErrorCode.NOT_FOUND_SKU);
         }
+
+        productSkus.forEach(this::validateSellable);
+
         return productSkus;
+    }
+
+    public List<SkuResDto> getProductSkuResDto(Long productId) {
+        return productSkuRepository.findSkuDtosByProductId(productId);
     }
 
     public ProductSku getProductSku(Long skuId) {
@@ -52,8 +59,13 @@ public class SkuService {
             .orElseThrow(() -> new ServiceException(ProductErrorCode.NOT_FOUND_SKU));
     }
 
-    public List<SkuResDto> getProductSkuResDto(Long productId) {
-        return productSkuRepository.findSkuDtosByProductId(productId);
+    public ProductSku getSellableSku(Long productId, Long changeSkuId) {
+        ProductSku productSku = productSkuRepository.findByIdAndProduct_IdAndStatusNot(changeSkuId, productId, SkuStatus.ARCHIVED)
+            .orElseThrow(() -> new ServiceException(ProductErrorCode.NOT_FOUND_SKU));
+
+        validateSellable(productSku);
+
+        return productSku;
     }
 
     public void createSkus(Product product, List<SkuCreateReqDto> skuDtos) {
@@ -261,6 +273,12 @@ public class SkuService {
     public void validateSkuOwnedByProduct(Long productId, Long skuId) {
         if (!productSkuRepository.existsByProductIdAndId(productId, skuId)) {
             throw new ServiceException(ProductErrorCode.SKU_NOT_BELONGS_TO_PRODUCT);
+        }
+    }
+
+    private void validateSellable(ProductSku productSku) {
+        if (!productSku.isSellable()) {
+            throw new ServiceException(ProductErrorCode.NOT_ACTIVE_SKU);
         }
     }
 

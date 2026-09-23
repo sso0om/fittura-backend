@@ -273,6 +273,47 @@ class CartServiceTest {
     }
 
 
+    // ========== 장바구니 아이템 옵션(SKU) 변경 ==========
+
+    @Test
+    @DisplayName("옵션 변경 - 같은 SKU인 경우 수량만 변경")
+    void updateCartItemSku_sameSku() {
+        // given
+        Product product = ProductFixture.component("A Desk");
+        ProductSku sku = ProductSkuFixture.skuWithId(1L, product, 10_000L);
+        Cart cart = CartFixture.cartWithId(1L, 1L);
+        CartItem item = CartItemFixture.cartItemWithId(1L, cart, sku, 2);
+
+        // when
+        cartService.updateCartItemSku(item, sku, 5);
+
+        // then
+        assertThat(item.getQuantity()).isEqualTo(5);
+        assertThat(item.getProductSku().getId()).isEqualTo(1L);
+        verify(cartItemRepository, never()).existsByCart_IdAndProductSku_Id(anyLong(), anyLong());
+    }
+
+    @Test
+    @DisplayName("옵션 변경 실패 - 바꾸려는 SKU가 이미 장바구니에 있음")
+    void updateCartItemSku_duplicate() {
+        // given
+        Product product = ProductFixture.component("A Desk");
+        ProductSku sku = ProductSkuFixture.skuWithId(1L, product, 10_000L);
+        ProductSku changeSku = ProductSkuFixture.skuWithId(2L, product, 12_000L);
+        Cart cart = CartFixture.cartWithId(1L, 1L);
+        CartItem item = CartItemFixture.cartItemWithId(1L, cart, sku, 2);
+
+        given(cartItemRepository.existsByCart_IdAndProductSku_Id(1L, 2L)).willReturn(true);
+
+        // when & then
+        assertThatThrownBy(() -> cartService.updateCartItemSku(item, changeSku, 3))
+            .isInstanceOf(ServiceException.class);
+
+        assertThat(item.getProductSku().getId()).isEqualTo(1L);
+        assertThat(item.getQuantity()).isEqualTo(2);
+    }
+
+
     // ========== 장바구니 아이템 삭제 ==========
 
     @Test

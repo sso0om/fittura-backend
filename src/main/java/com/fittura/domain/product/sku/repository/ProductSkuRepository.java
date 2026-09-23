@@ -2,6 +2,7 @@ package com.fittura.domain.product.sku.repository;
 
 import com.fittura.domain.product.sku.constant.SkuStatus;
 import com.fittura.domain.product.sku.entity.ProductSku;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -15,11 +16,15 @@ import java.util.Set;
 @Repository
 public interface ProductSkuRepository extends JpaRepository<ProductSku, Long>, ProductSkuRepositoryCustom {
 
+    @EntityGraph(attributePaths = "product")
     List<ProductSku> findAllByIdInAndStatusNot(Set<Long> skuIds, SkuStatus skuStatus);
 
     List<ProductSku> findByProductIdAndStatusNot(Long productId, SkuStatus status);
 
     Optional<ProductSku> findByIdAndStatusNot(Long skuId, SkuStatus status);
+
+    @EntityGraph(attributePaths = "product")
+    Optional<ProductSku> findByIdAndProduct_IdAndStatusNot(Long changeSkuId, Long productId, SkuStatus status);
 
     boolean existsByProductIdAndId(Long productId, Long skuId);
 
