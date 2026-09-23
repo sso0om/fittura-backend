@@ -6,6 +6,7 @@ import com.fittura.domain.product.product.dto.request.*;
 import com.fittura.domain.product.product.dto.response.*;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.service.ProductService;
+import com.fittura.domain.product.sku.dto.response.SkuResDto;
 import com.fittura.domain.product.sku.service.SkuService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -68,7 +69,10 @@ public class ProductFacade {
 
     @Transactional(readOnly = true)
     public ProductWithSkuResDto getProductWithSku(Long productId) {
-        return productService.getProductWithSku(productId);
+        ProductWithSkuResDto productDto = productService.getProductWithSku(productId);
+        List<SkuResDto> skuDtos = skuService.getProductSkuResDto(productId);
+
+        return productDto.withSkus(skuDtos);
     }
 
     @Transactional

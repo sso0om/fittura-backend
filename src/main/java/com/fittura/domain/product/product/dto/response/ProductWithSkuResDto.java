@@ -41,4 +41,13 @@ public record ProductWithSkuResDto(
             basePrice, baseSalePrice, PriceCalculator.discountRate(basePrice, baseSalePrice),
             weight, width, height, depth, isSoldOut, List.of());
     }
+
+    public ProductWithSkuResDto withSkus(List<SkuResDto> skus) {
+        return new ProductWithSkuResDto(
+            id, categoryId, name, description,
+            productType, deliveryType, deliveryFee, status,
+            basePrice, baseSalePrice, discountRate,
+            weight, width, height, depth, isSoldOut, skus
+        );
+    }
 }

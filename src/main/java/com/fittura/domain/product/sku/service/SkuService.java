@@ -10,6 +10,7 @@ import com.fittura.domain.product.sku.dto.request.CompositionCreateReqDto;
 import com.fittura.domain.product.sku.dto.request.CompositionUpdateReqDto;
 import com.fittura.domain.product.sku.dto.request.SkuCreateReqDto;
 import com.fittura.domain.product.sku.dto.request.SkuUpdateReqDto;
+import com.fittura.domain.product.sku.dto.response.SkuResDto;
 import com.fittura.domain.product.sku.entity.Color;
 import com.fittura.domain.product.sku.entity.Material;
 import com.fittura.domain.product.sku.entity.ProductComposition;
@@ -49,6 +50,10 @@ public class SkuService {
     public ProductSku getProductSku(Long skuId) {
         return productSkuRepository.findByIdAndStatusNot(skuId, SkuStatus.ARCHIVED)
             .orElseThrow(() -> new ServiceException(ProductErrorCode.NOT_FOUND_SKU));
+    }
+
+    public List<SkuResDto> getProductSkuResDto(Long productId) {
+        return productSkuRepository.findSkuDtosByProductId(productId);
     }
 
     public void createSkus(Product product, List<SkuCreateReqDto> skuDtos) {

@@ -176,8 +176,6 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
 
     @Override
     public Optional<ProductWithSkuResDto> findWithSkuById(Long id) {
-        BooleanExpression isSoldOut = isSoldOut();
-
         ProductWithSkuResDto productRow = queryFactory
             .select(Projections.constructor(ProductWithSkuResDto.class,
                 product.id,
@@ -193,7 +191,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
                 product.dimension.width,
                 product.dimension.height,
                 product.dimension.depth,
-                isSoldOut
+                isSoldOut()
             ))
             .from(product)
             .where(
@@ -202,46 +200,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             )
             .fetchOne();
 
-        if (productRow == null) return Optional.empty();
-
-        List<SkuResDto> skus = queryFactory
-            .select(Projections.constructor(SkuResDto.class,
-                productSku.id,
-                productSku.price,
-                productSku.salePrice,
-                productSku.status,
-                productSku.color.name,
-                productSku.material.name,
-                ProductSkuExpressions.isSoldOut(productSku)
-            ))
-            .from(productSku)
-            .leftJoin(productSku.color)
-            .leftJoin(productSku.material)
-            .where(
-                productSku.product.id.eq(id),
-                productSku.status.ne(SkuStatus.ARCHIVED)
-            )
-            .fetch();
-
-        return Optional.of(new ProductWithSkuResDto(
-            productRow.id(),
-            productRow.categoryId(),
-            productRow.name(),
-            productRow.description(),
-            productRow.productType(),
-            productRow.deliveryType(),
-            productRow.deliveryFee(),
-            productRow.status(),
-            productRow.basePrice(),
-            productRow.baseSalePrice(),
-            productRow.discountRate(),
-            productRow.weight(),
-            productRow.width(),
-            productRow.height(),
-            productRow.depth(),
-            productRow.isSoldOut(),
-            skus
-        ));
+        return Optional.ofNullable(productRow);
     }
 
 

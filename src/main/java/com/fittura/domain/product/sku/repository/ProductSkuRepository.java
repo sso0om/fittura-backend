@@ -13,7 +13,7 @@ import java.util.Optional;
 import java.util.Set;
 
 @Repository
-public interface ProductSkuRepository extends JpaRepository<ProductSku, Long> {
+public interface ProductSkuRepository extends JpaRepository<ProductSku, Long>, ProductSkuRepositoryCustom {
 
     List<ProductSku> findAllByIdInAndStatusNot(Set<Long> skuIds, SkuStatus skuStatus);
 
