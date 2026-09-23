@@ -135,6 +135,11 @@ public class ProductFacade {
 
     // ========== SKU ==========
 
+    @Transactional(readOnly = true)
+    public List<SkuResDto> getProductSkus(Long productId) {
+        return skuService.getProductSkuResDto(productId);
+    }
+
     @Transactional
     public void pauseSku(Long productId, Long skuId) {
         skuService.pauseSku(productId, skuId);

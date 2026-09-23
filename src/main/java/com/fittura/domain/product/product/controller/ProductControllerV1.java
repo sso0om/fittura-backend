@@ -3,6 +3,7 @@ package com.fittura.domain.product.product.controller;
 import com.fittura.domain.product.facade.ProductFacade;
 import com.fittura.domain.product.product.dto.request.ProductSearchReqDto;
 import com.fittura.domain.product.product.dto.response.*;
+import com.fittura.domain.product.sku.dto.response.SkuResDto;
 import com.fittura.global.rsdata.RsData;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -68,6 +69,17 @@ public class ProductControllerV1 {
 
         return ResponseEntity
             .ok(RsData.success("상품 구성 정보가 조회되었습니다.", resDto));
+    }
+
+    @GetMapping("/{productId}/skus")
+    @Operation(summary = "SKU 목록 조회", description = "제품의 SKU 목록 조회 API")
+    public ResponseEntity<RsData<List<SkuResDto>>> getProductSkus(
+        @PathVariable Long productId
+    ) {
+        List<SkuResDto> resDtos = productFacade.getProductSkus(productId);
+
+        return ResponseEntity
+            .ok(RsData.success("상품의 SKU 목록이 조회되었습니다.", resDtos));
     }
 
     @GetMapping("/filters")

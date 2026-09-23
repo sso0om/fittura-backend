@@ -452,4 +452,40 @@ class ProductControllerV1Test extends IntegrationTestBase {
             .andExpect(jsonPath("$.data.colors.length()").value(3))
             .andExpect(jsonPath("$.data.materials.length()").value(2));
     }
+
+
+    // ========== SKU 목록 조회 ==========
+
+    @Test
+    @DisplayName("SKU 목록 조회 성공")
+    void getProductSkusSuccess() throws Exception {
+        // given
+        Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Color white = colorRepository.save(ColorFixture.color("White"));
+
+        Product product = ProductFixture.component(category, "A Desk");
+        product.activate();
+        productRepository.save(product);
+
+        productSkuRepository.save(ProductSkuFixture.sku(product, 50000L, 40000L, 100));
+
+        ProductSku pausedSku = ProductSkuFixture.sku(product, 20000L, 0, white, null);
+        pausedSku.pause();
+        productSkuRepository.save(pausedSku);
+
+        ProductSku archivedSku = ProductSkuFixture.sku(product, 30000L, 100);
+        archivedSku.archive();
+        productSkuRepository.save(archivedSku);
+
+
+        // when & then
+        mockMvc.perform(get(PRODUCT_URL + "/" + product.getId() + "/skus"))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.length()").value(2))
+            .andExpect(jsonPath("$.data[0].salePrice").value(40000))
+            .andExpect(jsonPath("$.data[0].discountRate").value(20))
+            .andExpect(jsonPath("$.data[1].color").value(white.getName()))
+            .andExpect(jsonPath("$.data[1].isSoldOut").value(true));
+    }
 }
