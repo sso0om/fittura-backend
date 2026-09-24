@@ -191,10 +191,12 @@ class CartControllerV1Test extends IntegrationTestBase {
         // given
         Long memberId = 17L;
         Category category = categoryRepository.save(CategoryFixture.rootActive());
-        Product product = productRepository.save(ProductFixture.component(category, "A Desk"));
+        Product product = ProductFixture.component(category, "A Desk");
+        product.activate();
+        productRepository.save(product);
 
         ProductSku activeSku = productSkuRepository.save(ProductSkuFixture.sku(product, 10_000L, null, 100));
-        ProductSku pausedSku = productSkuRepository.save(ProductSkuFixture.sku(product, 20_000L, null, 100));
+        ProductSku pausedSku = ProductSkuFixture.sku(product, 20_000L, null, 100);
         pausedSku.pause();
         productSkuRepository.save(pausedSku);
 
