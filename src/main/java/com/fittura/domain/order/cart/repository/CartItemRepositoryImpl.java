@@ -17,6 +17,7 @@ import java.util.List;
 
 import static com.fittura.domain.order.cart.entity.QCartItem.cartItem;
 import static com.fittura.domain.product.product.entity.QProduct.product;
+import static com.fittura.domain.product.product.entity.QProductImage.productImage;
 import static com.fittura.domain.product.sku.entity.QColor.color;
 import static com.fittura.domain.product.sku.entity.QMaterial.material;
 import static com.fittura.domain.product.sku.entity.QProductSku.productSku;
@@ -75,7 +76,7 @@ public class CartItemRepositoryImpl implements CartItemRepositoryCustom {
                 cartItem.id,
                 product.id,
                 product.name,
-                product.mainImage.imageUrl,
+                productImage.imageUrl,
                 product.status,
                 product.deliveryType,
                 productSku.id,
@@ -90,7 +91,7 @@ public class CartItemRepositoryImpl implements CartItemRepositoryCustom {
             .from(cartItem)
             .join(cartItem.productSku, productSku)
             .join(productSku.product, product)
-            .leftJoin(product.mainImage)
+            .leftJoin(product.mainImage, productImage)
             .leftJoin(productSku.color, color)
             .leftJoin(productSku.material, material)
             .where(

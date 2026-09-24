@@ -29,6 +29,7 @@ import java.util.Optional;
 
 import static com.fittura.domain.product.product.entity.QProduct.product;
 import static com.fittura.domain.product.product.entity.QProductAttribute.productAttribute;
+import static com.fittura.domain.product.product.entity.QProductImage.productImage;
 import static com.fittura.domain.product.sku.entity.QProductComposition.productComposition;
 import static com.fittura.domain.product.sku.entity.QProductSku.productSku;
 
@@ -57,10 +58,10 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
                 product.status,
                 product.createdDate,
                 isSoldOut(),
-                product.mainImage.imageUrl
+                productImage.imageUrl
             ))
             .from(product)
-            .leftJoin(product.mainImage)
+            .leftJoin(product.mainImage, productImage)
             .where(conditions)
             .orderBy(getOrderSpecifier(pageable))
             .offset(pageable.getOffset())
