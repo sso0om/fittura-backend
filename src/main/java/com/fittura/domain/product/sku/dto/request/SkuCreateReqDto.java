@@ -13,8 +13,8 @@ public record SkuCreateReqDto(
     Long price,
 
     @Schema(example = "80000")
-    @PositiveOrZero
-    Long salePrice ,
+    @Positive
+    Long salePrice,
 
     @Schema(example = "50")
     @NotNull @PositiveOrZero

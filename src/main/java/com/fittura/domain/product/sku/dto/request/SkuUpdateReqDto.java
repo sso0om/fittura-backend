@@ -17,7 +17,7 @@ public record SkuUpdateReqDto(
     Long price,
 
     @Schema(example = "80000")
-    @PositiveOrZero
+    @Positive
     Long salePrice,
 
     @Schema(example = "50")
