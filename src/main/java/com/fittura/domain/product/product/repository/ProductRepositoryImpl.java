@@ -6,7 +6,6 @@ import com.fittura.domain.product.product.dto.response.*;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.entity.QProduct;
 import com.fittura.domain.product.sku.constant.SkuStatus;
-import com.fittura.domain.product.sku.dto.response.SkuResDto;
 import com.fittura.domain.product.sku.dto.response.SkuWithStockResDto;
 import com.fittura.domain.product.sku.entity.QProductSku;
 import com.fittura.domain.product.sku.repository.ProductSkuExpressions;
@@ -57,7 +56,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
                 product.baseSalePrice,
                 product.status,
                 product.createdDate,
-                isSoldOut(),
+                isAllSkusSoldOut(),
                 productImage.imageUrl
             ))
             .from(product)
@@ -79,8 +78,6 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
 
     @Override
     public Optional<ProductWithAllResDto> findWithAllById(Long id) {
-        BooleanExpression isSoldOut = isSoldOut();
-
         ProductWithAllResDto productRow = queryFactory
             .select(Projections.constructor(ProductWithAllResDto.class,
                 product.id,
@@ -95,7 +92,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
                 product.dimension.width,
                 product.dimension.height,
                 product.dimension.depth,
-                isSoldOut
+                isAllSkusSoldOut()
             ))
             .from(product)
             .where(
@@ -192,7 +189,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
                 product.dimension.width,
                 product.dimension.height,
                 product.dimension.depth,
-                isSoldOut()
+                isAllSkusSoldOut()
             ))
             .from(product)
             .where(
@@ -244,7 +241,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             .exists();
     }
 
-    private BooleanExpression isSoldOut() {
+    private BooleanExpression isAllSkusSoldOut() {
         QProductSku subSku = new QProductSku("subSku");
 
         return JPAExpressions
