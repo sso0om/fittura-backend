@@ -6,7 +6,7 @@ import com.fittura.domain.category.error.CategoryErrorCode;
 import com.fittura.domain.category.repository.CategoryRepository;
 import com.fittura.domain.category.support.CategoryFixture;
 import com.fittura.domain.product.product.constant.AttributeKey;
-import com.fittura.domain.product.product.constant.DeliveryType;
+import com.fittura.domain.delivery.delivery.constant.DeliveryType;
 import com.fittura.domain.product.product.constant.ProductStatus;
 import com.fittura.domain.product.product.constant.ProductType;
 import com.fittura.domain.product.product.dto.request.*;
@@ -70,8 +70,8 @@ class ProductServiceTest {
         ProductSearchCondition condition = new ProductSearchCondition(false, List.of(ProductStatus.ACTIVE, ProductStatus.DISCONTINUED), null, null, null, null);
         Pageable pageable = PageRequest.of(0, 10);
         List<ProductResDto> content = List.of(
-            new ProductResDto(1L, "A Desk", 50000L, ProductStatus.ACTIVE, ProductType.COMPONENT, null, false, "image.png"),
-            new ProductResDto(2L, "A Chair", 30000L, ProductStatus.DISCONTINUED, ProductType.COMPONENT, null, false, "image.png")
+            new ProductResDto(1L, "A Desk", ProductType.COMPONENT, DeliveryType.PARCEL, 50000L, 50000L, 0L, ProductStatus.ACTIVE, null, false, "image.png"),
+            new ProductResDto(2L, "A Chair", ProductType.COMPONENT, DeliveryType.PARCEL, 30000L, 30000L, 0L, ProductStatus.DISCONTINUED, null, false, "image.png")
         );
         Page<ProductResDto> page = new PageImpl<>(content, pageable, 2);
 
@@ -83,7 +83,7 @@ class ProductServiceTest {
         // then
         assertThat(result.getContent()).hasSize(2);
         assertThat(result.getTotalElements()).isEqualTo(2);
-        assertThat(result.getContent().get(0).name()).isEqualTo("A Desk");
+        assertThat(result.getContent().getFirst().name()).isEqualTo("A Desk");
     }
 
     @Test
@@ -112,12 +112,12 @@ class ProductServiceTest {
     void getProductWithSkuSuccess() {
         // given
         List<SkuResDto> skus = List.of(
-            new SkuResDto(1L, 90000L, SkuStatus.ACTIVE, null, null)
+            new SkuResDto(1L, 90000L, null, SkuStatus.ACTIVE, null, null, false)
         );
         ProductWithSkuResDto productWithSkuResDto = new ProductWithSkuResDto(
             1L, 1L, "A Desk", null, ProductType.COMPONENT,
             DeliveryType.PARCEL, DeliveryType.PARCEL.getBaseFee(), ProductStatus.ACTIVE,
-            50000L, 10.0, 100.0, 75.0, 50.0, false, skus
+            50000L, 50000L, 0L, 10.0, 100.0, 75.0, 50.0, false, skus
         );
 
         given(productRepository.findWithSkuById(1L)).willReturn(Optional.of(productWithSkuResDto));
@@ -151,7 +151,7 @@ class ProductServiceTest {
     void getProductWithAllSuccess() {
         // given
         List<SkuWithStockResDto> skus = List.of(
-            new SkuWithStockResDto(1L, 90000L, 50, 0, SkuStatus.ACTIVE, null, null)
+            new SkuWithStockResDto(1L, 90000L, null, 50, 0, SkuStatus.ACTIVE, null, null, false)
         );
         List<ProductAttributeResDto> attributes = List.of(
             new ProductAttributeResDto(1L, AttributeKey.SIZE_LABEL, "XL")
@@ -160,8 +160,8 @@ class ProductServiceTest {
             new CompositionResDto(1L, "의자 다리", 4, 0)
         );
         ProductWithAllResDto productWithAllResDto = new ProductWithAllResDto(
-            1L, "A Desk", null, ProductType.COMPLETE, DeliveryType.PARCEL, ProductStatus.DISABLED,
-            100000L, 10.0, 100.0, 75.0, 50.0, false, skus, attributes, compositions
+            1L, "A Desk", null, ProductType.COMPLETE, DeliveryType.PARCEL, DeliveryType.PARCEL.getBaseFee(), ProductStatus.DISABLED,
+            100000L, 100000L, 0L, 10.0, 100.0, 75.0, 50.0, false, skus, attributes, compositions
         );
 
         given(productRepository.findWithAllById(1L)).willReturn(Optional.of(productWithAllResDto));
@@ -537,7 +537,7 @@ class ProductServiceTest {
 
         // then
         assertThat(product.getAttributes()).hasSize(1);
-        assertThat(product.getAttributes().get(0).getAttributeValue()).isEqualTo("L");
+        assertThat(product.getAttributes().getFirst().getAttributeValue()).isEqualTo("L");
     }
 
     @Test
@@ -560,7 +560,7 @@ class ProductServiceTest {
     // ========== 핼퍼 메서드 ==========
 
     private SkuCreateReqDto skuDto() {
-        return new SkuCreateReqDto(10000L, 100, 1L, 1L);
+        return new SkuCreateReqDto(10000L, null, 100, 1L, 1L);
     }
 
     private AttributeCreateReqDto attributeDto() {
@@ -572,7 +572,7 @@ class ProductServiceTest {
     }
 
     private SkuUpdateReqDto skuUpdateDto(Long id) {
-        return new SkuUpdateReqDto(id, 10000L, 100, 1L, 1L);
+        return new SkuUpdateReqDto(id, 10000L, null, 100, 1L, 1L);
     }
 
     private void givenCategoryNotFound(Long categoryId) {

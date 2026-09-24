@@ -23,7 +23,7 @@ import com.fittura.domain.order.order.repository.OrderRepository;
 import com.fittura.domain.order.order.support.OrderAddressFixture;
 import com.fittura.domain.order.order.support.OrderFixture;
 import com.fittura.domain.order.order.support.OrderItemFixture;
-import com.fittura.domain.product.product.constant.DeliveryType;
+import com.fittura.domain.delivery.delivery.constant.DeliveryType;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.repository.ProductRepository;
 import com.fittura.domain.product.product.support.ProductFixture;
@@ -419,7 +419,7 @@ class OrderControllerTest extends IntegrationTestBase {
         // given
         Long memberId = 11L;
         ProductSku sku = savedDefaultSku(10);
-        sku.soldOut();
+        sku.pause();
         productSkuRepository.save(sku);
 
         Cart cart = cartRepository.save(CartFixture.cart(memberId));
@@ -505,13 +505,13 @@ class OrderControllerTest extends IntegrationTestBase {
     void createOrderFail_multipleInvalidItems() throws Exception {
         // given
         Long memberId = 13L;
-        ProductSku soldOutSku = savedDefaultSku(10);
-        soldOutSku.soldOut();
-        productSkuRepository.save(soldOutSku);
+        ProductSku pausedSku = savedDefaultSku(10);
+        pausedSku.pause();
+        productSkuRepository.save(pausedSku);
         ProductSku lowStockSku = savedDefaultSku(2);
 
         Cart cart = cartRepository.save(CartFixture.cart(memberId));
-        CartItem item1 = cartItemRepository.save(CartItemFixture.cartItem(cart, soldOutSku, 1));
+        CartItem item1 = cartItemRepository.save(CartItemFixture.cartItem(cart, pausedSku, 1));
         CartItem item2 = cartItemRepository.save(CartItemFixture.cartItem(cart, lowStockSku, 5));
 
         String reqBody = """

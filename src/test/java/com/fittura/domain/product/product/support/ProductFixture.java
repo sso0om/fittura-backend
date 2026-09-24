@@ -2,7 +2,7 @@ package com.fittura.domain.product.product.support;
 
 import com.fittura.domain.category.entity.Category;
 import com.fittura.domain.category.support.CategoryFixture;
-import com.fittura.domain.product.product.constant.DeliveryType;
+import com.fittura.domain.delivery.delivery.constant.DeliveryType;
 import com.fittura.domain.product.product.constant.ProductType;
 import com.fittura.domain.product.product.entity.Dimension;
 import com.fittura.domain.product.product.entity.Product;
@@ -16,8 +16,12 @@ public class ProductFixture {
     private ProductFixture() {
     }
 
+    public static Product product(Category category, String name, ProductType productType, DeliveryType deliveryType) {
+        return Product.create(category, name, "상품 설명", productType, deliveryType, DEFAULT_DIMENSION);
+    }
+
     public static Product product(Category category, String name, ProductType productType) {
-        return Product.create(category, name, "상품 설명", productType, DeliveryType.PARCEL, DEFAULT_DIMENSION);
+        return product(category, name, productType, DeliveryType.PARCEL);
     }
 
     public static Product complete(Category category, String name) {

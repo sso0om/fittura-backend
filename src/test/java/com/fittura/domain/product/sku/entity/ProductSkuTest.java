@@ -3,6 +3,8 @@ package com.fittura.domain.product.sku.entity;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.support.ProductFixture;
 import com.fittura.domain.product.sku.constant.SkuStatus;
+import com.fittura.domain.product.sku.support.ColorFixture;
+import com.fittura.domain.product.sku.support.MaterialFixture;
 import com.fittura.domain.product.sku.support.ProductSkuFixture;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -78,7 +80,8 @@ class ProductSkuTest {
     void getSkuIdentifier_bothOptions() {
         // given
         Product product = ProductFixture.component("A Desk");
-        ProductSku sku = ProductSkuFixture.skuWithOption(product, "White", "Wood");
+        ProductSku sku = ProductSkuFixture.sku(product, 1000L, 100,
+            ColorFixture.color("White"), MaterialFixture.material("Wood"));
 
         // when & then
         assertThat(sku.getSkuIdentifier()).isEqualTo("White / Wood");

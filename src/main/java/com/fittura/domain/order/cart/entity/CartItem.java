@@ -61,6 +61,14 @@ public class CartItem extends BaseEntity {
         this.quantity = quantity;
     }
 
+    public void changeSkuAndQuantity(ProductSku productSku, Integer quantity) {
+        Objects.requireNonNull(productSku, "productSku must not be null");
+        validateQuantity(quantity);
+
+        this.productSku = productSku;
+        this.quantity = quantity;
+    }
+
     private static void validateQuantity(Integer quantity) {
         if (quantity == null || quantity < 1) {
             throw new ServiceException(CartErrorCode.QUANTITY_MUST_BE_POSITIVE);

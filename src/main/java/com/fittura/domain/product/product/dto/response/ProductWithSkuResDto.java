@@ -1,9 +1,10 @@
 package com.fittura.domain.product.product.dto.response;
 
-import com.fittura.domain.product.product.constant.DeliveryType;
+import com.fittura.domain.delivery.delivery.constant.DeliveryType;
 import com.fittura.domain.product.product.constant.ProductStatus;
 import com.fittura.domain.product.product.constant.ProductType;
 import com.fittura.domain.product.sku.dto.response.SkuResDto;
+import com.fittura.domain.product.sku.util.PriceCalculator;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
@@ -19,6 +20,8 @@ public record ProductWithSkuResDto(
     Long deliveryFee,
     ProductStatus status,
     Long basePrice,
+    Long baseSalePrice,
+    Long discountRate,
     Double weight,
     Double width,
     Double height,
@@ -30,10 +33,21 @@ public record ProductWithSkuResDto(
     public ProductWithSkuResDto(
         Long id, Long categoryId, String name, String description,
         ProductType productType, DeliveryType deliveryType, ProductStatus status,
-        Long basePrice, Double weight, Double width,
-        Double height, Double depth, boolean isSoldOut
+        Long basePrice, Long baseSalePrice,
+        Double weight, Double width, Double height, Double depth, boolean isSoldOut
     ) {
-        this(id, categoryId, name, description, productType, deliveryType, deliveryType.getBaseFee(), status,
-            basePrice, weight, width, height, depth, isSoldOut, List.of());
+        this(id, categoryId, name, description,
+            productType, deliveryType, deliveryType.getBaseFee(), status,
+            basePrice, baseSalePrice, PriceCalculator.discountRate(basePrice, baseSalePrice),
+            weight, width, height, depth, isSoldOut, List.of());
+    }
+
+    public ProductWithSkuResDto withSkus(List<SkuResDto> skus) {
+        return new ProductWithSkuResDto(
+            id, categoryId, name, description,
+            productType, deliveryType, deliveryFee, status,
+            basePrice, baseSalePrice, discountRate,
+            weight, width, height, depth, isSoldOut, skus
+        );
     }
 }

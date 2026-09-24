@@ -33,14 +33,13 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class SkuServiceTest {
@@ -61,6 +60,56 @@ class SkuServiceTest {
     private SkuService skuService;
 
 
+    // ========== SKU 목록 조회 ==========
+
+    @Test
+    @DisplayName("SKU 목록 조회 성공")
+    void getSkusByIdSuccess() {
+        // given
+        Product product = activeProduct();
+        ProductSku sku = ProductSkuFixture.skuWithId(1L, product, 10_000L);
+        ProductSku otherSku = ProductSkuFixture.skuWithId(2L, product, 12_000L);
+        given(productSkuRepository.findAllByIdInAndStatusNot(Set.of(1L, 2L), SkuStatus.ARCHIVED))
+            .willReturn(List.of(sku, otherSku));
+
+        // when
+        List<ProductSku> result = skuService.getSkusById(Set.of(1L, 2L));
+
+        // then
+        assertThat(result).containsExactly(sku, otherSku);
+    }
+
+    @Test
+    @DisplayName("SKU 목록 조회 실패 - 요청한 id 중 없는 SKU가 있음")
+    void getSkusByIdFail_notFound() {
+        // given
+        Product product = activeProduct();
+        ProductSku sku = ProductSkuFixture.skuWithId(1L, product, 10_000L);
+        given(productSkuRepository.findAllByIdInAndStatusNot(Set.of(1L, 2L), SkuStatus.ARCHIVED))
+            .willReturn(List.of(sku));
+
+        // when & then
+        assertThatThrownBy(() -> skuService.getSkusById(Set.of(1L, 2L)))
+            .isInstanceOf(ServiceException.class);
+    }
+
+    @Test
+    @DisplayName("SKU 목록 조회 실패 - 판매 중지된 SKU가 섞여 있음")
+    void getSkusByIdFail_notSellable() {
+        // given
+        Product product = activeProduct();
+        ProductSku sku = ProductSkuFixture.skuWithId(1L, product, 10_000L);
+        ProductSku pausedSku = ProductSkuFixture.skuWithId(2L, product, 12_000L);
+        pausedSku.pause();
+        given(productSkuRepository.findAllByIdInAndStatusNot(Set.of(1L, 2L), SkuStatus.ARCHIVED))
+            .willReturn(List.of(sku, pausedSku));
+
+        // when & then
+        assertThatThrownBy(() -> skuService.getSkusById(Set.of(1L, 2L)))
+            .isInstanceOf(ServiceException.class);
+    }
+
+
     // ========== SKU 생성 ==========
 
     @Test
@@ -69,8 +118,8 @@ class SkuServiceTest {
         // given
         Product product = ProductFixture.component("Chair Leg");
         List<SkuCreateReqDto> skuDtos = List.of(
-            new SkuCreateReqDto(4500L, 100, 1L, 1L),
-            new SkuCreateReqDto(4800L, 50, 2L, 2L)
+            new SkuCreateReqDto(4500L, null, 100, 1L, 1L),
+            new SkuCreateReqDto(4800L, null, 50, 2L, 2L)
         );
 
         givenColor(1L, "White");
@@ -101,7 +150,7 @@ class SkuServiceTest {
         givenMaterial(2L, "Metal");
 
         List<SkuUpdateReqDto> reqDto = List.of(
-            new SkuUpdateReqDto(1L, 9000L, 80, 2L, 2L)
+            new SkuUpdateReqDto(1L, 9000L, null, 80, 2L, 2L)
         );
 
         // when
@@ -126,8 +175,8 @@ class SkuServiceTest {
         givenMaterial(1L, "Wood");
 
         List<SkuUpdateReqDto> reqDto = List.of(
-            new SkuUpdateReqDto(1L, 20000L, 50, 1L, 1L),
-            new SkuUpdateReqDto(null, 15000L, 30, 1L, 1L)
+            new SkuUpdateReqDto(1L, 20000L, null, 50, 1L, 1L),
+            new SkuUpdateReqDto(null, 15000L, null, 30, 1L, 1L)
         );
 
         // when
@@ -151,7 +200,7 @@ class SkuServiceTest {
         givenMaterial(1L, "Wood");
 
         List<SkuUpdateReqDto> reqDto = List.of(
-            new SkuUpdateReqDto(2L, 20000L, 50, 1L, 1L)
+            new SkuUpdateReqDto(2L, 20000L, null, 50, 1L, 1L)
         );
 
         // when
@@ -162,11 +211,11 @@ class SkuServiceTest {
     }
 
 
-    // ========== SKU 일시품절 ==========
+    // ========== SKU 일시 중단 ==========
 
     @Test
-    @DisplayName("SKU 일시품절 성공")
-    void soldOutSkuSuccess() {
+    @DisplayName("SKU 일시 중단 성공")
+    void pauseSkuSuccess() {
         // given
         Product product = ProductFixture.componentWithId(1L, "Chair");
         ProductSku sku = ProductSkuFixture.skuWithId(1L, product);
@@ -175,20 +224,20 @@ class SkuServiceTest {
         givenSkuFound(1L, sku);
 
         // when
-        skuService.soldOutSku(1L, 1L);
+        skuService.pauseSku(1L, 1L);
 
         // then
-        assertThat(sku.getStatus()).isEqualTo(SkuStatus.SOLDOUT);
+        assertThat(sku.getStatus()).isEqualTo(SkuStatus.PAUSED);
     }
 
     @Test
     @DisplayName("SKU 일시품절 실패 - SKU가 해당 상품에 속하지 않음")
-    void soldOutSkuFail_skuNotBelongsToProduct() {
+    void pauseSkuFail_skuNotBelongsToProduct() {
         // given
         given(productSkuRepository.existsByProductIdAndId(1L, 99L)).willReturn(false);
 
         // when & then
-        assertThatThrownBy(() -> skuService.soldOutSku(1L, 99L))
+        assertThatThrownBy(() -> skuService.pauseSku(1L, 99L))
             .isInstanceOf(ServiceException.class)
             .extracting(e -> ((ServiceException) e).getErrorCode())
             .isEqualTo(ProductErrorCode.SKU_NOT_BELONGS_TO_PRODUCT);
@@ -196,13 +245,13 @@ class SkuServiceTest {
 
     @Test
     @DisplayName("SKU 일시품절 실패 - ARCHIVED SKU")
-    void soldOutSkuFail_skuArchived() {
+    void pauseSkuFail_skuArchived() {
         // given
         given(productSkuRepository.existsByProductIdAndId(1L, 1L)).willReturn(true);
         givenSkuNotFound(1L);
 
         // when & then
-        assertThatThrownBy(() -> skuService.soldOutSku(1L, 1L))
+        assertThatThrownBy(() -> skuService.pauseSku(1L, 1L))
             .isInstanceOf(ServiceException.class)
             .extracting(e -> ((ServiceException) e).getErrorCode())
             .isEqualTo(ProductErrorCode.NOT_FOUND_SKU);
@@ -586,6 +635,51 @@ class SkuServiceTest {
     }
 
 
+    // ========== 판매 가능 SKU 조회 ==========
+
+    @Test
+    @DisplayName("판매 가능 SKU 조회 성공")
+    void getSellableSkuSuccess() {
+        // given
+        Product product = activeProduct();
+        ProductSku sku = ProductSkuFixture.skuWithId(1L, product, 10_000L);
+        given(productSkuRepository.findByIdAndProduct_IdAndStatusNot(1L, 10L, SkuStatus.ARCHIVED))
+            .willReturn(Optional.of(sku));
+
+        // when
+        ProductSku result = skuService.getSellableSku(10L, 1L);
+
+        // then
+        assertThat(result).isSameAs(sku);
+    }
+
+    @Test
+    @DisplayName("판매 가능 SKU 조회 실패 - 없는 SKU거나 다른 상품의 SKU")
+    void getSellableSkuFail_notFound() {
+        // given
+        given(productSkuRepository.findByIdAndProduct_IdAndStatusNot(1L, 10L, SkuStatus.ARCHIVED))
+            .willReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> skuService.getSellableSku(10L, 1L))
+            .isInstanceOf(ServiceException.class);
+    }
+
+    @Test
+    @DisplayName("판매 가능 SKU 조회 실패 - SKU는 ACTIVE지만 상품이 판매중이 아님")
+    void getSellableSkuFail_productNotActive() {
+        // given
+        Product product = ProductFixture.componentWithId(10L, "A Desk");   // 생성 직후 DISABLED
+        ProductSku sku = ProductSkuFixture.skuWithId(1L, product, 10_000L);
+        given(productSkuRepository.findByIdAndProduct_IdAndStatusNot(1L, 10L, SkuStatus.ARCHIVED))
+            .willReturn(Optional.of(sku));
+
+        // when & then
+        assertThatThrownBy(() -> skuService.getSellableSku(10L, 1L))
+            .isInstanceOf(ServiceException.class);
+    }
+
+
     // ========== 헬퍼 메서드 ==========
 
     private void givenSkuNotFound(Long skuId) {
@@ -596,6 +690,12 @@ class SkuServiceTest {
     private void givenSkuFound(Long skuId, ProductSku sku) {
         given(productSkuRepository.findByIdAndStatusNot(skuId, SkuStatus.ARCHIVED))
             .willReturn(Optional.of(sku));
+    }
+
+    private Product activeProduct() {
+        Product product = ProductFixture.componentWithId(10L, "A Desk");
+        product.activate();
+        return product;
     }
 
     private void givenSkus(Long productId, List<ProductSku> skus) {

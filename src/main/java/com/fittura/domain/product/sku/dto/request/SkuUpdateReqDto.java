@@ -16,6 +16,10 @@ public record SkuUpdateReqDto(
     @NotNull @PositiveOrZero
     Long price,
 
+    @Schema(example = "80000")
+    @Positive
+    Long salePrice,
+
     @Schema(example = "50")
     @NotNull @PositiveOrZero
     Integer stockQuantity,

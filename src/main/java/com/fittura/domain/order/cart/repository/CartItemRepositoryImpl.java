@@ -5,6 +5,7 @@ import com.fittura.domain.order.cart.entity.Cart;
 import com.fittura.domain.order.cart.entity.CartItem;
 import com.fittura.domain.product.product.constant.ProductStatus;
 import com.fittura.domain.product.sku.constant.SkuStatus;
+import com.fittura.domain.product.sku.repository.ProductSkuExpressions;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -16,6 +17,7 @@ import java.util.List;
 
 import static com.fittura.domain.order.cart.entity.QCartItem.cartItem;
 import static com.fittura.domain.product.product.entity.QProduct.product;
+import static com.fittura.domain.product.product.entity.QProductImage.productImage;
 import static com.fittura.domain.product.sku.entity.QColor.color;
 import static com.fittura.domain.product.sku.entity.QMaterial.material;
 import static com.fittura.domain.product.sku.entity.QProductSku.productSku;
@@ -74,18 +76,22 @@ public class CartItemRepositoryImpl implements CartItemRepositoryCustom {
                 cartItem.id,
                 product.id,
                 product.name,
+                productImage.imageUrl,
+                product.status,
+                product.deliveryType,
                 productSku.id,
                 color.name,
                 material.name,
                 productSku.price,
+                productSku.salePrice,
                 cartItem.quantity,
-                productSku.price.multiply(cartItem.quantity),
-                product.status,
-                productSku.status
+                productSku.status,
+                ProductSkuExpressions.isSoldOut(productSku)
             ))
             .from(cartItem)
             .join(cartItem.productSku, productSku)
             .join(productSku.product, product)
+            .leftJoin(product.mainImage, productImage)
             .leftJoin(productSku.color, color)
             .leftJoin(productSku.material, material)
             .where(
@@ -95,10 +101,13 @@ public class CartItemRepositoryImpl implements CartItemRepositoryCustom {
             )
             .orderBy(
                 new CaseBuilder()
-                    .when(productSku.status.eq(SkuStatus.ACTIVE))
+                    .when(productSku.status.eq(SkuStatus.ACTIVE)
+                        .and(product.status.eq(ProductStatus.ACTIVE))
+                        .and(ProductSkuExpressions.hasAvailableStock(productSku))
+                    )
                     .then(0)
                     .otherwise(1).asc(),
-                cartItem.modifiedDate.desc()
+                cartItem.createdDate.desc()
             )
             .fetch();
     }

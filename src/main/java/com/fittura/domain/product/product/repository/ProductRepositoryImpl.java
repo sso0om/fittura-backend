@@ -6,9 +6,9 @@ import com.fittura.domain.product.product.dto.response.*;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.entity.QProduct;
 import com.fittura.domain.product.sku.constant.SkuStatus;
-import com.fittura.domain.product.sku.dto.response.SkuResDto;
 import com.fittura.domain.product.sku.dto.response.SkuWithStockResDto;
 import com.fittura.domain.product.sku.entity.QProductSku;
+import com.fittura.domain.product.sku.repository.ProductSkuExpressions;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
@@ -28,6 +28,7 @@ import java.util.Optional;
 
 import static com.fittura.domain.product.product.entity.QProduct.product;
 import static com.fittura.domain.product.product.entity.QProductAttribute.productAttribute;
+import static com.fittura.domain.product.product.entity.QProductImage.productImage;
 import static com.fittura.domain.product.sku.entity.QProductComposition.productComposition;
 import static com.fittura.domain.product.sku.entity.QProductSku.productSku;
 
@@ -49,15 +50,17 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             .select(Projections.constructor(ProductResDto.class,
                 product.id,
                 product.name,
-                product.basePrice,
-                product.status,
                 product.productType,
+                product.deliveryType,
+                product.basePrice,
+                product.baseSalePrice,
+                product.status,
                 product.createdDate,
-                isSoldOut(),
-                product.mainImage.imageUrl
+                isAllSkusSoldOut(),
+                productImage.imageUrl
             ))
             .from(product)
-            .leftJoin(product.mainImage)
+            .leftJoin(product.mainImage, productImage)
             .where(conditions)
             .orderBy(getOrderSpecifier(pageable))
             .offset(pageable.getOffset())
@@ -75,8 +78,6 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
 
     @Override
     public Optional<ProductWithAllResDto> findWithAllById(Long id) {
-        BooleanExpression isSoldOut = isSoldOut();
-
         ProductWithAllResDto productRow = queryFactory
             .select(Projections.constructor(ProductWithAllResDto.class,
                 product.id,
@@ -86,11 +87,12 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
                 product.deliveryType,
                 product.status,
                 product.basePrice,
+                product.baseSalePrice,
                 product.dimension.weight,
                 product.dimension.width,
                 product.dimension.height,
                 product.dimension.depth,
-                isSoldOut
+                isAllSkusSoldOut()
             ))
             .from(product)
             .where(
@@ -105,11 +107,13 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             .select(Projections.constructor(SkuWithStockResDto.class,
                 productSku.id,
                 productSku.price,
+                productSku.salePrice,
                 productSku.stockQuantity,
                 productSku.reservedQuantity,
                 productSku.status,
                 productSku.color.name,
-                productSku.material.name
+                productSku.material.name,
+                ProductSkuExpressions.isSoldOut(productSku)
             ))
             .from(productSku)
             .leftJoin(productSku.color)
@@ -152,8 +156,11 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             productRow.description(),
             productRow.productType(),
             productRow.deliveryType(),
+            productRow.deliveryFee(),
             productRow.status(),
             productRow.basePrice(),
+            productRow.baseSalePrice(),
+            productRow.discountRate(),
             productRow.weight(),
             productRow.width(),
             productRow.height(),
@@ -167,8 +174,6 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
 
     @Override
     public Optional<ProductWithSkuResDto> findWithSkuById(Long id) {
-        BooleanExpression isSoldOut = isSoldOut();
-
         ProductWithSkuResDto productRow = queryFactory
             .select(Projections.constructor(ProductWithSkuResDto.class,
                 product.id,
@@ -179,11 +184,12 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
                 product.deliveryType,
                 product.status,
                 product.basePrice,
+                product.baseSalePrice,
                 product.dimension.weight,
                 product.dimension.width,
                 product.dimension.height,
                 product.dimension.depth,
-                isSoldOut
+                isAllSkusSoldOut()
             ))
             .from(product)
             .where(
@@ -192,42 +198,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             )
             .fetchOne();
 
-        if (productRow == null) return Optional.empty();
-
-        List<SkuResDto> skus = queryFactory
-            .select(Projections.constructor(SkuResDto.class,
-                productSku.id,
-                productSku.price,
-                productSku.status,
-                productSku.color.name,
-                productSku.material.name
-            ))
-            .from(productSku)
-            .leftJoin(productSku.color)
-            .leftJoin(productSku.material)
-            .where(
-                productSku.product.id.eq(id),
-                productSku.status.ne(SkuStatus.ARCHIVED)
-            )
-            .fetch();
-
-        return Optional.of(new ProductWithSkuResDto(
-            productRow.id(),
-            productRow.categoryId(),
-            productRow.name(),
-            productRow.description(),
-            productRow.productType(),
-            productRow.deliveryType(),
-            productRow.deliveryFee(),
-            productRow.status(),
-            productRow.basePrice(),
-            productRow.weight(),
-            productRow.width(),
-            productRow.height(),
-            productRow.depth(),
-            productRow.isSoldOut(),
-            skus
-        ));
+        return Optional.ofNullable(productRow);
     }
 
 
@@ -270,7 +241,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
             .exists();
     }
 
-    private BooleanExpression isSoldOut() {
+    private BooleanExpression isAllSkusSoldOut() {
         QProductSku subSku = new QProductSku("subSku");
 
         return JPAExpressions

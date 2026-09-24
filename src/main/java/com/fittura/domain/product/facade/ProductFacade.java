@@ -6,6 +6,7 @@ import com.fittura.domain.product.product.dto.request.*;
 import com.fittura.domain.product.product.dto.response.*;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.service.ProductService;
+import com.fittura.domain.product.sku.dto.response.SkuResDto;
 import com.fittura.domain.product.sku.service.SkuService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -47,7 +48,7 @@ public class ProductFacade {
     public Page<ProductResDto> getProducts(ProductSearchReqDto reqDto, Pageable pageable) {
         List<ProductStatus> statuses = Boolean.TRUE.equals(reqDto.inStockOnly())
             ? List.of(ProductStatus.ACTIVE)
-            : List.of(ProductStatus.ACTIVE, ProductStatus.DISCONTINUED);
+            : ProductStatus.PUBLIC_STATUSES;
         List<Long> categoryIds = categoryService.getCategoryIdWithDescendant(reqDto.categoryId());
 
         ProductSearchCondition searchCondition = new ProductSearchCondition(
@@ -68,7 +69,10 @@ public class ProductFacade {
 
     @Transactional(readOnly = true)
     public ProductWithSkuResDto getProductWithSku(Long productId) {
-        return productService.getProductWithSku(productId);
+        ProductWithSkuResDto productDto = productService.getProductWithSku(productId);
+        List<SkuResDto> skuDtos = skuService.getProductSkuResDto(productId);
+
+        return productDto.withSkus(skuDtos);
     }
 
     @Transactional
@@ -131,9 +135,15 @@ public class ProductFacade {
 
     // ========== SKU ==========
 
+    @Transactional(readOnly = true)
+    public List<SkuResDto> getProductSkus(Long productId) {
+        productService.validatePublicProduct(productId);
+        return skuService.getProductSkuResDto(productId);
+    }
+
     @Transactional
-    public void soldOutSku(Long productId, Long skuId) {
-        skuService.soldOutSku(productId, skuId);
+    public void pauseSku(Long productId, Long skuId) {
+        skuService.pauseSku(productId, skuId);
     }
 
     @Transactional

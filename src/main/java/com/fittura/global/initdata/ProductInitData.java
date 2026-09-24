@@ -4,7 +4,7 @@ import com.fittura.domain.category.entity.Category;
 import com.fittura.domain.category.repository.CategoryRepository;
 import com.fittura.domain.product.facade.ProductFacade;
 import com.fittura.domain.product.product.constant.AttributeKey;
-import com.fittura.domain.product.product.constant.DeliveryType;
+import com.fittura.domain.delivery.delivery.constant.DeliveryType;
 import com.fittura.domain.product.product.constant.ProductType;
 import com.fittura.domain.product.product.dto.request.AttributeCreateReqDto;
 import com.fittura.domain.product.product.dto.request.ProductCreateReqDto;
@@ -39,7 +39,7 @@ import java.util.Map;
  * - COMPLETE(조립형)  : composition 2개 + 색/재질 다른 SKU  → 원형 식탁, 식탁 의자
  * - COMPONENT(부품)   : composition 없음, 부품 카테고리      → 상판/다리/좌판·등받이/손잡이 등
  * - COMPONENT(단품)   : composition 없음, 부품 아닌 완제품    → 3단 서랍장
- * - 상태 다양화: DISCONTINUED/DISABLED 각 1, SKU 단종 1, "ACTIVE인데 재고 0"(일시품절) 다수
+ * - 상태 다양화: DISCONTINUED/DISABLED 각 1, SKU 단종 1, SKU 일시중단 1, "ACTIVE인데 재고 0"(일시품절) 다수
  * - 페이징 확인용으로 "원형" 카테고리 하나만 20개 초과로 채움
  * <p>
  * color/material 은 아직 별도 생성 로직이 없어 여기서 레포지토리로 직접 마스터를 만든다.
@@ -87,11 +87,14 @@ public class ProductInitData implements ApplicationRunner {
 
         // ===== 1. 부품(COMPONENT) =====
         Long tableTopId = component(getCat("식탁 상판"), "원목 상판 800X800", "L",
-            sku(89_000, 30, "오크", "원목"), sku(99_000, 20, "월넛", "원목"));
+            saleSku(89_000, 79_000, 30, "오크", "원목"),
+            sku(99_000, 20, "월넛", "원목"));
         Long tableLegId = component(getCat("식탁 다리"), "철제 테이블 다리 4개 세트", "L",
-            sku(49_000, 40, "블랙", "스틸"), sku(52_000, 0, "실버", "스틸"));
+            sku(49_000, 40, "블랙", "스틸"),
+            sku(52_000, 0, "실버", "스틸"));
         Long chairBodyId = component(getCat("의자 좌판"), "패브릭 좌판·등받이 일체형", "M",
-            sku(59_000, 50, "베이지", "패브릭"), sku(59_000, 35, "차콜", "패브릭"));
+            saleSku(59_000, 47_000, 50, "베이지", "패브릭"),
+            sku(59_000, 35, "차콜", "패브릭"));
         Long chairLegId = component(getCat("의자 다리"), "원목 의자 다리 프레임", null,
             sku(29_000, 60, "오크", "원목"));
         component(getCat("서랍장 손잡이"), "알루미늄 손잡이", "S",
@@ -99,7 +102,8 @@ public class ProductInitData implements ApplicationRunner {
 
         // ===== 2. 완제품(COMPLETE, 조립형) =====
         complete(getCat("원형"), "핏투라 원형 식탁 800", "L", DeliveryType.INSTALLATION,
-            List.of(sku(139_000, 15, "오크", "원목"), sku(149_000, 10, "월넛", "원목")),
+            List.of(saleSku(139_000, 119_000, 15, "오크", "원목"),
+                sku(149_000, 10, "월넛", "원목")),
             List.of(comp(firstSkuId(tableTopId), 1, 0),
                 comp(firstSkuId(tableLegId), 1, 1)));
         List<Long> padIds = pad(getCat("원형"), PAGING_PAD);
@@ -111,11 +115,13 @@ public class ProductInitData implements ApplicationRunner {
 
         // ===== 3. 단품(COMPONENT, 조립X 완제품) =====
         component(getCat("3단 서랍장"), "3단 원목 서랍장", "L",
-            sku(119_000, 10, "오크", "원목"), sku(129_000, 0, "월넛", "원목"));
+            sku(119_000, 10, "오크", "원목"),
+            saleSku(129_000, 109_000, 0, "월넛", "원목"));
 
         // 전체 일시품절 케이스
         component(getCat("5단 서랍장"), "5단 수납 서랍장 (전체 품절)", "XL",
-            sku(159_000, 0, "오크", "원목"), sku(169_000, 0, "월넛", "원목"));
+            sku(159_000, 0, "오크", "원목"),
+            sku(169_000, 0, "월넛", "원목"));
 
         // ===== 4. 전체 활성화 =====
         productRepository.findAll().forEach(Product::activate);
@@ -124,6 +130,7 @@ public class ProductInitData implements ApplicationRunner {
         productRepository.findById(padIds.get(0)).ifPresent(Product::discontinue); // 단종
         productRepository.findById(padIds.get(1)).ifPresent(Product::disable);     // 일시 숨김
         discontinueOneSku(padIds.get(2));                                          // SKU 단종
+        pauseOneSku(padIds.get(3));                                                // SKU 일시중단
     }
 
 
@@ -187,7 +194,7 @@ public class ProductInitData implements ApplicationRunner {
     // ========== 헬퍼 ==========
 
     private SkuCreateReqDto sku(long price, int stockQuantity, String colorName, String materialName) {
-        return new SkuCreateReqDto(price, stockQuantity, colorIds.get(colorName), materialIds.get(materialName));
+        return new SkuCreateReqDto(price, null, stockQuantity, colorIds.get(colorName), materialIds.get(materialName));
     }
 
     private CompositionCreateReqDto comp(Long childSkuId, int quantity, int sortOrder) {
@@ -223,11 +230,22 @@ public class ProductInitData implements ApplicationRunner {
     private void discontinueOneSku(Long productId) {
         List<ProductSku> skus = activeSkus(productId);
         if (skus.size() > 1) {
-            skus.get(0).discontinue(); // 여러 SKU 중 하나만 단종
+            skus.getFirst().discontinue(); // 여러 SKU 중 하나만 단종
         }
     }
 
     private List<ProductSku> activeSkus(Long productId) {
         return productSkuRepository.findByProductIdAndStatusNot(productId, SkuStatus.ARCHIVED);
+    }
+
+    private void pauseOneSku(Long productId) {
+        List<ProductSku> skus = activeSkus(productId);
+        if (skus.size() > 1) {
+            skus.getFirst().pause(); // 여러 SKU 중 하나만 일시중단
+        }
+    }
+
+    private SkuCreateReqDto saleSku(long price, long salePrice, int stockQuantity, String colorName, String materialName) {
+        return new SkuCreateReqDto(price, salePrice, stockQuantity, colorIds.get(colorName), materialIds.get(materialName));
     }
 }

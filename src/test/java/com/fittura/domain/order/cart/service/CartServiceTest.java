@@ -9,6 +9,7 @@ import com.fittura.domain.order.cart.repository.CartItemRepository;
 import com.fittura.domain.order.cart.repository.CartRepository;
 import com.fittura.domain.order.cart.support.CartFixture;
 import com.fittura.domain.order.cart.support.CartItemFixture;
+import com.fittura.domain.delivery.delivery.constant.DeliveryType;
 import com.fittura.domain.product.product.constant.ProductStatus;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.support.ProductFixture;
@@ -51,7 +52,7 @@ class CartServiceTest {
     // ========== 장바구니 조회 ==========
 
     @Test
-    @DisplayName("빈 장바구니 조회 성공")
+    @DisplayName("빈 장바구니 조회 성공 - 장바구니 없으면 아이템 조회하지 않음")
     void getCartSuccess_noCart() {
         // given
         Long memberId = 1L;
@@ -63,25 +64,18 @@ class CartServiceTest {
         // then
         assertThat(result.cartId()).isNull();
         assertThat(result.items()).isEmpty();
-        assertThat(result.totalPrice()).isEqualTo(0L);
         verify(cartItemRepository, never()).findCartItemDtosByCart(anyLong());
     }
 
     @Test
-    @DisplayName("장바구니 조회 성공 - 총 금액 합산 반환")
+    @DisplayName("장바구니 조회 성공 - 조회된 아이템을 순서 그대로 반환")
     void getCartSuccess_withItems() {
         // given
         Long memberId = 1L;
         Cart cart = CartFixture.cartWithId(10L, memberId);
 
-        CartItemResDto item1 = new CartItemResDto(
-            1L, 1L, "Desk", 1L, "White", "Wood", 10000L, 2, 20000L,
-            ProductStatus.ACTIVE, SkuStatus.ACTIVE
-        );
-        CartItemResDto item2 = new CartItemResDto(
-            2L, 2L, "Chair", 2L, "Black", "Metal", 15000L, 1, 15000L,
-            ProductStatus.ACTIVE, SkuStatus.ACTIVE
-        );
+        CartItemResDto item1 = cartItemResDto(1L, DeliveryType.PARCEL, 10_000L, null, 2);
+        CartItemResDto item2 = cartItemResDto(2L, DeliveryType.INSTALLATION, 15_000L, null, 1);
 
         given(cartRepository.findByMemberId(memberId)).willReturn(Optional.of(cart));
         given(cartItemRepository.findCartItemDtosByCart(cart.getId())).willReturn(List.of(item1, item2));
@@ -91,8 +85,25 @@ class CartServiceTest {
 
         // then
         assertThat(result.cartId()).isEqualTo(10L);
-        assertThat(result.items()).hasSize(2);
-        assertThat(result.totalPrice()).isEqualTo(35000L);
+        assertThat(result.items()).containsExactly(item1, item2);
+    }
+
+    @Test
+    @DisplayName("장바구니 조회 성공 - 장바구니는 있으나 조회 가능한 아이템 없음")
+    void getCartSuccess_cartWithoutItems() {
+        // given
+        Long memberId = 1L;
+        Cart cart = CartFixture.cartWithId(10L, memberId);
+
+        given(cartRepository.findByMemberId(memberId)).willReturn(Optional.of(cart));
+        given(cartItemRepository.findCartItemDtosByCart(cart.getId())).willReturn(List.of());
+
+        // when
+        CartResDto result = cartService.getCart(memberId);
+
+        // then
+        assertThat(result.cartId()).isEqualTo(10L);
+        assertThat(result.items()).isEmpty();
     }
 
 
@@ -262,6 +273,47 @@ class CartServiceTest {
     }
 
 
+    // ========== 장바구니 아이템 옵션(SKU) 변경 ==========
+
+    @Test
+    @DisplayName("옵션 변경 - 같은 SKU인 경우 수량만 변경")
+    void updateCartItemSku_sameSku() {
+        // given
+        Product product = ProductFixture.component("A Desk");
+        ProductSku sku = ProductSkuFixture.skuWithId(1L, product, 10_000L);
+        Cart cart = CartFixture.cartWithId(1L, 1L);
+        CartItem item = CartItemFixture.cartItemWithId(1L, cart, sku, 2);
+
+        // when
+        cartService.updateCartItemSku(item, sku, 5);
+
+        // then
+        assertThat(item.getQuantity()).isEqualTo(5);
+        assertThat(item.getProductSku().getId()).isEqualTo(1L);
+        verify(cartItemRepository, never()).existsByCart_IdAndProductSku_Id(anyLong(), anyLong());
+    }
+
+    @Test
+    @DisplayName("옵션 변경 실패 - 바꾸려는 SKU가 이미 장바구니에 있음")
+    void updateCartItemSku_duplicate() {
+        // given
+        Product product = ProductFixture.component("A Desk");
+        ProductSku sku = ProductSkuFixture.skuWithId(1L, product, 10_000L);
+        ProductSku changeSku = ProductSkuFixture.skuWithId(2L, product, 12_000L);
+        Cart cart = CartFixture.cartWithId(1L, 1L);
+        CartItem item = CartItemFixture.cartItemWithId(1L, cart, sku, 2);
+
+        given(cartItemRepository.existsByCart_IdAndProductSku_Id(1L, 2L)).willReturn(true);
+
+        // when & then
+        assertThatThrownBy(() -> cartService.updateCartItemSku(item, changeSku, 3))
+            .isInstanceOf(ServiceException.class);
+
+        assertThat(item.getProductSku().getId()).isEqualTo(1L);
+        assertThat(item.getQuantity()).isEqualTo(2);
+    }
+
+
     // ========== 장바구니 아이템 삭제 ==========
 
     @Test
@@ -310,5 +362,19 @@ class CartServiceTest {
         // when & then
         assertThatThrownBy(() -> cartService.deleteCartItem(memberId, itemId))
             .isInstanceOf(ServiceException.class);
+    }
+
+
+    // ========== 헬퍼 메서드 ==========
+
+    private CartItemResDto cartItemResDto(
+        Long id, DeliveryType deliveryType, Long price, Long salePrice, Integer quantity
+    ) {
+        return new CartItemResDto(
+            id, id, "A Desk", null,
+            ProductStatus.ACTIVE, deliveryType,
+            id, "White", "Wood",
+            price, salePrice, quantity, SkuStatus.ACTIVE, false
+        );
     }
 }

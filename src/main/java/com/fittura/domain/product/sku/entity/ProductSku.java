@@ -3,6 +3,7 @@ package com.fittura.domain.product.sku.entity;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.error.ProductErrorCode;
 import com.fittura.domain.product.sku.constant.SkuStatus;
+import com.fittura.domain.product.sku.util.PriceCalculator;
 import com.fittura.global.exception.ServiceException;
 import com.fittura.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
@@ -33,6 +34,9 @@ public class ProductSku extends BaseEntity {
     @Column(nullable = false)
     private Long price;
 
+    @Column
+    private Long salePrice;
+
     @Column(nullable = false)
     private Integer stockQuantity = 0;
 
@@ -56,15 +60,18 @@ public class ProductSku extends BaseEntity {
     public static ProductSku create(
         Product product,
         Long price,
+        Long salePrice,
         Integer stockQuantity,
         Color color,
         Material material
     ) {
         Objects.requireNonNull(product, "product must not be null");
+        validateSalePrice(price, salePrice);
 
         ProductSku productSku = ProductSku.builder()
             .product(product)
             .price(price)
+            .salePrice(salePrice)
             .stockQuantity(stockQuantity)
             .reservedQuantity(0)
             .status(SkuStatus.ACTIVE)
@@ -77,8 +84,11 @@ public class ProductSku extends BaseEntity {
         return productSku;
     }
 
-    public void update(Long price, Integer stockQuantity, Color color, Material material) {
+    public void update(Long price, Long salePrice, Integer stockQuantity, Color color, Material material) {
+        validateSalePrice(price, salePrice);
+
         this.price = price;
+        this.salePrice = salePrice;
         this.stockQuantity = stockQuantity;
         this.color = color;
         this.material = material;
@@ -91,8 +101,11 @@ public class ProductSku extends BaseEntity {
         this.reservedQuantity += quantity;
     }
 
-    public void soldOut() {
-        this.status = SkuStatus.SOLDOUT;
+
+    // ===== status =====
+
+    public void pause() {
+        this.status = SkuStatus.PAUSED;
     }
 
     public void discontinue() {
@@ -118,6 +131,13 @@ public class ProductSku extends BaseEntity {
         return status == SkuStatus.ARCHIVED;
     }
 
+    public boolean isSellable() {
+        return isActive() && product.isActive();
+    }
+
+
+    // ===== getter =====
+
     public String getSkuIdentifier() {
         return Stream.of(
                 color != null ? color.getName() : null,
@@ -125,5 +145,22 @@ public class ProductSku extends BaseEntity {
             )
             .filter(s -> s != null && !s.isEmpty())
             .collect(Collectors.joining(" / "));
+    }
+
+    public Long getDiscountRate() {
+        return PriceCalculator.discountRate(price, salePrice);
+    }
+
+    public Long getEffectivePrice() {
+        return PriceCalculator.effectivePrice(price, salePrice);
+    }
+
+
+    // ===== 유효성 검사 =====
+
+    private static void validateSalePrice(Long price, Long salePrice) {
+        if (salePrice != null && price <= salePrice) {
+            throw new ServiceException(ProductErrorCode.SALE_PRICE_LESS_THAN_PRICE);
+        }
     }
 }

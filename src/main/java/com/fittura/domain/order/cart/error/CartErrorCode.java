@@ -12,6 +12,7 @@ public enum CartErrorCode implements ErrorCode {
     // 400
     QUANTITY_MUST_BE_POSITIVE(HttpStatus.BAD_REQUEST, "CA400-01", "수량은 1개 이상 선택해야 합니다."),
     QUANTITY_EXCEEDED(HttpStatus.BAD_REQUEST, "CA400-02", "수량은 999개 이하 선택해야 합니다."),
+    DUPLICATE_CART_ITEM(HttpStatus.BAD_REQUEST, "CA400-03", "이미 장바구니에 담긴 제품입니다." ),
 
     // 404
     NOT_FOUND_ITEM(HttpStatus.NOT_FOUND, "CA404-01", "장바구니 제품을 찾을 수 없습니다.");

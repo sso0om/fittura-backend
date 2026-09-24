@@ -1,7 +1,7 @@
 package com.fittura.domain.product.product.entity;
 
 import com.fittura.domain.category.entity.Category;
-import com.fittura.domain.product.product.constant.DeliveryType;
+import com.fittura.domain.delivery.delivery.constant.DeliveryType;
 import com.fittura.domain.product.product.constant.ProductStatus;
 import com.fittura.domain.product.product.constant.ProductType;
 import com.fittura.domain.product.product.error.ProductErrorCode;
@@ -15,6 +15,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
@@ -54,6 +55,9 @@ public class Product extends BaseEntity {
     @Column(nullable = false)
     private Long basePrice = 0L;
 
+    @Column(nullable = false)
+    private Long baseSalePrice = 0L;
+
     @Embedded
     private Dimension dimension;
 
@@ -89,6 +93,7 @@ public class Product extends BaseEntity {
             .productType(productType)
             .deliveryType(deliveryType)
             .basePrice(0L)
+            .baseSalePrice(0L)
             .dimension(dimension)
             .status(ProductStatus.DISABLED)
             .build();
@@ -126,12 +131,14 @@ public class Product extends BaseEntity {
     }
 
     public void syncBasePrice() {
-        this.basePrice = productSkus.stream()
-            .filter(s -> !s.isArchived())
-            .mapToLong(ProductSku::getPrice)
-            .min()
-            .orElseThrow(() -> new ServiceException(ProductErrorCode.PRODUCT_HAVA_SKU));
+        ProductSku baseSku = getBaseSku();
+
+        this.basePrice = baseSku.getPrice();
+        this.baseSalePrice = baseSku.getEffectivePrice();
     }
+
+
+    // ===== status =====
 
     public void activate() {
         this.status = ProductStatus.ACTIVE;
@@ -149,9 +156,6 @@ public class Product extends BaseEntity {
         this.status = ProductStatus.ARCHIVED;
     }
 
-
-    // ===== 필드 확인 =====
-
     public boolean isComplete() {
         return productType == ProductType.COMPLETE;
     }
@@ -162,5 +166,29 @@ public class Product extends BaseEntity {
 
     public boolean isArchived() {
         return status == ProductStatus.ARCHIVED;
+    }
+
+
+    // ===== 헬퍼 메서드 =====
+
+    private ProductSku getBaseSku() {
+        List<ProductSku> candidates = productSkus.stream()
+            .filter(sku -> !sku.isArchived())
+            .toList();
+
+        if (candidates.isEmpty()) {
+            throw new ServiceException(ProductErrorCode.PRODUCT_HAVA_SKU);
+        }
+
+        Comparator<ProductSku> byEffectivePrice = Comparator.comparing(ProductSku::getEffectivePrice);
+
+        return candidates.stream()
+            .filter(ProductSku::isActive)
+            .min(byEffectivePrice)  // ACTIVE 후보 중 최저가
+            .orElseGet(() ->        // ACTIVE가 없을 시 전체 후보 중 최저가
+                candidates.stream()
+                    .min(byEffectivePrice)
+                    .orElseThrow()
+            );
     }
 }

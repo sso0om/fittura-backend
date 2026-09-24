@@ -10,6 +10,7 @@ import com.fittura.domain.product.sku.dto.request.CompositionCreateReqDto;
 import com.fittura.domain.product.sku.dto.request.CompositionUpdateReqDto;
 import com.fittura.domain.product.sku.dto.request.SkuCreateReqDto;
 import com.fittura.domain.product.sku.dto.request.SkuUpdateReqDto;
+import com.fittura.domain.product.sku.dto.response.SkuResDto;
 import com.fittura.domain.product.sku.entity.Color;
 import com.fittura.domain.product.sku.entity.Material;
 import com.fittura.domain.product.sku.entity.ProductComposition;
@@ -22,7 +23,10 @@ import com.fittura.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,12 +44,28 @@ public class SkuService {
         if (productSkus.size() != skuIds.size()) {
             throw new ServiceException(ProductErrorCode.NOT_FOUND_SKU);
         }
+
+        productSkus.forEach(this::validateSellable);
+
         return productSkus;
+    }
+
+    public List<SkuResDto> getProductSkuResDto(Long productId) {
+        return productSkuRepository.findSkuDtosByProductId(productId);
     }
 
     public ProductSku getProductSku(Long skuId) {
         return productSkuRepository.findByIdAndStatusNot(skuId, SkuStatus.ARCHIVED)
             .orElseThrow(() -> new ServiceException(ProductErrorCode.NOT_FOUND_SKU));
+    }
+
+    public ProductSku getSellableSku(Long productId, Long changeSkuId) {
+        ProductSku productSku = productSkuRepository.findByIdAndProduct_IdAndStatusNot(changeSkuId, productId, SkuStatus.ARCHIVED)
+            .orElseThrow(() -> new ServiceException(ProductErrorCode.NOT_FOUND_SKU));
+
+        validateSellable(productSku);
+
+        return productSku;
     }
 
     public void createSkus(Product product, List<SkuCreateReqDto> skuDtos) {
@@ -56,6 +76,7 @@ public class SkuService {
             ProductSku productSku = ProductSku.create(
                 product,
                 skuDto.price(),
+                skuDto.salePrice(),
                 skuDto.stockQuantity(),
                 color,
                 material
@@ -94,6 +115,7 @@ public class SkuService {
                 ProductSku newSku = ProductSku.create(
                     product,
                     dto.price(),
+                    dto.salePrice(),
                     dto.stockQuantity(),
                     color,
                     material
@@ -101,16 +123,16 @@ public class SkuService {
                 productSkuRepository.save(newSku);
             } else {
                 ProductSku sku = existingMap.get(dto.id());
-                sku.update(dto.price(), dto.stockQuantity(), color, material);
+                sku.update(dto.price(), dto.salePrice(), dto.stockQuantity(), color, material);
             }
         }
     }
 
-    public void soldOutSku(Long productId, Long skuId) {
+    public void pauseSku(Long productId, Long skuId) {
         validateSkuOwnedByProduct(productId, skuId);
 
         ProductSku sku = getProductSku(skuId);
-        sku.soldOut();
+        sku.pause();
     }
 
     public void discontinueSku(Long productId, Long skuId) {
@@ -251,6 +273,12 @@ public class SkuService {
     public void validateSkuOwnedByProduct(Long productId, Long skuId) {
         if (!productSkuRepository.existsByProductIdAndId(productId, skuId)) {
             throw new ServiceException(ProductErrorCode.SKU_NOT_BELONGS_TO_PRODUCT);
+        }
+    }
+
+    private void validateSellable(ProductSku productSku) {
+        if (!productSku.isSellable()) {
+            throw new ServiceException(ProductErrorCode.NOT_ACTIVE_SKU);
         }
     }
 

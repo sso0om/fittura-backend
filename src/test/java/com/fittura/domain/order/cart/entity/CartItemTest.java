@@ -46,4 +46,24 @@ class CartItemTest {
         // then
         assertThat(cartItem.getQuantity()).isEqualTo(5);
     }
+
+    // ========== changeSkuAndQuantity ==========
+
+    @Test
+    @DisplayName("changeSkuAndQuantity 성공 - SKU와 수량이 함께 바뀜")
+    void changeSkuAndQuantitySuccess() {
+        // given
+        Cart cart = CartFixture.cart(1L);
+        Product product = ProductFixture.component("A Desk");
+        ProductSku sku = ProductSkuFixture.sku(product, 10000L, 100);
+        ProductSku changeSku = ProductSkuFixture.sku(product, 12000L, 100);
+        CartItem cartItem = CartItem.create(cart, sku, 2);
+
+        // when
+        cartItem.changeSkuAndQuantity(changeSku, 5);
+
+        // then
+        assertThat(cartItem.getProductSku()).isSameAs(changeSku);
+        assertThat(cartItem.getQuantity()).isEqualTo(5);
+    }
 }
