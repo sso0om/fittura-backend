@@ -131,10 +131,7 @@ public class Product extends BaseEntity {
     }
 
     public void syncBasePrice() {
-        ProductSku baseSku = productSkus.stream()
-            .filter(ProductSku::isActive)
-            .min(Comparator.comparing(ProductSku::getEffectivePrice))
-            .orElseThrow(() -> new ServiceException(ProductErrorCode.PRODUCT_HAVA_SKU));
+        ProductSku baseSku = getBaseSku();
 
         this.basePrice = baseSku.getPrice();
         this.baseSalePrice = baseSku.getEffectivePrice();
@@ -169,5 +166,29 @@ public class Product extends BaseEntity {
 
     public boolean isArchived() {
         return status == ProductStatus.ARCHIVED;
+    }
+
+
+    // ===== 헬퍼 메서드 =====
+
+    private ProductSku getBaseSku() {
+        List<ProductSku> candidates = productSkus.stream()
+            .filter(sku -> !sku.isArchived())
+            .toList();
+
+        if (candidates.isEmpty()) {
+            throw new ServiceException(ProductErrorCode.PRODUCT_HAVA_SKU);
+        }
+
+        Comparator<ProductSku> byEffectivePrice = Comparator.comparing(ProductSku::getEffectivePrice);
+
+        return candidates.stream()
+            .filter(ProductSku::isActive)
+            .min(byEffectivePrice)  // ACTIVE 후보 중 최저가
+            .orElseGet(() ->        // ACTIVE가 없을 시 전체 후보 중 최저가
+                candidates.stream()
+                    .min(byEffectivePrice)
+                    .orElseThrow()
+            );
     }
 }
