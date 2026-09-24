@@ -48,7 +48,7 @@ public class ProductFacade {
     public Page<ProductResDto> getProducts(ProductSearchReqDto reqDto, Pageable pageable) {
         List<ProductStatus> statuses = Boolean.TRUE.equals(reqDto.inStockOnly())
             ? List.of(ProductStatus.ACTIVE)
-            : List.of(ProductStatus.ACTIVE, ProductStatus.DISCONTINUED);
+            : ProductStatus.PUBLIC_STATUSES;
         List<Long> categoryIds = categoryService.getCategoryIdWithDescendant(reqDto.categoryId());
 
         ProductSearchCondition searchCondition = new ProductSearchCondition(
@@ -137,6 +137,7 @@ public class ProductFacade {
 
     @Transactional(readOnly = true)
     public List<SkuResDto> getProductSkus(Long productId) {
+        productService.validatePublicProduct(productId);
         return skuService.getProductSkuResDto(productId);
     }
 

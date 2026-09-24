@@ -190,6 +190,12 @@ public class ProductService {
         }
     }
 
+    public void validatePublicProduct(Long productId) {
+        if(!existsByIdAndStatusIn(productId, ProductStatus.PUBLIC_STATUSES)) {
+            throw new ServiceException(ProductErrorCode.NOT_FOUND_PRODUCT);
+        }
+    }
+
     public void validateModifiableProduct(Product product) {
         // TODO: 진행 중인 주문(결제/배송)이 있는 경우 삭제, 비활성화 불가 (주문 도메인 구현 후)
     }
@@ -223,5 +229,9 @@ public class ProductService {
 
     private List<ProductAttribute> getAttributes(Long productId) {
         return attributeRepository.findByProductId(productId);
+    }
+
+    private boolean existsByIdAndStatusIn(Long productId, List<ProductStatus> statuses) {
+        return productRepository.existsByIdAndStatusIn(productId, statuses);
     }
 }
