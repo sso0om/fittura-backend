@@ -1,4 +1,4 @@
-package com.fittura.domain.member.error;
+package com.fittura.domain.member.member.error;
 
 import com.fittura.global.error.ErrorCode;
 import lombok.Getter;

@@ -1,8 +1,9 @@
-package com.fittura.domain.member.controller;
+package com.fittura.domain.member.member.controller;
 
-import com.fittura.domain.member.entity.Member;
-import com.fittura.domain.member.error.MemberErrorCode;
-import com.fittura.domain.member.repository.MemberRepository;
+import com.fittura.domain.member.member.controller.AuthControllerV1;
+import com.fittura.domain.member.member.entity.Member;
+import com.fittura.domain.member.member.error.MemberErrorCode;
+import com.fittura.domain.member.member.repository.MemberRepository;
 import com.fittura.global.IntegrationTestBase;
 import com.fittura.global.config.AppProperties;
 import com.fittura.global.error.CommonErrorCode;

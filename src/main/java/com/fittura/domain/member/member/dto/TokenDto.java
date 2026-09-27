@@ -1,4 +1,4 @@
-package com.fittura.domain.member.dto;
+package com.fittura.domain.member.member.dto;
 
 public record TokenDto(
     String accessToken,

@@ -1,10 +1,10 @@
-package com.fittura.domain.member.controller;
+package com.fittura.domain.member.member.controller;
 
-import com.fittura.domain.member.dto.AuthResultDto;
-import com.fittura.domain.member.dto.request.SignInReqDto;
-import com.fittura.domain.member.dto.request.SignUpReqDto;
-import com.fittura.domain.member.dto.response.AuthResDto;
-import com.fittura.domain.member.service.AuthService;
+import com.fittura.domain.member.member.dto.AuthResultDto;
+import com.fittura.domain.member.member.dto.request.SignInReqDto;
+import com.fittura.domain.member.member.dto.request.SignUpReqDto;
+import com.fittura.domain.member.member.dto.response.AuthResDto;
+import com.fittura.domain.member.member.service.AuthService;
 import com.fittura.global.rsdata.RsData;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

@@ -1,7 +1,7 @@
-package com.fittura.domain.member.dto;
+package com.fittura.domain.member.member.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fittura.domain.member.entity.Member;
+import com.fittura.domain.member.member.entity.Member;
 
 @JsonIgnoreProperties({"tokenDto"})
 public record AuthResultDto(

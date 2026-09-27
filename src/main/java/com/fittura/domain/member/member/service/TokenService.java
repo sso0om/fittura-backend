@@ -1,8 +1,8 @@
-package com.fittura.domain.member.service;
+package com.fittura.domain.member.member.service;
 
-import com.fittura.domain.member.dto.TokenDto;
-import com.fittura.domain.member.entity.Member;
-import com.fittura.domain.member.error.MemberErrorCode;
+import com.fittura.domain.member.member.dto.TokenDto;
+import com.fittura.domain.member.member.entity.Member;
+import com.fittura.domain.member.member.error.MemberErrorCode;
 import com.fittura.global.exception.ServiceException;
 import com.fittura.global.security.JwtTokenProvider;
 import com.fittura.global.security.TokenStatus;

@@ -1,8 +1,8 @@
-package com.fittura.domain.member.service;
+package com.fittura.domain.member.member.service;
 
-import com.fittura.domain.member.entity.Member;
-import com.fittura.domain.member.error.MemberErrorCode;
-import com.fittura.domain.member.repository.MemberRepository;
+import com.fittura.domain.member.member.entity.Member;
+import com.fittura.domain.member.member.error.MemberErrorCode;
+import com.fittura.domain.member.member.repository.MemberRepository;
 import com.fittura.global.error.CommonErrorCode;
 import com.fittura.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;

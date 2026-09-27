@@ -1,11 +1,11 @@
-package com.fittura.domain.member.service;
+package com.fittura.domain.member.member.service;
 
-import com.fittura.domain.member.dto.AuthResultDto;
-import com.fittura.domain.member.dto.TokenDto;
-import com.fittura.domain.member.dto.request.SignInReqDto;
-import com.fittura.domain.member.dto.request.SignUpReqDto;
-import com.fittura.domain.member.entity.Member;
-import com.fittura.domain.member.error.MemberErrorCode;
+import com.fittura.domain.member.member.dto.AuthResultDto;
+import com.fittura.domain.member.member.dto.TokenDto;
+import com.fittura.domain.member.member.dto.request.SignInReqDto;
+import com.fittura.domain.member.member.dto.request.SignUpReqDto;
+import com.fittura.domain.member.member.entity.Member;
+import com.fittura.domain.member.member.error.MemberErrorCode;
 import com.fittura.global.config.AppProperties;
 import com.fittura.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;

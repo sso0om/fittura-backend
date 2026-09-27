@@ -1,6 +1,6 @@
-package com.fittura.domain.member.repository;
+package com.fittura.domain.member.member.repository;
 
-import com.fittura.domain.member.entity.Member;
+import com.fittura.domain.member.member.entity.Member;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

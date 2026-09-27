@@ -1,4 +1,4 @@
-package com.fittura.domain.member.constant;
+package com.fittura.domain.member.member.constant;
 
 public enum Role {
     ROLE_USER,

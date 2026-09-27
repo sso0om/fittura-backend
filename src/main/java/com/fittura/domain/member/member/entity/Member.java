@@ -1,6 +1,6 @@
-package com.fittura.domain.member.entity;
+package com.fittura.domain.member.member.entity;
 
-import com.fittura.domain.member.constant.Role;
+import com.fittura.domain.member.member.constant.Role;
 import com.fittura.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Builder;

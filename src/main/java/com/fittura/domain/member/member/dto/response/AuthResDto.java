@@ -1,6 +1,6 @@
-package com.fittura.domain.member.dto.response;
+package com.fittura.domain.member.member.dto.response;
 
-import com.fittura.domain.member.dto.AuthResultDto;
+import com.fittura.domain.member.member.dto.AuthResultDto;
 
 public record AuthResDto(
     Long id,
