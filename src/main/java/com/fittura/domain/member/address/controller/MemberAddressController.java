@@ -1,6 +1,7 @@
 package com.fittura.domain.member.address.controller;
 
 import com.fittura.domain.member.address.dto.request.MAddressCreateReqDto;
+import com.fittura.domain.member.address.dto.request.MAddressUpdateReqDto;
 import com.fittura.domain.member.address.dto.response.MemberAddressResDto;
 import com.fittura.domain.member.address.service.MemberAddressService;
 import com.fittura.global.rsdata.RsData;
@@ -28,7 +29,7 @@ public class MemberAddressController {
     public ResponseEntity<RsData<List<MemberAddressResDto>>> getMemberAddresses(
         @LogInMemberId Long memberId
     ) {
-        List<MemberAddressResDto> resDtos = addressService.getMemberAddresses(memberId);
+        List<MemberAddressResDto> resDtos = addressService.getAddresses(memberId);
         return ResponseEntity.ok(RsData.success("나의 배송지 목록을 조회했습니다.", resDtos));
     }
 
@@ -63,8 +64,19 @@ public class MemberAddressController {
             .body(RsData.createSuccess("나의 배송지가 저장되었습니다.", addressId));
     }
 
+    @PutMapping("/{addressId}")
+    @Operation(summary = "배송지 수정", description = "배송지 수정 API")
+    public ResponseEntity<RsData<Void>> updateMemberAddress(
+        @LogInMemberId Long memberId,
+        @PathVariable Long addressId,
+        @RequestBody @Valid MAddressUpdateReqDto reqDto
+    ) {
+        addressService.updateAddress(memberId, addressId, reqDto);
+        return ResponseEntity.ok(RsData.success("배송지가 수정되었습니다.", null));
+    }
+
     @PatchMapping("/{addressId}/default")
-    @Operation(summary = "기본 배송지 변경", description = "기본 배송지 변경")
+    @Operation(summary = "기본 배송지 변경", description = "기본 배송지 변경 API")
     public ResponseEntity<RsData<Void>> changeDefaultMemberAddress(
         @LogInMemberId Long memberId,
         @PathVariable Long addressId

@@ -1,6 +1,7 @@
 package com.fittura.domain.member.address.service;
 
 import com.fittura.domain.member.address.dto.request.MAddressCreateReqDto;
+import com.fittura.domain.member.address.dto.request.MAddressUpdateReqDto;
 import com.fittura.domain.member.address.dto.response.MemberAddressResDto;
 import com.fittura.domain.member.address.entity.MemberAddress;
 import com.fittura.domain.member.address.error.MemberAddressError;
@@ -20,7 +21,7 @@ public class MemberAddressService {
     private final MemberAddressRepository addressRepository;
 
     @Transactional(readOnly = true)
-    public List<MemberAddressResDto> getMemberAddresses(Long memberId) {
+    public List<MemberAddressResDto> getAddresses(Long memberId) {
         return addressRepository.findAllByMemberId(memberId).stream()
             .map(MemberAddressResDto::from)
             .toList();
@@ -35,7 +36,7 @@ public class MemberAddressService {
 
     @Transactional(readOnly = true)
     public MemberAddressResDto getAddress(Long memberId, Long addressId) {
-        return MemberAddressResDto.from(getAddressByIdAndMember(memberId, addressId));
+        return MemberAddressResDto.from(getAddressByIdAndMember(addressId, memberId));
     }
 
     @Transactional
@@ -57,15 +58,26 @@ public class MemberAddressService {
     }
 
     @Transactional
-    public void changeDefaultMemberAddress(Long memberId, Long addressId) {
-        MemberAddress address = getAddressByIdAndMember(memberId, addressId);
-        if (address.isDefaultAddress()) return;
+    public void updateAddress(Long memberId, Long addressId, MAddressUpdateReqDto reqDto) {
+        MemberAddress address = getAddressByIdAndMember(addressId, memberId);
 
-        getOpDefaultAddress(memberId)
-            .ifPresent(MemberAddress::unmarkDefault);
+        address.update(
+            reqDto.addressName(), reqDto.receiverName(), reqDto.phoneNumber(),
+            reqDto.zipCode(), reqDto.address(), reqDto.addressDetail(),
+            reqDto.sido(), reqDto.sigungu()
+        );
 
-        address.markDefault();
+        if (reqDto.defaultAddress()) {
+            changeDefaultAddress(memberId, address);
+        }
     }
+
+    @Transactional
+    public void changeDefaultMemberAddress(Long memberId, Long addressId) {
+        MemberAddress address = getAddressByIdAndMember(addressId, memberId);
+        changeDefaultAddress(memberId, address);
+    }
+
 
     // ========== 헬퍼 메서드 ==========
 
@@ -80,5 +92,14 @@ public class MemberAddressService {
     private MemberAddress getAddressByIdAndMember(Long addressId, Long memberId) {
         return addressRepository.findByIdAndMemberId(addressId, memberId)
             .orElseThrow(() -> new ServiceException(MemberAddressError.NOT_FOUND_ADDRESS));
+    }
+
+    private void changeDefaultAddress(Long memberId, MemberAddress address) {
+        if (address.isDefaultAddress()) return;
+
+        getOpDefaultAddress(memberId)
+            .ifPresent(MemberAddress::unmarkDefault);
+
+        address.markDefault();
     }
 }

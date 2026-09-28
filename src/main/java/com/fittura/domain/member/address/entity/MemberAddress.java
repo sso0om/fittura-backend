@@ -87,6 +87,26 @@ public class MemberAddress extends BaseEntity {
             .build();
     }
 
+    public void update(
+        String addressName,
+        String receiverName,
+        String phoneNumber,
+        String zipCode,
+        String address,
+        String addressDetail,
+        String sido,
+        String sigungu
+    ) {
+        this.addressName = addressName;
+        this.receiverName = receiverName;
+        this.phoneNumber = phoneNumber;
+        this.zipCode = zipCode;
+        this.address = address;
+        this.addressDetail = addressDetail;
+        this.sido = sido;
+        this.sigungu = sigungu;
+    }
+
     public void markDefault() {
         this.defaultAddress = true;
     }

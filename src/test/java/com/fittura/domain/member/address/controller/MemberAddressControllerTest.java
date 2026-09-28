@@ -15,6 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -32,7 +33,7 @@ class MemberAddressControllerTest extends IntegrationTestBase {
 
     @Test
     @DisplayName("배송지 목록 조회 성공 - 내 배송지만 기본 배송지 → 최근 등록 순으로 반환")
-    void getMemberAddressesSuccess() throws Exception {
+    void getAddressesSuccess() throws Exception {
         // given
         Long memberId = 30L;
         Long otherMemberId = 31L;
@@ -57,7 +58,7 @@ class MemberAddressControllerTest extends IntegrationTestBase {
 
     @Test
     @DisplayName("배송지 목록 조회 성공 - 등록된 배송지 없음: 빈 목록")
-    void getMemberAddressesSuccess_empty() throws Exception {
+    void getAddressesSuccess_empty() throws Exception {
         // given
         Long memberId = 32L;
 
@@ -228,6 +229,72 @@ class MemberAddressControllerTest extends IntegrationTestBase {
             .andExpect(jsonPath("$.code").value(MemberAddressError.NOT_FOUND_ADDRESS.getCode()));
 
         assertThat(address.isDefaultAddress()).isFalse();
+    }
+
+
+    // ========== 배송지 수정 ==========
+
+    @Test
+    @DisplayName("배송지 수정 성공 - 필드 변경, 기본 배송지 미선택 시 기본 배송지 유지")
+    void updateAddressSuccess() throws Exception {
+        // given
+        Long memberId = 50L;
+        MemberAddress defaultAddress = addressRepository.save(MemberAddressFixture.address(memberId, true));
+        MemberAddress target = addressRepository.save(MemberAddressFixture.address(memberId, false));
+
+        // when & then
+        mockMvc.perform(put(ADDRESS_URL + "/{addressId}", target.getId())
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody(false)))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value("S200-01"))
+            .andExpect(jsonPath("$.message").value("배송지가 수정되었습니다."));
+
+        assertThat(target.getAddressName()).isEqualTo("회사");
+        assertThat(target.isDefaultAddress()).isFalse();
+        assertThat(defaultAddress.isDefaultAddress()).isTrue();
+    }
+
+    @Test
+    @DisplayName("배송지 수정 성공 - 기본 배송지로 선택 시 기존 기본 배송지 해제")
+    void updateAddressSuccess_changeDefault() throws Exception {
+        // given
+        Long memberId = 51L;
+        MemberAddress oldDefault = addressRepository.save(MemberAddressFixture.address(memberId, true));
+        MemberAddress target = addressRepository.save(MemberAddressFixture.address(memberId, false));
+
+        // when & then
+        mockMvc.perform(put(ADDRESS_URL + "/{addressId}", target.getId())
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody(true)))
+            .andDo(print())
+            .andExpect(status().isOk());
+
+        assertThat(target.isDefaultAddress()).isTrue();
+        assertThat(oldDefault.isDefaultAddress()).isFalse();
+    }
+
+    @Test
+    @DisplayName("배송지 수정 실패 - 다른 회원의 배송지는 404")
+    void updateAddressFail_otherMember() throws Exception {
+        // given
+        Long ownerId = 52L;
+        Long otherMemberId = 53L;
+        MemberAddress address = addressRepository.save(MemberAddressFixture.address(ownerId, true));
+
+        // when & then
+        mockMvc.perform(put(ADDRESS_URL + "/{addressId}", address.getId())
+                .header("Authorization", userBearerToken(otherMemberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody(false)))
+            .andDo(print())
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value(MemberAddressError.NOT_FOUND_ADDRESS.getCode()));
+
+        assertThat(address.getAddressName()).isEqualTo("우리집");
     }
 
 

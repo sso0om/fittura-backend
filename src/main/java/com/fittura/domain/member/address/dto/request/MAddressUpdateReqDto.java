@@ -6,8 +6,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-@Schema(description = "나의 배송지 생성 요청 DTO")
-public record MAddressCreateReqDto(
+@Schema(description = "나의 배송지 수정 요청 DTO")
+public record MAddressUpdateReqDto(
     @Schema(example = "우리집")
     @NotBlank @Size(max = 50)
     String addressName,
