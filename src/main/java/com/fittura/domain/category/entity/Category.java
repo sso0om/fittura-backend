@@ -31,10 +31,10 @@ public class Category extends BaseEntity {
     private List<Category> children = new ArrayList<>();
 
     @Column(nullable = false)
-    private int depth;
+    private Integer depth;
 
     @Column(nullable = false)
-    private int sortOrder;
+    private Integer sortOrder;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

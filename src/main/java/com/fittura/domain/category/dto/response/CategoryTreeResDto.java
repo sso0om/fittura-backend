@@ -11,8 +11,8 @@ public record CategoryTreeResDto(
     Long id,
     String name,
     Long parentId,
-    int depth,
-    int sortOrder,
+    Integer depth,
+    Integer sortOrder,
     CategoryStatus status,
     List<CategoryTreeResDto> children
 ) {

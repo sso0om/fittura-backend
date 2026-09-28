@@ -2,6 +2,7 @@ package com.fittura.domain.category.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 
@@ -12,7 +13,7 @@ public record CategoryCreateReqDto(
 
     Long parentId,
 
-    @PositiveOrZero
-    int sortOrder
+    @NotNull @PositiveOrZero
+    Integer sortOrder
 ) {
 }

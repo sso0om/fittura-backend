@@ -69,7 +69,8 @@ public class OrderItem extends BaseEntity {
     @Column(nullable = false)
     private Long itemTotalAmount;
 
-    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
     private OrderItemStatus status;
 
 
@@ -171,7 +172,7 @@ public class OrderItem extends BaseEntity {
             .sum();
     }
 
-    private Long getTotalRefundedAmount() {
+    private long getTotalRefundedAmount() {
         return claimItems.stream()
             .filter(ci -> ci.getClaim().isConfirmed())
             .mapToLong(ClaimItem::getRefundAmount)

@@ -31,10 +31,10 @@ public class PaymentCard extends BaseEntity {
     private String cardNumberMasked;
 
     @Column(nullable = false)
-    private int installmentMonths;
+    private Integer installmentMonths;
 
     @Column(nullable = false)
-    private boolean isInterestFree;
+    private boolean interestFree;
 
     @Column(nullable = false, length = 20)
     private String approvalNumber;
@@ -44,7 +44,7 @@ public class PaymentCard extends BaseEntity {
 
     public static PaymentCard create(
         Payment payment, String issuerCode, String cardNumberMasked,
-        int installmentMonths, boolean isInterestFree, String approvalNumber
+        int installmentMonths, boolean interestFree, String approvalNumber
     ) {
         Objects.requireNonNull(payment, "Payment must not be null");
         return PaymentCard.builder()
@@ -52,7 +52,7 @@ public class PaymentCard extends BaseEntity {
             .issuerCode(issuerCode)
             .cardNumberMasked(cardNumberMasked)
             .installmentMonths(installmentMonths)
-            .isInterestFree(isInterestFree)
+            .interestFree(interestFree)
             .approvalNumber(approvalNumber)
             .build();
     }
