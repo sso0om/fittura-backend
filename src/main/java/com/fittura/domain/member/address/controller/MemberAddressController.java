@@ -13,6 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/memberAddress")
 @RequiredArgsConstructor
@@ -20,6 +22,15 @@ import org.springframework.web.bind.annotation.*;
 public class MemberAddressController {
 
     private final MemberAddressService addressService;
+
+    @GetMapping
+    @Operation(summary = "나의 배송지 목록 조회", description = "나의 배송지 목록 조회 API")
+    public ResponseEntity<RsData<List<MemberAddressResDto>>> getMemberAddresses(
+        @LogInMemberId Long memberId
+    ) {
+        List<MemberAddressResDto> resDtos = addressService.getMemberAddresses(memberId);
+        return ResponseEntity.ok(RsData.success("나의 배송지 목록을 조회했습니다.", resDtos));
+    }
 
     @GetMapping("/default")
     @Operation(summary = "나의 기본 배송지 조회", description = "나의 기본 배송지 조회 API")

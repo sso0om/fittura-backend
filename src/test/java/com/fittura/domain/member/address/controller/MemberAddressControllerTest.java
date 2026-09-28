@@ -27,6 +27,48 @@ class MemberAddressControllerTest extends IntegrationTestBase {
 
     private static final String ADDRESS_URL = "/api/v1/memberAddress";
 
+    // ========== 배송지 목록 조회 ==========
+
+    @Test
+    @DisplayName("배송지 목록 조회 성공 - 내 배송지만 기본 배송지 → 최근 등록 순으로 반환")
+    void getMemberAddressesSuccess() throws Exception {
+        // given
+        Long memberId = 30L;
+        Long otherMemberId = 31L;
+        MemberAddress oldest = addressRepository.save(MemberAddressFixture.address(memberId, false));
+        MemberAddress defaultAddress = addressRepository.save(MemberAddressFixture.address(memberId, true));
+        MemberAddress newest = addressRepository.save(MemberAddressFixture.address(memberId, false));
+        addressRepository.save(MemberAddressFixture.address(otherMemberId, true));
+
+        // when & then
+        mockMvc.perform(get(ADDRESS_URL)
+                .header("Authorization", userBearerToken(memberId)))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value("S200-01"))
+            .andExpect(jsonPath("$.message").value("나의 배송지 목록을 조회했습니다."))
+            .andExpect(jsonPath("$.data.length()").value(3))
+            .andExpect(jsonPath("$.data[0].addressId").value(defaultAddress.getId()))
+            .andExpect(jsonPath("$.data[0].defaultAddress").value(true))
+            .andExpect(jsonPath("$.data[1].addressId").value(newest.getId()))
+            .andExpect(jsonPath("$.data[2].addressId").value(oldest.getId()));
+    }
+
+    @Test
+    @DisplayName("배송지 목록 조회 성공 - 등록된 배송지 없음: 빈 목록")
+    void getMemberAddressesSuccess_empty() throws Exception {
+        // given
+        Long memberId = 32L;
+
+        // when & then
+        mockMvc.perform(get(ADDRESS_URL)
+                .header("Authorization", userBearerToken(memberId)))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data").isArray())
+            .andExpect(jsonPath("$.data").isEmpty());
+    }
+
     // ========== 기본 배송지 조회 ==========
 
     @Test

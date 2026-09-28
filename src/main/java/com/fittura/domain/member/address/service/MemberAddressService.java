@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -17,6 +18,13 @@ import java.util.Optional;
 public class MemberAddressService {
 
     private final MemberAddressRepository addressRepository;
+
+    @Transactional(readOnly = true)
+    public List<MemberAddressResDto> getMemberAddresses(Long memberId) {
+        return addressRepository.findAllByMemberId(memberId).stream()
+            .map(MemberAddressResDto::from)
+            .toList();
+    }
 
     @Transactional(readOnly = true)
     public MemberAddressResDto getDefaultAddress(Long memberId) {
