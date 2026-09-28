@@ -1,6 +1,7 @@
 package com.fittura.domain.member.address.service;
 
 import com.fittura.domain.member.address.dto.request.MAddressCreateReqDto;
+import com.fittura.domain.member.address.dto.response.DefaultAddressResDto;
 import com.fittura.domain.member.address.entity.MemberAddress;
 import com.fittura.domain.member.address.repository.MemberAddressRepository;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,13 @@ import java.util.Optional;
 public class MemberAddressService {
 
     private final MemberAddressRepository addressRepository;
+
+    @Transactional(readOnly = true)
+    public DefaultAddressResDto getDefaultAddress(Long memberId) {
+        return getOpDefaultAddress(memberId)
+            .map(DefaultAddressResDto::from)
+            .orElse(null);
+    }
 
     @Transactional
     public Long createAddress(Long memberId, MAddressCreateReqDto reqDto) {

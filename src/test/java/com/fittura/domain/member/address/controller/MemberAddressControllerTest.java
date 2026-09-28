@@ -4,7 +4,6 @@ import com.fittura.domain.member.address.entity.MemberAddress;
 import com.fittura.domain.member.address.repository.MemberAddressRepository;
 import com.fittura.domain.member.address.support.MemberAddressFixture;
 import com.fittura.global.IntegrationTestBase;
-import com.fittura.global.error.CommonErrorCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -25,6 +25,46 @@ class MemberAddressControllerTest extends IntegrationTestBase {
     private MemberAddressRepository addressRepository;
 
     private static final String ADDRESS_URL = "/api/v1/memberAddress";
+
+    // ========== 기본 배송지 조회 ==========
+
+    @Test
+    @DisplayName("기본 배송지 조회 성공 - 기본 배송지 반환")
+    void getDefaultAddressSuccess() throws Exception {
+        // given
+        Long memberId = 10L;
+        addressRepository.save(MemberAddressFixture.address(memberId, false));
+        MemberAddress defaultAddress = addressRepository.save(MemberAddressFixture.address(memberId, true));
+
+        // when & then
+        mockMvc.perform(get(ADDRESS_URL + "/default")
+                .header("Authorization", userBearerToken(memberId)))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value("S200-01"))
+            .andExpect(jsonPath("$.message").value("나의 기본 배송지를 조회했습니다."))
+            .andExpect(jsonPath("$.data.addressId").value(defaultAddress.getId()))
+            .andExpect(jsonPath("$.data.addressName").value("우리집"))
+            .andExpect(jsonPath("$.data.zipCode").value("12345"))
+            .andExpect(jsonPath("$.data.address").value("서울특별시 중구 서소문로 127"))
+            .andExpect(jsonPath("$.data.addressDetail").value("시청역"));
+    }
+
+    @Test
+    @DisplayName("기본 배송지 조회 성공 - 등록된 배송지 없음: data null")
+    void getDefaultAddressSuccess_noAddress() throws Exception {
+        // given
+        Long memberId = 11L;
+
+        // when & then
+        mockMvc.perform(get(ADDRESS_URL + "/default")
+                .header("Authorization", userBearerToken(memberId)))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value("S200-01"))
+            .andExpect(jsonPath("$.data").value((Object) null));
+    }
+
 
     // ========== 배송지 등록 ==========
 

@@ -1,6 +1,7 @@
 package com.fittura.domain.member.address.controller;
 
 import com.fittura.domain.member.address.dto.request.MAddressCreateReqDto;
+import com.fittura.domain.member.address.dto.response.DefaultAddressResDto;
 import com.fittura.domain.member.address.service.MemberAddressService;
 import com.fittura.global.rsdata.RsData;
 import com.fittura.global.security.LogInMemberId;
@@ -10,10 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/memberAddress")
@@ -22,6 +20,15 @@ import org.springframework.web.bind.annotation.RestController;
 public class MemberAddressController {
 
     private final MemberAddressService addressService;
+
+    @GetMapping("/default")
+    @Operation(summary = "나의 기본 배송지 조회", description = "나의 기본 배송지 조회 API")
+    public ResponseEntity<RsData<DefaultAddressResDto>> getDefaultAddress(
+        @LogInMemberId Long memberId
+    ) {
+        DefaultAddressResDto resDto = addressService.getDefaultAddress(memberId);
+        return ResponseEntity.ok(RsData.success("나의 기본 배송지를 조회했습니다.", resDto));
+    }
 
     @PostMapping
     @Operation(summary = "나의 배송지 등록", description = "나의 배송지 등록 API")
