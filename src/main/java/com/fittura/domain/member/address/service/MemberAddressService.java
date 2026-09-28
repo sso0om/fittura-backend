@@ -1,9 +1,11 @@
 package com.fittura.domain.member.address.service;
 
 import com.fittura.domain.member.address.dto.request.MAddressCreateReqDto;
-import com.fittura.domain.member.address.dto.response.DefaultAddressResDto;
+import com.fittura.domain.member.address.dto.response.MemberAddressResDto;
 import com.fittura.domain.member.address.entity.MemberAddress;
+import com.fittura.domain.member.address.error.MemberAddressError;
 import com.fittura.domain.member.address.repository.MemberAddressRepository;
+import com.fittura.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,10 +19,18 @@ public class MemberAddressService {
     private final MemberAddressRepository addressRepository;
 
     @Transactional(readOnly = true)
-    public DefaultAddressResDto getDefaultAddress(Long memberId) {
+    public MemberAddressResDto getDefaultAddress(Long memberId) {
         return getOpDefaultAddress(memberId)
-            .map(DefaultAddressResDto::from)
+            .map(MemberAddressResDto::from)
             .orElse(null);
+    }
+
+    @Transactional(readOnly = true)
+    public MemberAddressResDto getAddress(Long memberId, Long addressId) {
+        MemberAddress address = addressRepository.findByIdAndMemberId(addressId, memberId)
+            .orElseThrow(() -> new ServiceException(MemberAddressError.NOT_FOUND_ADDRESS));
+
+        return MemberAddressResDto.from(address);
     }
 
     @Transactional
@@ -40,6 +50,9 @@ public class MemberAddressService {
         addressRepository.save(address);
         return address.getId();
     }
+
+
+    // ========== 헬퍼 메서드 ==========
 
     private boolean existsByMemberId(Long memberId) {
         return addressRepository.existsByMemberId(memberId);

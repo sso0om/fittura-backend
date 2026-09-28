@@ -1,6 +1,7 @@
 package com.fittura.domain.member.address.controller;
 
 import com.fittura.domain.member.address.entity.MemberAddress;
+import com.fittura.domain.member.address.error.MemberAddressError;
 import com.fittura.domain.member.address.repository.MemberAddressRepository;
 import com.fittura.domain.member.address.support.MemberAddressFixture;
 import com.fittura.global.IntegrationTestBase;
@@ -63,6 +64,44 @@ class MemberAddressControllerTest extends IntegrationTestBase {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.code").value("S200-01"))
             .andExpect(jsonPath("$.data").value((Object) null));
+    }
+
+
+    // ========== 배송지 단건 조회 ==========
+
+    @Test
+    @DisplayName("배송지 조회 성공 - 기본 배송지가 아닌 주소도 조회")
+    void getAddressSuccess() throws Exception {
+        // given
+        Long memberId = 20L;
+        addressRepository.save(MemberAddressFixture.address(memberId, true));
+        MemberAddress address = addressRepository.save(MemberAddressFixture.address(memberId, false));
+
+        // when & then
+        mockMvc.perform(get(ADDRESS_URL + "/{addressId}", address.getId())
+                .header("Authorization", userBearerToken(memberId)))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value("S200-01"))
+            .andExpect(jsonPath("$.message").value("배송지를 조회했습니다."))
+            .andExpect(jsonPath("$.data.addressId").value(address.getId()))
+            .andExpect(jsonPath("$.data.zipCode").value("12345"));
+    }
+
+    @Test
+    @DisplayName("배송지 조회 실패 - 다른 회원의 배송지는 404")
+    void getAddressFail_otherMember() throws Exception {
+        // given
+        Long ownerId = 21L;
+        Long otherMemberId = 22L;
+        MemberAddress address = addressRepository.save(MemberAddressFixture.address(ownerId, true));
+
+        // when & then
+        mockMvc.perform(get(ADDRESS_URL + "/{addressId}", address.getId())
+                .header("Authorization", userBearerToken(otherMemberId)))
+            .andDo(print())
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value(MemberAddressError.NOT_FOUND_ADDRESS.getCode()));
     }
 
 

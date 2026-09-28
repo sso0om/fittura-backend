@@ -59,7 +59,6 @@ public class MemberAddress extends BaseEntity {
     @Column(nullable = false)
     private boolean defaultAddress;
 
-
     public static MemberAddress create(
         Long memberId,
         String addressName,

@@ -1,7 +1,7 @@
 package com.fittura.domain.member.address.controller;
 
 import com.fittura.domain.member.address.dto.request.MAddressCreateReqDto;
-import com.fittura.domain.member.address.dto.response.DefaultAddressResDto;
+import com.fittura.domain.member.address.dto.response.MemberAddressResDto;
 import com.fittura.domain.member.address.service.MemberAddressService;
 import com.fittura.global.rsdata.RsData;
 import com.fittura.global.security.LogInMemberId;
@@ -23,11 +23,21 @@ public class MemberAddressController {
 
     @GetMapping("/default")
     @Operation(summary = "나의 기본 배송지 조회", description = "나의 기본 배송지 조회 API")
-    public ResponseEntity<RsData<DefaultAddressResDto>> getDefaultAddress(
+    public ResponseEntity<RsData<MemberAddressResDto>> getDefaultAddress(
         @LogInMemberId Long memberId
     ) {
-        DefaultAddressResDto resDto = addressService.getDefaultAddress(memberId);
+        MemberAddressResDto resDto = addressService.getDefaultAddress(memberId);
         return ResponseEntity.ok(RsData.success("나의 기본 배송지를 조회했습니다.", resDto));
+    }
+
+    @GetMapping("/{addressId}")
+    @Operation(summary = "배송지 조회", description = "배송지 조회 API")
+    public ResponseEntity<RsData<MemberAddressResDto>> getAddress(
+        @LogInMemberId Long memberId,
+        @PathVariable Long addressId
+    ) {
+        MemberAddressResDto resDto = addressService.getAddress(memberId, addressId);
+        return ResponseEntity.ok(RsData.success("배송지를 조회했습니다.", resDto));
     }
 
     @PostMapping
