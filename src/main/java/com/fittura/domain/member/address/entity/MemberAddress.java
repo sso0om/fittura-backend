@@ -87,6 +87,10 @@ public class MemberAddress extends BaseEntity {
             .build();
     }
 
+    public void markDefault() {
+        this.defaultAddress = true;
+    }
+
     public void unmarkDefault() {
         this.defaultAddress = false;
     }

@@ -13,6 +13,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -187,6 +188,46 @@ class MemberAddressControllerTest extends IntegrationTestBase {
         MemberAddress newDefault = addressRepository.findByMemberIdAndDefaultAddressTrue(memberId).orElseThrow();
         assertThat(newDefault.getId()).isNotEqualTo(oldDefault.getId());
         assertThat(oldDefault.isDefaultAddress()).isFalse();
+    }
+
+    // ========== 기본 배송지 변경 ==========
+
+    @Test
+    @DisplayName("기본 배송지 변경 성공 - 기존 기본 배송지 해제")
+    void changeDefaultAddressSuccess() throws Exception {
+        // given
+        Long memberId = 40L;
+        MemberAddress oldDefault = addressRepository.save(MemberAddressFixture.address(memberId, true));
+        MemberAddress target = addressRepository.save(MemberAddressFixture.address(memberId, false));
+
+        // when & then
+        mockMvc.perform(patch(ADDRESS_URL + "/{addressId}/default", target.getId())
+                .header("Authorization", userBearerToken(memberId)))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value("S200-01"))
+            .andExpect(jsonPath("$.message").value("기본 배송지가 변경되었습니다."));
+
+        assertThat(target.isDefaultAddress()).isTrue();
+        assertThat(oldDefault.isDefaultAddress()).isFalse();
+    }
+
+    @Test
+    @DisplayName("기본 배송지 변경 실패 - 다른 회원의 배송지는 404")
+    void changeDefaultAddressFail_otherMember() throws Exception {
+        // given
+        Long ownerId = 41L;
+        Long otherMemberId = 42L;
+        MemberAddress address = addressRepository.save(MemberAddressFixture.address(ownerId, false));
+
+        // when & then
+        mockMvc.perform(patch(ADDRESS_URL + "/{addressId}/default", address.getId())
+                .header("Authorization", userBearerToken(otherMemberId)))
+            .andDo(print())
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value(MemberAddressError.NOT_FOUND_ADDRESS.getCode()));
+
+        assertThat(address.isDefaultAddress()).isFalse();
     }
 
 

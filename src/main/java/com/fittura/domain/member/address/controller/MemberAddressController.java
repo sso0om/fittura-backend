@@ -62,4 +62,14 @@ public class MemberAddressController {
             .status(HttpStatus.CREATED)
             .body(RsData.createSuccess("나의 배송지가 저장되었습니다.", addressId));
     }
+
+    @PatchMapping("/{addressId}/default")
+    @Operation(summary = "기본 배송지 변경", description = "기본 배송지 변경")
+    public ResponseEntity<RsData<Void>> changeDefaultMemberAddress(
+        @LogInMemberId Long memberId,
+        @PathVariable Long addressId
+    ) {
+        addressService.changeDefaultMemberAddress(memberId, addressId);
+        return ResponseEntity.ok(RsData.success("기본 배송지가 변경되었습니다.", null));
+    }
 }

@@ -35,10 +35,7 @@ public class MemberAddressService {
 
     @Transactional(readOnly = true)
     public MemberAddressResDto getAddress(Long memberId, Long addressId) {
-        MemberAddress address = addressRepository.findByIdAndMemberId(addressId, memberId)
-            .orElseThrow(() -> new ServiceException(MemberAddressError.NOT_FOUND_ADDRESS));
-
-        return MemberAddressResDto.from(address);
+        return MemberAddressResDto.from(getAddressByIdAndMember(memberId, addressId));
     }
 
     @Transactional
@@ -59,6 +56,16 @@ public class MemberAddressService {
         return address.getId();
     }
 
+    @Transactional
+    public void changeDefaultMemberAddress(Long memberId, Long addressId) {
+        MemberAddress address = getAddressByIdAndMember(memberId, addressId);
+        if (address.isDefaultAddress()) return;
+
+        getOpDefaultAddress(memberId)
+            .ifPresent(MemberAddress::unmarkDefault);
+
+        address.markDefault();
+    }
 
     // ========== 헬퍼 메서드 ==========
 
@@ -68,5 +75,10 @@ public class MemberAddressService {
 
     private Optional<MemberAddress> getOpDefaultAddress(Long memberId) {
         return addressRepository.findByMemberIdAndDefaultAddressTrue(memberId);
+    }
+
+    private MemberAddress getAddressByIdAndMember(Long addressId, Long memberId) {
+        return addressRepository.findByIdAndMemberId(addressId, memberId)
+            .orElseThrow(() -> new ServiceException(MemberAddressError.NOT_FOUND_ADDRESS));
     }
 }
