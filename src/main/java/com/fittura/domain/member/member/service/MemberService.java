@@ -19,7 +19,7 @@ public class MemberService {
     private final MemberRepository memberRepository;
 
     @Transactional(readOnly = true)
-    public Member findById(long id) {
+    public Member findById(Long id) {
         return memberRepository.findById(id)
             .orElseThrow(() -> new ServiceException(MemberErrorCode.NOT_FOUND_MEMBER));
     }

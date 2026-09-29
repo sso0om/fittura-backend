@@ -44,7 +44,7 @@ public class PaymentCard extends BaseEntity {
 
     public static PaymentCard create(
         Payment payment, String issuerCode, String cardNumberMasked,
-        int installmentMonths, boolean interestFree, String approvalNumber
+        Integer installmentMonths, boolean interestFree, String approvalNumber
     ) {
         Objects.requireNonNull(payment, "Payment must not be null");
         return PaymentCard.builder()

@@ -116,7 +116,7 @@ public class OrderItem extends BaseEntity {
         this.itemTotalAmount = itemTotalAmount - discountAmount;
     }
 
-    public Long calcRefundAmount(int claimQuantity) {
+    public Long calcRefundAmount(Integer claimQuantity) {
         int remaining = quantity - getTotalClaimQuantity();
 
         if (claimQuantity == remaining) {

@@ -43,19 +43,19 @@ public class Category extends BaseEntity {
 
     // ===== 생성 =====
 
-    private Category(String name, int sortOrder) {
+    private Category(String name, Integer sortOrder) {
         this.name = name;
         this.sortOrder = sortOrder;
         this.status = CategoryStatus.DISABLED;
     }
 
-    public static Category createRoot(String name, int sortOrder) {
+    public static Category createRoot(String name, Integer sortOrder) {
         Category category = new Category(name, sortOrder);
         category.setDepth(0);
         return category;
     }
 
-    public static Category createChild(String name, int sortOrder, Category parent) {
+    public static Category createChild(String name, Integer sortOrder, Category parent) {
         Objects.requireNonNull(parent, "parent must not be null");
 
         if (parent.isArchived()) {
@@ -70,7 +70,7 @@ public class Category extends BaseEntity {
 
     // ===== 수정 =====
 
-    public void update(String name, int sortOrder) {
+    public void update(String name, Integer sortOrder) {
         this.name = name;
         this.sortOrder = sortOrder;
     }
@@ -149,7 +149,7 @@ public class Category extends BaseEntity {
         this.parent = newParent;
     }
 
-    private void updateDepthRecursively(int newDepth) {
+    private void updateDepthRecursively(Integer newDepth) {
         this.depth = newDepth;
 
         for (Category child : this.children) {
@@ -182,7 +182,7 @@ public class Category extends BaseEntity {
         this.parent = parent;
     }
 
-    private void setDepth(int depth) {
+    private void setDepth(Integer depth) {
         this.depth = depth;
     }
 
