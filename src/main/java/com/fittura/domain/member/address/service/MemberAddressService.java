@@ -78,11 +78,24 @@ public class MemberAddressService {
         changeDefaultAddress(memberId, address);
     }
 
+    @Transactional
+    public void deleteMemberAddress(Long memberId, Long addressId) {
+        MemberAddress address = getAddressByIdAndMember(addressId, memberId);
+        if (address.isDefaultAddress() && existsByMemberIdAndIdNot(memberId, addressId)) {
+            throw new ServiceException(MemberAddressError.CAN_NOT_DELETE_DEFAULT_ADDRESS);
+        }
+        addressRepository.delete(address);
+    }
+
 
     // ========== 헬퍼 메서드 ==========
 
     private boolean existsByMemberId(Long memberId) {
         return addressRepository.existsByMemberId(memberId);
+    }
+
+    private boolean existsByMemberIdAndIdNot(Long memberId, Long addressId) {
+        return addressRepository.existsByMemberIdAndIdNot(memberId, addressId);
     }
 
     private Optional<MemberAddress> getOpDefaultAddress(Long memberId) {

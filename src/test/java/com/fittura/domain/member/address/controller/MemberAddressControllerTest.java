@@ -12,6 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -277,24 +278,60 @@ class MemberAddressControllerTest extends IntegrationTestBase {
         assertThat(oldDefault.isDefaultAddress()).isFalse();
     }
 
+
+    // ========== 배송지 삭제 ==========
+
     @Test
-    @DisplayName("배송지 수정 실패 - 다른 회원의 배송지는 404")
-    void updateAddressFail_otherMember() throws Exception {
+    @DisplayName("배송지 삭제 성공 - 기본 배송지가 아닌 주소")
+    void deleteAddressSuccess() throws Exception {
         // given
-        Long ownerId = 52L;
-        Long otherMemberId = 53L;
-        MemberAddress address = addressRepository.save(MemberAddressFixture.address(ownerId, true));
+        Long memberId = 60L;
+        addressRepository.save(MemberAddressFixture.address(memberId, true));
+        MemberAddress target = addressRepository.save(MemberAddressFixture.address(memberId, false));
 
         // when & then
-        mockMvc.perform(put(ADDRESS_URL + "/{addressId}", address.getId())
-                .header("Authorization", userBearerToken(otherMemberId))
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(reqBody(false)))
+        mockMvc.perform(delete(ADDRESS_URL + "/{addressId}", target.getId())
+                .header("Authorization", userBearerToken(memberId)))
             .andDo(print())
-            .andExpect(status().isNotFound())
-            .andExpect(jsonPath("$.code").value(MemberAddressError.NOT_FOUND_ADDRESS.getCode()));
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value("S200-01"))
+            .andExpect(jsonPath("$.message").value("배송지가 삭제되었습니다."));
 
-        assertThat(address.getAddressName()).isEqualTo("우리집");
+        assertThat(addressRepository.existsById(target.getId())).isFalse();
+    }
+
+    @Test
+    @DisplayName("배송지 삭제 성공 - 마지막 남은 기본 배송지는 삭제 가능")
+    void deleteAddressSuccess_lastDefaultAddress() throws Exception {
+        // given
+        Long memberId = 61L;
+        MemberAddress target = addressRepository.save(MemberAddressFixture.address(memberId, true));
+
+        // when & then
+        mockMvc.perform(delete(ADDRESS_URL + "/{addressId}", target.getId())
+                .header("Authorization", userBearerToken(memberId)))
+            .andDo(print())
+            .andExpect(status().isOk());
+
+        assertThat(addressRepository.existsByMemberId(memberId)).isFalse();
+    }
+
+    @Test
+    @DisplayName("배송지 삭제 실패 - 다른 주소가 있으면 기본 배송지는 삭제 불가")
+    void deleteAddressFail_defaultAddress() throws Exception {
+        // given
+        Long memberId = 62L;
+        MemberAddress target = addressRepository.save(MemberAddressFixture.address(memberId, true));
+        addressRepository.save(MemberAddressFixture.address(memberId, false));
+
+        // when & then
+        mockMvc.perform(delete(ADDRESS_URL + "/{addressId}", target.getId())
+                .header("Authorization", userBearerToken(memberId)))
+            .andDo(print())
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value(MemberAddressError.CAN_NOT_DELETE_DEFAULT_ADDRESS.getCode()));
+
+        assertThat(addressRepository.existsById(target.getId())).isTrue();
     }
 
 

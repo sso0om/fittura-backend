@@ -84,4 +84,14 @@ public class MemberAddressController {
         addressService.changeDefaultMemberAddress(memberId, addressId);
         return ResponseEntity.ok(RsData.success("기본 배송지가 변경되었습니다.", null));
     }
+
+    @DeleteMapping("/{addressId}")
+    @Operation(summary = "배송지 삭제", description = "배송지 삭제 API")
+    public ResponseEntity<RsData<Void>> deleteAddress(
+        @LogInMemberId Long memberId,
+        @PathVariable Long addressId
+    ) {
+        addressService.deleteMemberAddress(memberId, addressId);
+        return ResponseEntity.ok(RsData.success("배송지가 삭제되었습니다.", null));
+    }
 }

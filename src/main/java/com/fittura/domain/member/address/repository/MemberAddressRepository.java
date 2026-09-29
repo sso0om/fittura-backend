@@ -22,4 +22,6 @@ public interface MemberAddressRepository extends JpaRepository<MemberAddress, Lo
     Optional<MemberAddress> findByMemberIdAndDefaultAddressTrue(Long memberId);
 
     boolean existsByMemberId(Long memberId);
+
+    boolean existsByMemberIdAndIdNot(Long memberId, Long addressId);
 }
