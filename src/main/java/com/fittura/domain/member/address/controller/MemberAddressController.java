@@ -19,7 +19,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/memberAddress")
 @RequiredArgsConstructor
-@Tag(name = "Auth V1", description = "사용자 배송지 CRUD 관련 API")
+@Tag(name = "MemberAddress V1", description = "사용자 배송지 CRUD 관련 API")
 public class MemberAddressController {
 
     private final MemberAddressService addressService;
