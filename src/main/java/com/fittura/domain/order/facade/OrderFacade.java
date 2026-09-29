@@ -48,7 +48,6 @@ public class OrderFacade {
         }
         orderService.createOrderAddress(order, reqDto.orderAddress());
         orderService.calcAmount(order);
-
         return order.getId();
     }
 

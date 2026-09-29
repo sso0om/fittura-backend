@@ -1,5 +1,7 @@
 package com.fittura.domain.order.order.entity;
 
+import com.fittura.domain.delivery.delivery.constant.DeliveryType;
+import com.fittura.domain.delivery.delivery.util.DeliveryFeeCalculator;
 import com.fittura.domain.order.order.constant.OrderStatus;
 import com.fittura.domain.order.order.error.OrderErrorCode;
 import com.fittura.global.error.CommonErrorCode;
@@ -100,18 +102,29 @@ public class Order extends BaseEntity {
         discountAmount += item.getDiscountAmount();
     }
 
+
+    // ===== Calc =====
+
     public void calcDiscountAmount(Long discountAmount) {
         // TODO: promotion 기능 때 반영 예정
         this.discountAmount = discountAmount;
     }
 
     public void calcDeliveryFee() {
-        // TODO: delivery 기능 때 반영 예정
+        Map<DeliveryType, List<OrderItem>> itemsByType = items.stream()
+            .collect(groupingBy(OrderItem::getDeliveryType));
+
+        this.deliveryFee = itemsByType.entrySet().stream()
+            .mapToLong(entry -> calcDeliveryFeeByType(entry.getKey(), entry.getValue()))
+            .sum();
     }
 
     public void calcFinalAmount() {
         finalAmount = totalAmount - discountAmount - pointUsedAmount + deliveryFee;
     }
+
+
+    // ===== getter =====
 
     public Map<Long, Integer> getQuantityBySkuId() {
         return items.stream()
@@ -166,12 +179,24 @@ public class Order extends BaseEntity {
         }
     }
 
-
-    // ===== 헬퍼 메서드 =====
-
     private static void validateAmount(Long amount) {
         if (amount == null || amount < 0) {
             throw new ServiceException(OrderErrorCode.AMOUNT_MUST_BE_POSITIVE);
         }
+    }
+
+
+    // ===== 헬퍼 메서드 =====
+
+    private long calcDeliveryFeeByType(DeliveryType type, List<OrderItem> items) {
+        long amount = items.stream()
+            .mapToLong(OrderItem::getItemTotalAmount)
+            .sum();
+
+        int quantity = items.stream()
+            .mapToInt(OrderItem::getQuantity)
+            .sum();
+
+        return DeliveryFeeCalculator.calculate(type, amount, quantity);
     }
 }

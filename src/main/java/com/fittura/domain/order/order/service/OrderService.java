@@ -57,7 +57,7 @@ public class OrderService {
 
     public void calcAmount(Order order) {
         // TODO: calcDiscountAmount
-        // TODO: calcDeliveryFee
+        order.calcDeliveryFee();
         order.calcFinalAmount();
     }
 

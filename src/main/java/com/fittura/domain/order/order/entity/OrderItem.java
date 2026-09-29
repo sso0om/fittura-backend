@@ -1,5 +1,6 @@
 package com.fittura.domain.order.order.entity;
 
+import com.fittura.domain.delivery.delivery.constant.DeliveryType;
 import com.fittura.domain.order.order.constant.OrderItemStatus;
 import com.fittura.domain.order.order.error.OrderErrorCode;
 import com.fittura.domain.product.sku.entity.ProductSku;
@@ -106,6 +107,9 @@ public class OrderItem extends BaseEntity {
         claimItems.add(claimItem);
     }
 
+
+    // ===== Calc =====
+
     public void calcDiscountAmount(Long discountAmount) {
         // TODO: promotion 기능 때 반영 예정
         this.discountAmount = discountAmount;
@@ -120,6 +124,9 @@ public class OrderItem extends BaseEntity {
         }
         return itemTotalAmount * claimQuantity / quantity;
     }
+
+
+    // ===== Delivery =====
 
     public void assignDelivery(Long deliveryId) {
         // TODO: delivery의 order와 orderItem의 Order 일치 여부는 delivery 생성 로직에서 진행
@@ -146,6 +153,13 @@ public class OrderItem extends BaseEntity {
     public boolean isCanceled() {
         return status == OrderItemStatus.CANCELLED;
     }
+
+
+    // ===== getter =====
+    public DeliveryType getDeliveryType() {
+        return sku.getProduct().getDeliveryType();
+    }
+
 
     // ===== 유효성 검증 =====
 
