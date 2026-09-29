@@ -10,6 +10,8 @@ public record MemberAddressResDto(
     String zipCode,
     String address,
     String addressDetail,
+    String sido,
+    String sigungu,
     boolean defaultAddress
 ) {
     public static MemberAddressResDto from(MemberAddress address) {
@@ -21,6 +23,8 @@ public record MemberAddressResDto(
             address.getZipCode(),
             address.getAddress(),
             address.getAddressDetail(),
+            address.getSido(),
+            address.getSigungu(),
             address.isDefaultAddress()
         );
     }
