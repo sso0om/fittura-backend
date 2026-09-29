@@ -25,10 +25,11 @@ public record MAddressCreateReqDto(
     String zipCode,
 
     @Schema(example = "서울특별시 중구 서소문로 127")
-    @NotBlank
+    @NotBlank @Size(max = 255)
     String address,
 
     @Schema(example = "시청역")
+    @Size(max = 255)
     String addressDetail,
 
     @Schema(example = "서울특별시")
