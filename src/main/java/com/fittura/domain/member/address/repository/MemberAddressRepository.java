@@ -2,6 +2,7 @@ package com.fittura.domain.member.address.repository;
 
 import com.fittura.domain.member.address.entity.MemberAddress;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -19,9 +20,18 @@ public interface MemberAddressRepository extends JpaRepository<MemberAddress, Lo
 
     Optional<MemberAddress> findByIdAndMemberId(Long addressId, Long memberId);
 
-    Optional<MemberAddress> findByMemberIdAndDefaultAddressTrue(Long memberId);
+    Optional<MemberAddress> findFirstByMemberIdAndDefaultAddressTrueOrderByIdDesc(Long memberId);
 
     boolean existsByMemberId(Long memberId);
 
     boolean existsByMemberIdAndIdNot(Long memberId, Long addressId);
+
+    @Modifying
+    @Query("""
+        UPDATE MemberAddress a
+        SET a.defaultAddress = false
+        WHERE a.memberId = :memberId
+        AND a.defaultAddress = true
+        """)
+    void unmarkAllDefault(@Param("memberId") Long memberId);
 }

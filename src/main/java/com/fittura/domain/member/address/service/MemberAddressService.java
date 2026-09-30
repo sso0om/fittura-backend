@@ -44,8 +44,7 @@ public class MemberAddressService {
         boolean defaultAddress = reqDto.defaultAddress() || !existsByMemberId(memberId);
 
         if (reqDto.defaultAddress()) {
-            getOpDefaultAddress(memberId)
-                .ifPresent(MemberAddress::unmarkDefault);
+            addressRepository.unmarkAllDefault(memberId);
         }
 
         MemberAddress address = MemberAddress.create(
@@ -99,7 +98,7 @@ public class MemberAddressService {
     }
 
     private Optional<MemberAddress> getOpDefaultAddress(Long memberId) {
-        return addressRepository.findByMemberIdAndDefaultAddressTrue(memberId);
+        return addressRepository.findFirstByMemberIdAndDefaultAddressTrueOrderByIdDesc(memberId);
     }
 
     private MemberAddress getAddressByIdAndMember(Long addressId, Long memberId) {
@@ -110,9 +109,7 @@ public class MemberAddressService {
     private void changeDefaultAddress(Long memberId, MemberAddress address) {
         if (address.isDefaultAddress()) return;
 
-        getOpDefaultAddress(memberId)
-            .ifPresent(MemberAddress::unmarkDefault);
-
+        addressRepository.unmarkAllDefault(memberId);
         address.markDefault();
     }
 }

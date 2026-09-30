@@ -5,6 +5,7 @@ import com.fittura.domain.member.address.error.MemberAddressError;
 import com.fittura.domain.member.address.repository.MemberAddressRepository;
 import com.fittura.domain.member.address.support.MemberAddressFixture;
 import com.fittura.global.IntegrationTestBase;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,8 @@ class MemberAddressControllerTest extends IntegrationTestBase {
     private MockMvc mockMvc;
     @Autowired
     private MemberAddressRepository addressRepository;
+    @Autowired
+    private EntityManager em;
 
     private static final String ADDRESS_URL = "/api/v1/memberAddress";
 
@@ -168,7 +171,7 @@ class MemberAddressControllerTest extends IntegrationTestBase {
             .andExpect(jsonPath("$.code").value("S201-01"))
             .andExpect(jsonPath("$.message").value("나의 배송지가 저장되었습니다."));
 
-        MemberAddress saved = addressRepository.findByMemberIdAndDefaultAddressTrue(memberId).orElseThrow();
+        MemberAddress saved = addressRepository.findFirstByMemberIdAndDefaultAddressTrueOrderByIdDesc(memberId).orElseThrow();
         assertThat(saved.getAddressName()).isEqualTo("회사");
     }
 
@@ -187,9 +190,9 @@ class MemberAddressControllerTest extends IntegrationTestBase {
             .andDo(print())
             .andExpect(status().isCreated());
 
-        MemberAddress newDefault = addressRepository.findByMemberIdAndDefaultAddressTrue(memberId).orElseThrow();
+        MemberAddress newDefault = addressRepository.findFirstByMemberIdAndDefaultAddressTrueOrderByIdDesc(memberId).orElseThrow();
         assertThat(newDefault.getId()).isNotEqualTo(oldDefault.getId());
-        assertThat(oldDefault.isDefaultAddress()).isFalse();
+        assertThat(reload(oldDefault).isDefaultAddress()).isFalse();
     }
 
     // ========== 기본 배송지 변경 ==========
@@ -210,8 +213,8 @@ class MemberAddressControllerTest extends IntegrationTestBase {
             .andExpect(jsonPath("$.code").value("S200-01"))
             .andExpect(jsonPath("$.message").value("기본 배송지가 변경되었습니다."));
 
-        assertThat(target.isDefaultAddress()).isTrue();
-        assertThat(oldDefault.isDefaultAddress()).isFalse();
+        assertThat(reload(target).isDefaultAddress()).isTrue();
+        assertThat(reload(oldDefault).isDefaultAddress()).isFalse();
     }
 
     @Test
@@ -274,8 +277,8 @@ class MemberAddressControllerTest extends IntegrationTestBase {
             .andDo(print())
             .andExpect(status().isOk());
 
-        assertThat(target.isDefaultAddress()).isTrue();
-        assertThat(oldDefault.isDefaultAddress()).isFalse();
+        assertThat(reload(target).isDefaultAddress()).isTrue();
+        assertThat(reload(oldDefault).isDefaultAddress()).isFalse();
     }
 
 
@@ -351,5 +354,12 @@ class MemberAddressControllerTest extends IntegrationTestBase {
                 "defaultAddress": %b
             }
             """.formatted(defaultAddress);
+    }
+
+    // 벌크 UPDATE는 영속성 컨텍스트를 거치지 않으므로 DB 기준으로 다시 조회
+    private MemberAddress reload(MemberAddress address) {
+        em.flush();
+        em.clear();
+        return addressRepository.findById(address.getId()).orElseThrow();
     }
 }
