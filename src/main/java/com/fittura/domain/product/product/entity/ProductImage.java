@@ -29,7 +29,7 @@ public class ProductImage extends BaseEntity {
     private ImageType imageType;
 
     @Column(nullable = false)
-    private int sortOrder = 0;
+    private Integer sortOrder = 0;
 
     @Column(length = 255)
     private String altText;

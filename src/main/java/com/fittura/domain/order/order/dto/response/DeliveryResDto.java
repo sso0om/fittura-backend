@@ -11,6 +11,6 @@ public record DeliveryResDto(
     DeliveryType deliveryType,
     DeliveryStatus status,
     @Schema(description = "대표 상품명") String repProductName,
-    @Schema(description = "상품 종류 수") int itemCnt
+    @Schema(description = "상품 종류 수") Integer itemCnt
 ) {
 }

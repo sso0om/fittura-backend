@@ -7,8 +7,8 @@ public record CategoryResDto(
     Long id,
     String name,
     Long parentId,
-    int depth,
-    int sortOrder,
+    Integer depth,
+    Integer sortOrder,
     CategoryStatus status
 ) {
     public static CategoryResDto from(Category category) {

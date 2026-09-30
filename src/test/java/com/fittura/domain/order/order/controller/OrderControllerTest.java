@@ -303,6 +303,12 @@ class OrderControllerTest extends IntegrationTestBase {
         assertThat(orderRepository.count()).isEqualTo(1);
         assertThat(orderItemRepository.count()).isEqualTo(1);
         assertThat(addressRepository.count()).isEqualTo(1);
+
+        // 일반배송 20000원 (무료배송 기준 미만) → 기본 배송비 적용
+        Order order = orderRepository.findAll().getFirst();
+        long deliveryFee = DeliveryType.PARCEL.getBaseFee();
+        assertThat(order.getDeliveryFee()).isEqualTo(deliveryFee);
+        assertThat(order.getFinalAmount()).isEqualTo(20000L - 1000L + deliveryFee);
     }
 
     @Test

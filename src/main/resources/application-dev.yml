@@ -18,3 +18,7 @@ logging:
     org.hibernate.orm.jdbc.extract: TRACE
     org.springframework.transaction.interceptor: TRACE
     com.fittura: DEBUG
+
+# TODO: 로그인 연동 후 제거 - 토큰 없는 요청을 이 회원으로 인증 (MemberInitData 기준 user1)
+dev:
+  fixed-member-id: 2

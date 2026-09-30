@@ -1,5 +1,6 @@
 package com.fittura.domain.order.order.entity;
 
+import com.fittura.domain.delivery.delivery.constant.DeliveryType;
 import com.fittura.domain.order.order.constant.OrderItemStatus;
 import com.fittura.domain.order.order.error.OrderErrorCode;
 import com.fittura.domain.product.sku.entity.ProductSku;
@@ -69,7 +70,8 @@ public class OrderItem extends BaseEntity {
     @Column(nullable = false)
     private Long itemTotalAmount;
 
-    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
     private OrderItemStatus status;
 
 
@@ -105,13 +107,16 @@ public class OrderItem extends BaseEntity {
         claimItems.add(claimItem);
     }
 
+
+    // ===== Calc =====
+
     public void calcDiscountAmount(Long discountAmount) {
         // TODO: promotion 기능 때 반영 예정
         this.discountAmount = discountAmount;
         this.itemTotalAmount = itemTotalAmount - discountAmount;
     }
 
-    public Long calcRefundAmount(int claimQuantity) {
+    public Long calcRefundAmount(Integer claimQuantity) {
         int remaining = quantity - getTotalClaimQuantity();
 
         if (claimQuantity == remaining) {
@@ -119,6 +124,9 @@ public class OrderItem extends BaseEntity {
         }
         return itemTotalAmount * claimQuantity / quantity;
     }
+
+
+    // ===== Delivery =====
 
     public void assignDelivery(Long deliveryId) {
         // TODO: delivery의 order와 orderItem의 Order 일치 여부는 delivery 생성 로직에서 진행
@@ -146,6 +154,13 @@ public class OrderItem extends BaseEntity {
         return status == OrderItemStatus.CANCELLED;
     }
 
+
+    // ===== getter =====
+    public DeliveryType getDeliveryType() {
+        return sku.getProduct().getDeliveryType();
+    }
+
+
     // ===== 유효성 검증 =====
 
     public boolean isQuantityValid(Integer claimQuantity) {
@@ -171,7 +186,7 @@ public class OrderItem extends BaseEntity {
             .sum();
     }
 
-    private Long getTotalRefundedAmount() {
+    private long getTotalRefundedAmount() {
         return claimItems.stream()
             .filter(ci -> ci.getClaim().isConfirmed())
             .mapToLong(ClaimItem::getRefundAmount)

@@ -1,7 +1,7 @@
 package com.fittura.global.initdata;
 
-import com.fittura.domain.member.entity.Member;
-import com.fittura.domain.member.repository.MemberRepository;
+import com.fittura.domain.member.member.entity.Member;
+import com.fittura.domain.member.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
