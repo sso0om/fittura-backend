@@ -91,7 +91,7 @@ public class OrderItem extends BaseEntity {
             .sku(sku)
             .productName(sku.getProduct().getName())
             .skuIdentifier(sku.getSkuIdentifier())
-            .unitPrice(sku.getPrice())
+            .unitPrice(sku.getEffectivePrice())
             .quantity(quantity)
             .discountAmount(0L)
             .itemTotalAmount(sku.getPrice() * quantity)
