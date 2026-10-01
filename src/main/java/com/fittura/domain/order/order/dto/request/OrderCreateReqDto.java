@@ -13,7 +13,7 @@ public record OrderCreateReqDto(
 
     @Schema(example = "[1, 2, 3]")
     @NotNull @Size(min = 1)
-    List<@NotNull Long> cartItems,
+    List<@NotNull Long> cartItemIds,
 
     @Schema(example = "5000")
     @NotNull @PositiveOrZero

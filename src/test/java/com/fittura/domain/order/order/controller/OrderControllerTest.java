@@ -275,7 +275,7 @@ class OrderControllerTest extends IntegrationTestBase {
 
         String reqBody = """
             {
-                "cartItems": [%d],
+                "cartItemIds": [%d],
                 "pointUsedAmount": 1000,
                 "orderAddress": {
                     "receiverName": "홍길동",
@@ -324,7 +324,7 @@ class OrderControllerTest extends IntegrationTestBase {
 
         String reqBody = """
             {
-                "cartItems": [%d, %d],
+                "cartItemIds": [%d, %d],
                 "pointUsedAmount": 500,
                 "orderAddress": {
                     "receiverName": "홍길동",
@@ -361,7 +361,7 @@ class OrderControllerTest extends IntegrationTestBase {
 
         String reqBody = """
             {
-                "cartItems": [%d],
+                "cartItemIds": [%d],
                 "pointUsedAmount": 0,
                 "orderAddress": {
                     "receiverName": "홍길동",
@@ -392,7 +392,7 @@ class OrderControllerTest extends IntegrationTestBase {
 
         String reqBody = """
             {
-                "cartItems": [9999],
+                "cartItemIds": [9999],
                 "pointUsedAmount": 1000,
                 "orderAddress": {
                     "receiverName": "홍길동",
@@ -433,7 +433,7 @@ class OrderControllerTest extends IntegrationTestBase {
 
         String reqBody = """
             {
-                "cartItems": [%d],
+                "cartItemIds": [%d],
                 "pointUsedAmount": 1000,
                 "orderAddress": {
                     "receiverName": "홍길동",
@@ -476,7 +476,7 @@ class OrderControllerTest extends IntegrationTestBase {
 
         String reqBody = """
             {
-                "cartItems": [%d],
+                "cartItemIds": [%d],
                 "pointUsedAmount": 1000,
                 "orderAddress": {
                     "receiverName": "홍길동",
@@ -522,7 +522,7 @@ class OrderControllerTest extends IntegrationTestBase {
 
         String reqBody = """
             {
-                "cartItems": [%d, %d],
+                "cartItemIds": [%d, %d],
                 "pointUsedAmount": 0,
                 "orderAddress": {
                     "receiverName": "홍길동",

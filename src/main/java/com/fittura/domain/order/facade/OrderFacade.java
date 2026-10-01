@@ -39,7 +39,7 @@ public class OrderFacade {
 
     @Transactional
     public Long createOrder(Long memberId, OrderCreateReqDto reqDto) {
-        List<CartItem> cartItems = cartService.getItemsByIdAndMember(reqDto.cartItems(), memberId);
+        List<CartItem> cartItems = cartService.getItemsByIdAndMemberForUpdate(reqDto.cartItemIds(), memberId);
         orderService.validateCartItems(cartItems);
 
         Order order = orderService.createOrder(memberId, reqDto);
