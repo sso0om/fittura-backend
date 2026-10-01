@@ -59,6 +59,9 @@ public class OrderItem extends BaseEntity {
     private String skuIdentifier;
 
     @Column(nullable = false)
+    private Long originalPrice;
+
+    @Column(nullable = false)
     private Long unitPrice;
 
     @Column(nullable = false)
@@ -91,6 +94,7 @@ public class OrderItem extends BaseEntity {
             .sku(sku)
             .productName(sku.getProduct().getName())
             .skuIdentifier(sku.getSkuIdentifier())
+            .originalPrice(sku.getPrice())
             .unitPrice(sku.getEffectivePrice())
             .quantity(quantity)
             .discountAmount(0L)

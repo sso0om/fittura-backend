@@ -231,6 +231,24 @@ class OrderControllerTest extends IntegrationTestBase {
     }
 
     @Test
+    @DisplayName("주문 조회 성공 - 할인 상품은 정가와 판매가를 함께 반환")
+    void getOrderSuccess_saleSku() throws Exception {
+        // given
+        Long memberId = 34L;
+        ProductSku sku = savedSaleSku(10000L, 8000L);
+        Order order = createOrderWithItem(memberId, sku, 2);
+
+        // when & then
+        mockMvc.perform(get(ORDER_URL + "/{id}", order.getId())
+                .header("Authorization", userBearerToken(memberId)))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.items[0].originalPrice").value(10000))
+            .andExpect(jsonPath("$.data.items[0].unitPrice").value(8000))
+            .andExpect(jsonPath("$.data.items[0].itemTotalAmount").value(16000));
+    }
+
+    @Test
     @DisplayName("주문 조회 실패 - 존재하지 않는 주문")
     void getOrderFail_notFound() throws Exception {
         // given
@@ -564,6 +582,13 @@ class OrderControllerTest extends IntegrationTestBase {
         Product product = productRepository.save(ProductFixture.component(category, "A Desk"));
         product.activate();
         return productSkuRepository.save(ProductSkuFixture.sku(product, 10000L, stock));
+    }
+
+    private ProductSku savedSaleSku(Long price, Long salePrice) {
+        Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Product product = productRepository.save(ProductFixture.component(category, "A Desk"));
+        product.activate();
+        return productSkuRepository.save(ProductSkuFixture.sku(product, price, salePrice, 100));
     }
 
     private Order createOrderWithItem(Long memberId, ProductSku sku, Integer quantity) {
