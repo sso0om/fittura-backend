@@ -8,6 +8,7 @@ import com.fittura.domain.product.sku.constant.SkuStatus;
 import com.fittura.domain.product.sku.repository.ProductSkuExpressions;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.CaseBuilder;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,14 @@ import static com.fittura.domain.product.sku.entity.QProductSku.productSku;
 public class CartItemRepositoryImpl implements CartItemRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
+
+    @Override
+    public List<CartItem> findAllWithSku(List<Long> itemIds, Long memberId) {
+        return cartItemsWithSkuQuery(itemIds, memberId)
+            .leftJoin(product.mainImage, productImage).fetchJoin()
+            .orderBy(productSku.id.asc())
+            .fetch();
+    }
 
     @Override
     public List<CartItem> findAllWithSkuForUpdate(List<Long> itemIds, Long memberId) {
@@ -53,18 +62,7 @@ public class CartItemRepositoryImpl implements CartItemRepositoryCustom {
             .fetch();
 
         // productSku는 이미 세션에 락 걸린 최신 상태로 있음 (인스턴스 재사용)
-        return queryFactory
-            .selectFrom(cartItem)
-            .join(cartItem.productSku, productSku).fetchJoin()
-            .join(productSku.product, product).fetchJoin()
-            .leftJoin(productSku.color, color).fetchJoin()
-            .leftJoin(productSku.material, material).fetchJoin()
-            .where(
-                cartItem.id.in(itemIds),
-                cartItem.cart.memberId.eq(memberId),
-                productSku.status.ne(SkuStatus.ARCHIVED),
-                product.status.ne(ProductStatus.ARCHIVED)
-            )
+        return cartItemsWithSkuQuery(itemIds, memberId)
             .orderBy(productSku.id.asc())
             .fetch();
     }
@@ -121,5 +119,20 @@ public class CartItemRepositoryImpl implements CartItemRepositoryCustom {
                 cartItem.productSku.id.in(skuIds)
             )
             .fetch();
+    }
+
+    private JPAQuery<CartItem> cartItemsWithSkuQuery(List<Long> itemIds, Long memberId) {
+        return queryFactory
+            .selectFrom(cartItem)
+            .join(cartItem.productSku, productSku).fetchJoin()
+            .join(productSku.product, product).fetchJoin()
+            .leftJoin(productSku.color, color).fetchJoin()
+            .leftJoin(productSku.material, material).fetchJoin()
+            .where(
+                cartItem.id.in(itemIds),
+                cartItem.cart.memberId.eq(memberId),
+                productSku.status.ne(SkuStatus.ARCHIVED),
+                product.status.ne(ProductStatus.ARCHIVED)
+            );
     }
 }
