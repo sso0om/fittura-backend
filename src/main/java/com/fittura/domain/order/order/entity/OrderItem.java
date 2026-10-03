@@ -3,6 +3,7 @@ package com.fittura.domain.order.order.entity;
 import com.fittura.domain.delivery.delivery.constant.DeliveryType;
 import com.fittura.domain.order.order.constant.OrderItemStatus;
 import com.fittura.domain.order.order.error.OrderErrorCode;
+import com.fittura.domain.order.order.util.OrderItemCalculation;
 import com.fittura.domain.product.sku.entity.ProductSku;
 import com.fittura.global.exception.ServiceException;
 import com.fittura.global.jpa.entity.BaseEntity;
@@ -113,6 +114,10 @@ public class OrderItem extends BaseEntity {
 
 
     // ===== Calc =====
+
+    public OrderItemCalculation toCalculation() {
+        return new OrderItemCalculation(getDeliveryType(), unitPrice, quantity, discountAmount);
+    }
 
     public void calcDiscountAmount(Long discountAmount) {
         // TODO: promotion 기능 때 반영 예정

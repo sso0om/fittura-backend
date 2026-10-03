@@ -55,12 +55,6 @@ public class OrderService {
         return order;
     }
 
-    public void calcAmount(Order order) {
-        // TODO: calcDiscountAmount
-        order.calcDeliveryFee();
-        order.calcFinalAmount();
-    }
-
 
     // ========== 주문 제품 ==========
 

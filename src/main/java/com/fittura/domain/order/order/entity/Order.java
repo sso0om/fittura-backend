@@ -1,9 +1,10 @@
 package com.fittura.domain.order.order.entity;
 
-import com.fittura.domain.delivery.delivery.constant.DeliveryType;
-import com.fittura.domain.delivery.delivery.util.DeliveryFeeCalculator;
 import com.fittura.domain.order.order.constant.OrderStatus;
 import com.fittura.domain.order.order.error.OrderErrorCode;
+import com.fittura.domain.order.order.util.OrderCalculation;
+import com.fittura.domain.order.order.util.OrderCalculator;
+import com.fittura.domain.order.order.util.OrderItemCalculation;
 import com.fittura.global.error.CommonErrorCode;
 import com.fittura.global.exception.ServiceException;
 import com.fittura.global.jpa.entity.BaseEntity;
@@ -98,29 +99,17 @@ public class Order extends BaseEntity {
 
     public void addItem(OrderItem item) {
         items.add(item);
-        totalAmount += item.getUnitPrice() * item.getQuantity();
-        discountAmount += item.getDiscountAmount();
     }
 
 
     // ===== Calc =====
 
-    public void calcDiscountAmount(Long discountAmount) {
-        // TODO: promotion 기능 때 반영 예정
-        this.discountAmount = discountAmount;
-    }
+    public void calcAmount() {
+        List<OrderItemCalculation> calculations = items.stream()
+            .map(OrderItem::toCalculation)
+            .toList();
 
-    public void calcDeliveryFee() {
-        Map<DeliveryType, List<OrderItem>> itemsByType = items.stream()
-            .collect(groupingBy(OrderItem::getDeliveryType));
-
-        this.deliveryFee = itemsByType.entrySet().stream()
-            .mapToLong(entry -> calcDeliveryFeeByType(entry.getKey(), entry.getValue()))
-            .sum();
-    }
-
-    public void calcFinalAmount() {
-        finalAmount = totalAmount - discountAmount - pointUsedAmount + deliveryFee;
+        applyCalculation(OrderCalculator.calculate(calculations, pointUsedAmount));
     }
 
 
@@ -188,15 +177,10 @@ public class Order extends BaseEntity {
 
     // ===== 헬퍼 메서드 =====
 
-    private long calcDeliveryFeeByType(DeliveryType type, List<OrderItem> items) {
-        long amount = items.stream()
-            .mapToLong(OrderItem::getItemTotalAmount)
-            .sum();
-
-        int quantity = items.stream()
-            .mapToInt(OrderItem::getQuantity)
-            .sum();
-
-        return DeliveryFeeCalculator.calculate(type, amount, quantity);
+    private void applyCalculation(OrderCalculation calculation) {
+        this.totalAmount = calculation.totalAmount();
+        this.discountAmount = calculation.discountAmount();
+        this.deliveryFee = calculation.deliveryFee();
+        this.finalAmount = calculation.finalAmount();
     }
 }

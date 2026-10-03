@@ -594,7 +594,7 @@ class OrderControllerTest extends IntegrationTestBase {
     private Order createOrderWithItem(Long memberId, ProductSku sku, Integer quantity) {
         Order order = OrderFixture.order(memberId, 1000L);
         OrderItemFixture.orderItem(order, sku, quantity);
-        order.calcFinalAmount();
+        order.calcAmount();
         order.prepare();
         orderRepository.save(order);
 
@@ -609,7 +609,7 @@ class OrderControllerTest extends IntegrationTestBase {
     private Order createOrderWithDelivery(Long memberId, ProductSku sku, Integer quantity, DeliveryType type) {
         Order order = OrderFixture.order(memberId, 0L);
         OrderItem item = OrderItemFixture.orderItem(order, sku, quantity);
-        order.calcFinalAmount();
+        order.calcAmount();
         order.prepare();
         orderRepository.save(order);
 
@@ -629,7 +629,7 @@ class OrderControllerTest extends IntegrationTestBase {
         Order order = OrderFixture.order(memberId, 0L);
         OrderItem parcelItem = OrderItemFixture.orderItem(order, parcelSku, 1);
         OrderItem installItem = OrderItemFixture.orderItem(order, installSku, 1);
-        order.calcFinalAmount();
+        order.calcAmount();
         order.prepare();
         orderRepository.save(order);
 

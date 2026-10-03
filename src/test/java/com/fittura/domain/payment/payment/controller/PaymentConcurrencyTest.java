@@ -249,7 +249,7 @@ public class PaymentConcurrencyTest extends IntegrationTestBase {
     private Order createOrderWithItem(Long memberId, ProductSku sku, Integer quantity) {
         Order order = OrderFixture.order(memberId);
         OrderItemFixture.orderItem(order, sku, quantity);
-        order.calcFinalAmount();
+        order.calcAmount();
 
         sku.reserveQuantity(quantity);
         skuRepository.save(sku);

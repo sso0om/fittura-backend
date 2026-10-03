@@ -394,7 +394,7 @@ class PaymentControllerTest extends IntegrationTestBase {
     private Order createOrderWithItem(Long memberId, ProductSku sku, Integer quantity) {
         Order order = OrderFixture.order(memberId, 1000L);
         OrderItemFixture.orderItem(order, sku, quantity);
-        order.calcFinalAmount();
+        order.calcAmount();
 
         sku.reserveQuantity(quantity);
 
