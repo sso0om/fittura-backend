@@ -8,7 +8,6 @@ import com.fittura.domain.order.order.entity.Order;
 import com.fittura.domain.order.order.repository.OrderItemRepository;
 import com.fittura.domain.order.order.repository.OrderRepository;
 import com.fittura.domain.order.order.support.OrderFixture;
-import com.fittura.domain.order.order.support.OrderItemFixture;
 import com.fittura.domain.payment.facde.PaymentFacade;
 import com.fittura.domain.payment.payment.constant.PaymentStatus;
 import com.fittura.domain.payment.payment.dto.request.PaymentApproveReqDto;
@@ -247,9 +246,7 @@ public class PaymentConcurrencyTest extends IntegrationTestBase {
     }
 
     private Order createOrderWithItem(Long memberId, ProductSku sku, Integer quantity) {
-        Order order = OrderFixture.order(memberId);
-        OrderItemFixture.orderItem(order, sku, quantity);
-        order.calcAmount();
+        Order order = OrderFixture.orderWithItem(memberId, 0L, sku, quantity);
 
         sku.reserveQuantity(quantity);
         skuRepository.save(sku);

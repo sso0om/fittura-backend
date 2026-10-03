@@ -13,7 +13,6 @@ import com.fittura.domain.order.order.entity.Order;
 import com.fittura.domain.order.order.error.OrderErrorCode;
 import com.fittura.domain.order.order.repository.OrderRepository;
 import com.fittura.domain.order.order.support.OrderFixture;
-import com.fittura.domain.order.order.support.OrderItemFixture;
 import com.fittura.domain.payment.payment.constant.PaymentStatus;
 import com.fittura.domain.payment.payment.entity.Payment;
 import com.fittura.domain.payment.payment.error.PaymentErrorCode;
@@ -392,9 +391,7 @@ class PaymentControllerTest extends IntegrationTestBase {
     }
 
     private Order createOrderWithItem(Long memberId, ProductSku sku, Integer quantity) {
-        Order order = OrderFixture.order(memberId, 1000L);
-        OrderItemFixture.orderItem(order, sku, quantity);
-        order.calcAmount();
+        Order order = OrderFixture.orderWithItem(memberId, 1000L, sku, quantity);
 
         sku.reserveQuantity(quantity);
 

@@ -22,7 +22,6 @@ import com.fittura.domain.order.order.repository.OrderItemRepository;
 import com.fittura.domain.order.order.repository.OrderRepository;
 import com.fittura.domain.order.order.support.OrderAddressFixture;
 import com.fittura.domain.order.order.support.OrderFixture;
-import com.fittura.domain.order.order.support.OrderItemFixture;
 import com.fittura.domain.delivery.delivery.constant.DeliveryType;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.repository.ProductRepository;
@@ -592,9 +591,7 @@ class OrderControllerTest extends IntegrationTestBase {
     }
 
     private Order createOrderWithItem(Long memberId, ProductSku sku, Integer quantity) {
-        Order order = OrderFixture.order(memberId, 1000L);
-        OrderItemFixture.orderItem(order, sku, quantity);
-        order.calcAmount();
+        Order order = OrderFixture.orderWithItem(memberId, 1000L, sku, quantity);
         order.prepare();
         orderRepository.save(order);
 
@@ -607,9 +604,8 @@ class OrderControllerTest extends IntegrationTestBase {
     }
 
     private Order createOrderWithDelivery(Long memberId, ProductSku sku, Integer quantity, DeliveryType type) {
-        Order order = OrderFixture.order(memberId, 0L);
-        OrderItem item = OrderItemFixture.orderItem(order, sku, quantity);
-        order.calcAmount();
+        Order order = OrderFixture.orderWithItem(memberId, 0L, sku, quantity);
+        OrderItem item = order.getItems().get(0);
         order.prepare();
         orderRepository.save(order);
 
@@ -626,10 +622,9 @@ class OrderControllerTest extends IntegrationTestBase {
     }
 
     private Order createOrderWithMultipleDeliveries(Long memberId, ProductSku parcelSku, ProductSku installSku) {
-        Order order = OrderFixture.order(memberId, 0L);
-        OrderItem parcelItem = OrderItemFixture.orderItem(order, parcelSku, 1);
-        OrderItem installItem = OrderItemFixture.orderItem(order, installSku, 1);
-        order.calcAmount();
+        Order order = OrderFixture.orderWithItems(memberId, 0L, parcelSku, installSku);
+        OrderItem parcelItem = order.getItems().get(0);
+        OrderItem installItem = order.getItems().get(1);
         order.prepare();
         orderRepository.save(order);
 
