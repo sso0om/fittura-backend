@@ -4,10 +4,12 @@ import com.fittura.domain.product.product.constant.ImageType;
 import com.fittura.domain.product.sku.entity.ProductSku;
 import com.fittura.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import static lombok.AccessLevel.PROTECTED;
 
+@Getter
 @Entity
 @Table(name = "product_images")
 @NoArgsConstructor(access = PROTECTED)
