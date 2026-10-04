@@ -52,7 +52,7 @@ public class CartItem extends BaseEntity {
     }
 
     public void addQuantity(Integer quantity) {
-        validateQuantity(quantity);
+        validateQuantity(this.quantity + quantity);
         this.quantity += quantity;
     }
 
