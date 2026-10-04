@@ -10,6 +10,6 @@ public record OrderCalculation (
     long pointUsedAmount,
     long deliveryFee,
     long finalAmount,
-    Map<DeliveryType, Long> deliveryFeeByType
+    Map<DeliveryType, DeliveryGroupCalculation> groups
 ) {
 }

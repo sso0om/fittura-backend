@@ -85,12 +85,12 @@ class OrderCalculatorTest {
     }
 
     @Test
-    @DisplayName("calculate 성공 - 일반배송과 기사배송이 섞이면 타입별로 계산해 합산")
+    @DisplayName("calculate 성공 - 일반배송과 기사배송이 섞이면 타입별로 묶어 계산하고 합산")
     void calculateSuccess_mixedTypes() {
         // given
         List<OrderItemCalculation> items = List.of(
-            parcel(10000L, 1, 0L),
-            new OrderItemCalculation(DeliveryType.INSTALLATION, 200000L, 2, 0L)
+            new OrderItemCalculation(DeliveryType.INSTALLATION, 200000L, 2, 0L),
+            parcel(10000L, 1, 0L)
         );
 
         // when
@@ -99,10 +99,45 @@ class OrderCalculatorTest {
         // then
         long parcelFee = DeliveryType.PARCEL.getBaseFee();
         long installationFee = DeliveryType.INSTALLATION.getBaseFee() * 2;
-        assertThat(result.deliveryFeeByType())
-            .containsEntry(DeliveryType.PARCEL, parcelFee)
-            .containsEntry(DeliveryType.INSTALLATION, installationFee);
+
+        assertThat(result.groups().get(DeliveryType.PARCEL))
+            .isEqualTo(new DeliveryGroupCalculation(DeliveryType.PARCEL, 10000L, parcelFee));
+        assertThat(result.groups().get(DeliveryType.INSTALLATION))
+            .isEqualTo(new DeliveryGroupCalculation(DeliveryType.INSTALLATION, 400000L, installationFee));
         assertThat(result.deliveryFee()).isEqualTo(parcelFee + installationFee);
+    }
+
+    @Test
+    @DisplayName("calculate 성공 - 묶음 순서는 입력 순서와 상관없이 PARCEL → INSTALLATION")
+    void calculateSuccess_groupOrder() {
+        // given
+        List<OrderItemCalculation> items = List.of(
+            new OrderItemCalculation(DeliveryType.INSTALLATION, 200000L, 1, 0L),
+            parcel(10000L, 1, 0L)
+        );
+
+        // when
+        OrderCalculation result = OrderCalculator.calculate(items, 0L);
+
+        // then
+        assertThat(result.groups().keySet())
+            .containsExactly(DeliveryType.PARCEL, DeliveryType.INSTALLATION);
+    }
+
+    @Test
+    @DisplayName("calculate 성공 - 묶음 합계는 할인 후 금액")
+    void calculateSuccess_groupAmountAfterDiscount() {
+        // given
+        List<OrderItemCalculation> items = List.of(
+            parcel(30000L, 1, 5000L),
+            parcel(10000L, 1, 0L)
+        );
+
+        // when
+        OrderCalculation result = OrderCalculator.calculate(items, 0L);
+
+        // then
+        assertThat(result.groups().get(DeliveryType.PARCEL).amount()).isEqualTo(35000L);
     }
 
 

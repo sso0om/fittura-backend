@@ -3,11 +3,11 @@ package com.fittura.domain.order.order.util;
 import com.fittura.domain.delivery.delivery.constant.DeliveryType;
 import com.fittura.domain.delivery.delivery.util.DeliveryFeeCalculator;
 
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
-import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.groupingBy;
 
 public class OrderCalculator {
 
@@ -22,31 +22,30 @@ public class OrderCalculator {
             .mapToLong(OrderItemCalculation::discountAmount)
             .sum();
 
-        Map<DeliveryType, Long> deliveryFeeByType = calcDeliveryFeeByType(items);
-        long deliveryFee = deliveryFeeByType.values().stream()
-            .mapToLong(Long::longValue)
+        Map<DeliveryType, DeliveryGroupCalculation> groups  = calcGroups(items);
+        long deliveryFee = groups.values().stream()
+            .mapToLong(DeliveryGroupCalculation::deliveryFee)
             .sum();
 
         long finalAmount = totalAmount - discountAmount - pointUsedAmount + deliveryFee;
 
         return new OrderCalculation(
-            totalAmount, discountAmount, pointUsedAmount, deliveryFee, finalAmount, deliveryFeeByType
+            totalAmount, discountAmount, pointUsedAmount, deliveryFee, finalAmount, groups
         );
     }
 
-    private static Map<DeliveryType, Long> calcDeliveryFeeByType(List<OrderItemCalculation> items) {
+    private static Map<DeliveryType, DeliveryGroupCalculation> calcGroups(List<OrderItemCalculation> items) {
         Map<DeliveryType, List<OrderItemCalculation>> itemsByType = items.stream()
-            .collect(Collectors.groupingBy(OrderItemCalculation::deliveryType));
+            .collect(groupingBy(OrderItemCalculation::deliveryType));
 
-        return itemsByType
-            .entrySet().stream()
-            .collect(toMap(
-                Map.Entry::getKey,
-                entry -> calcGroupFee(entry.getKey(), entry.getValue())
-            ));
+        Map<DeliveryType, DeliveryGroupCalculation> groups = new EnumMap<>(DeliveryType.class);
+        itemsByType.forEach(
+            (type, group) -> groups.put(type, calcGroup(type, group))
+        );
+        return groups;
     }
 
-    private static long calcGroupFee(DeliveryType type, List<OrderItemCalculation> items) {
+    private static DeliveryGroupCalculation calcGroup(DeliveryType type, List<OrderItemCalculation> items) {
         long amount = items.stream()
             .mapToLong(OrderItemCalculation::itemTotalAmount)
             .sum();
@@ -55,6 +54,6 @@ public class OrderCalculator {
             .mapToInt(OrderItemCalculation::quantity)
             .sum();
 
-        return DeliveryFeeCalculator.calculate(type, amount, quantity);
+        return new DeliveryGroupCalculation(type, amount, DeliveryFeeCalculator.calculate(type, amount, quantity));
     }
 }
