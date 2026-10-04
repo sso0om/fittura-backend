@@ -75,8 +75,8 @@ public class SkuService {
 
             ProductSku productSku = ProductSku.create(
                 product,
-                skuDto.price(),
-                skuDto.salePrice(),
+                skuDto.originalPrice(),
+                skuDto.discountPrice(),
                 skuDto.stockQuantity(),
                 color,
                 material
@@ -114,8 +114,8 @@ public class SkuService {
             if (dto.id() == null) {
                 ProductSku newSku = ProductSku.create(
                     product,
-                    dto.price(),
-                    dto.salePrice(),
+                    dto.originalPrice(),
+                    dto.discountPrice(),
                     dto.stockQuantity(),
                     color,
                     material
@@ -123,7 +123,7 @@ public class SkuService {
                 productSkuRepository.save(newSku);
             } else {
                 ProductSku sku = existingMap.get(dto.id());
-                sku.update(dto.price(), dto.salePrice(), dto.stockQuantity(), color, material);
+                sku.update(dto.originalPrice(), dto.discountPrice(), dto.stockQuantity(), color, material);
             }
         }
     }

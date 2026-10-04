@@ -32,10 +32,10 @@ public class ProductSku extends BaseEntity {
     private Product product;
 
     @Column(nullable = false)
-    private Long price;
+    private Long originalPrice;
 
     @Column
-    private Long salePrice;
+    private Long discountPrice;
 
     @Column(nullable = false)
     private Integer stockQuantity = 0;
@@ -59,19 +59,19 @@ public class ProductSku extends BaseEntity {
 
     public static ProductSku create(
         Product product,
-        Long price,
-        Long salePrice,
+        Long originalPrice,
+        Long discountPrice,
         Integer stockQuantity,
         Color color,
         Material material
     ) {
         Objects.requireNonNull(product, "product must not be null");
-        validateSalePrice(price, salePrice);
+        validateDiscountPrice(originalPrice, discountPrice);
 
         ProductSku productSku = ProductSku.builder()
             .product(product)
-            .price(price)
-            .salePrice(salePrice)
+            .originalPrice(originalPrice)
+            .discountPrice(discountPrice)
             .stockQuantity(stockQuantity)
             .reservedQuantity(0)
             .status(SkuStatus.ACTIVE)
@@ -84,11 +84,11 @@ public class ProductSku extends BaseEntity {
         return productSku;
     }
 
-    public void update(Long price, Long salePrice, Integer stockQuantity, Color color, Material material) {
-        validateSalePrice(price, salePrice);
+    public void update(Long originalPrice, Long discountPrice, Integer stockQuantity, Color color, Material material) {
+        validateDiscountPrice(originalPrice, discountPrice);
 
-        this.price = price;
-        this.salePrice = salePrice;
+        this.originalPrice = originalPrice;
+        this.discountPrice = discountPrice;
         this.stockQuantity = stockQuantity;
         this.color = color;
         this.material = material;
@@ -147,20 +147,21 @@ public class ProductSku extends BaseEntity {
             .collect(Collectors.joining(" / "));
     }
 
-    public Long getDiscountRate() {
-        return PriceCalculator.discountRate(price, salePrice);
+    // 판매가 = 할인가가 있으면 할인가, 없으면 정가
+    public Long getSalePrice() {
+        return PriceCalculator.salePrice(originalPrice, discountPrice);
     }
 
-    public Long getEffectivePrice() {
-        return PriceCalculator.effectivePrice(price, salePrice);
+    public Long getDiscountRate() {
+        return PriceCalculator.discountRate(originalPrice, getSalePrice());
     }
 
 
     // ===== 유효성 검사 =====
 
-    private static void validateSalePrice(Long price, Long salePrice) {
-        if (salePrice != null && price <= salePrice) {
-            throw new ServiceException(ProductErrorCode.SALE_PRICE_LESS_THAN_PRICE);
+    private static void validateDiscountPrice(Long originalPrice, Long discountPrice) {
+        if (discountPrice != null && originalPrice <= discountPrice) {
+            throw new ServiceException(ProductErrorCode.DISCOUNT_PRICE_LESS_THAN_ORIGINAL_PRICE);
         }
     }
 }

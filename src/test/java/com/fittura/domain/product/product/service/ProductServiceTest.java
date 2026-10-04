@@ -409,7 +409,7 @@ class ProductServiceTest {
         productService.syncBasePrice(product);
 
         // then
-        assertThat(product.getBasePrice()).isEqualTo(30000L);
+        assertThat(product.getBaseOriginalPrice()).isEqualTo(30000L);
     }
 
 

@@ -45,12 +45,12 @@ class ProductTest {
         product.syncBasePrice();
 
         // then
-        assertThat(product.getBasePrice()).isEqualTo(30000L);
+        assertThat(product.getBaseOriginalPrice()).isEqualTo(30000L);
     }
 
     @Test
-    @DisplayName("basePrice 동기화 성공 - price, salePrice 중 최솟값인 SKU")
-    void syncBasePrice_usesEffectivePriceWithSalePrice() {
+    @DisplayName("basePrice 동기화 성공 - 판매가가 가장 낮은 SKU")
+    void syncBasePrice_usesLowestSalePrice() {
         // given
         Product product = ProductFixture.component("책상");
         ProductSkuFixture.sku(product, 40000L, 10);
@@ -60,7 +60,7 @@ class ProductTest {
         product.syncBasePrice();
 
         // then
-        assertThat(product.getBasePrice()).isEqualTo(50000L);
+        assertThat(product.getBaseOriginalPrice()).isEqualTo(50000L);
         assertThat(product.getBaseSalePrice()).isEqualTo(30000L);
     }
 
@@ -78,7 +78,7 @@ class ProductTest {
         product.syncBasePrice();
 
         // then
-        assertThat(product.getBasePrice()).isEqualTo(50000L);
+        assertThat(product.getBaseOriginalPrice()).isEqualTo(50000L);
         assertThat(product.getBaseSalePrice()).isEqualTo(50000L);
     }
 
@@ -100,7 +100,7 @@ class ProductTest {
         product.syncBasePrice();
 
         // then
-        assertThat(product.getBasePrice()).isEqualTo(50000L);
+        assertThat(product.getBaseOriginalPrice()).isEqualTo(50000L);
         assertThat(product.getBaseSalePrice()).isEqualTo(30000L);
     }
 

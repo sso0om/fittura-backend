@@ -5,14 +5,14 @@ import com.fittura.domain.product.sku.entity.ProductSku;
 
 public record OrderItemCalculation(
     DeliveryType deliveryType,
-    long unitPrice,
+    long salePrice,
     int quantity,
     long discountAmount
 ) {
     public static OrderItemCalculation of(ProductSku sku, int quantity) {
         return new OrderItemCalculation(
             sku.getProduct().getDeliveryType(),
-            sku.getEffectivePrice(),
+            sku.getSalePrice(),
             quantity,
             0L
         );
@@ -20,7 +20,7 @@ public record OrderItemCalculation(
 
     // 할인 전 금액
     public long amount() {
-        return unitPrice * quantity;
+        return salePrice * quantity;
     }
 
     // 할인 후 금액 (= OrderItem.itemTotalAmount)

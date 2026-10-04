@@ -4,14 +4,15 @@ public class PriceCalculator {
 
     private PriceCalculator() {}
 
-    public static Long effectivePrice(Long price, Long salePrice) {
-        return salePrice == null ? price : salePrice;
+    // 판매가 = 할인가가 있으면 할인가, 없으면 정가
+    public static Long salePrice(Long originalPrice, Long discountPrice) {
+        return discountPrice == null ? originalPrice : discountPrice;
     }
 
-    public static Long discountRate(Long price, Long salePrice) {
-        if (price == 0 || salePrice == null) {
+    public static Long discountRate(Long originalPrice, Long salePrice) {
+        if (originalPrice == 0) {
             return 0L;
         }
-        return (price - salePrice) * 100 / price;
+        return (originalPrice - salePrice) * 100 / originalPrice;
     }
 }

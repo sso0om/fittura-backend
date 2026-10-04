@@ -19,7 +19,7 @@ public record OrderPreviewItemResDto(
     Long salePrice,
     Long discountRate,
     Integer quantity,
-    Long itemTotalPrice
+    Long itemTotalAmount
 ) {
     public static OrderPreviewItemResDto from(ProductSku sku, int quantity) {
         Product product = sku.getProduct();
@@ -33,11 +33,11 @@ public record OrderPreviewItemResDto(
             sku.getId(),
             sku.getColor() != null ? sku.getColor().getName() : null,
             sku.getMaterial() != null ? sku.getMaterial().getName() : null,
-            sku.getPrice(),
-            sku.getEffectivePrice(),
+            sku.getOriginalPrice(),
+            sku.getSalePrice(),
             sku.getDiscountRate(),
             quantity,
-            sku.getEffectivePrice() * quantity
+            sku.getSalePrice() * quantity
         );
     }
 }

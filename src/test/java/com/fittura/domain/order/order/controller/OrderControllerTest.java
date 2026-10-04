@@ -243,7 +243,7 @@ class OrderControllerTest extends IntegrationTestBase {
             .andDo(print())
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.items[0].originalPrice").value(10000))
-            .andExpect(jsonPath("$.data.items[0].unitPrice").value(8000))
+            .andExpect(jsonPath("$.data.items[0].salePrice").value(8000))
             .andExpect(jsonPath("$.data.items[0].itemTotalAmount").value(16000));
     }
 

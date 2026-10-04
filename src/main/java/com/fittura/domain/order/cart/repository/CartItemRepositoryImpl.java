@@ -80,8 +80,8 @@ public class CartItemRepositoryImpl implements CartItemRepositoryCustom {
                 productSku.id,
                 color.name,
                 material.name,
-                productSku.price,
-                productSku.salePrice,
+                productSku.originalPrice,
+                productSku.discountPrice,
                 cartItem.quantity,
                 productSku.status,
                 ProductSkuExpressions.isSoldOut(productSku)

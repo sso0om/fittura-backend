@@ -22,7 +22,7 @@ public record CartItemResDto(
     Long salePrice,
     Long discountRate,
     Integer quantity,
-    Long itemTotalPrice,
+    Long itemTotalAmount,
     SkuStatus skuStatus,
     Boolean isSoldOut
 ) {
@@ -31,18 +31,18 @@ public record CartItemResDto(
         Long cartItemId, Long productId, String productName, String mainImageUrl,
         ProductStatus productStatus, DeliveryType deliveryType,
         Long skuId, String color, String material,
-        Long price, Long salePrice, Integer quantity, SkuStatus skuStatus, Boolean isSoldOut
+        Long originalPrice, Long discountPrice, Integer quantity, SkuStatus skuStatus, Boolean isSoldOut
     ) {
         this(
             cartItemId, productId, productName, mainImageUrl, productStatus,
             deliveryType,
             deliveryType.calcItemFee(quantity),
             skuId, color, material,
-            price,
-            PriceCalculator.effectivePrice(price, salePrice),
-            PriceCalculator.discountRate(price, salePrice),
+            originalPrice,
+            PriceCalculator.salePrice(originalPrice, discountPrice),
+            PriceCalculator.discountRate(originalPrice, PriceCalculator.salePrice(originalPrice, discountPrice)),
             quantity,
-            PriceCalculator.effectivePrice(price, salePrice) * quantity,
+            PriceCalculator.salePrice(originalPrice, discountPrice) * quantity,
             skuStatus,
             isSoldOut
         );

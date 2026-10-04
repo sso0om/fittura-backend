@@ -240,7 +240,7 @@ class ProductControllerV1Test extends IntegrationTestBase {
         productSkuRepository.save(cheap.getProductSkus().get(0));
 
         // when & then
-        mockMvc.perform(get(PRODUCT_URL).param("sort", "basePrice,asc"))
+        mockMvc.perform(get(PRODUCT_URL).param("sort", "baseOriginalPrice,asc"))
             .andDo(print())
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.content[0].name").value("Cheap Chair"))

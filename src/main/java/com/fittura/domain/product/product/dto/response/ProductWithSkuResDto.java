@@ -19,7 +19,7 @@ public record ProductWithSkuResDto(
     DeliveryType deliveryType,
     Long deliveryFee,
     ProductStatus status,
-    Long basePrice,
+    Long baseOriginalPrice,
     Long baseSalePrice,
     Long discountRate,
     Double weight,
@@ -33,12 +33,12 @@ public record ProductWithSkuResDto(
     public ProductWithSkuResDto(
         Long id, Long categoryId, String name, String description,
         ProductType productType, DeliveryType deliveryType, ProductStatus status,
-        Long basePrice, Long baseSalePrice,
+        Long baseOriginalPrice, Long baseSalePrice,
         Double weight, Double width, Double height, Double depth, boolean isSoldOut
     ) {
         this(id, categoryId, name, description,
             productType, deliveryType, deliveryType.getBaseFee(), status,
-            basePrice, baseSalePrice, PriceCalculator.discountRate(basePrice, baseSalePrice),
+            baseOriginalPrice, baseSalePrice, PriceCalculator.discountRate(baseOriginalPrice, baseSalePrice),
             weight, width, height, depth, isSoldOut, List.of());
     }
 
@@ -46,7 +46,7 @@ public record ProductWithSkuResDto(
         return new ProductWithSkuResDto(
             id, categoryId, name, description,
             productType, deliveryType, deliveryFee, status,
-            basePrice, baseSalePrice, discountRate,
+            baseOriginalPrice, baseSalePrice, discountRate,
             weight, width, height, depth, isSoldOut, skus
         );
     }

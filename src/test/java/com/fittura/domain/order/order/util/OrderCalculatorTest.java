@@ -143,7 +143,7 @@ class OrderCalculatorTest {
 
     // ========== 헬퍼 메서드 ==========
 
-    private OrderItemCalculation parcel(long unitPrice, int quantity, long discountAmount) {
-        return new OrderItemCalculation(DeliveryType.PARCEL, unitPrice, quantity, discountAmount);
+    private OrderItemCalculation parcel(long salePrice, int quantity, long discountAmount) {
+        return new OrderItemCalculation(DeliveryType.PARCEL, salePrice, quantity, discountAmount);
     }
 }

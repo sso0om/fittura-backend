@@ -63,7 +63,7 @@ public class OrderItem extends BaseEntity {
     private Long originalPrice;
 
     @Column(nullable = false)
-    private Long unitPrice;
+    private Long salePrice;
 
     @Column(nullable = false)
     private Integer quantity;
@@ -95,11 +95,11 @@ public class OrderItem extends BaseEntity {
             .sku(sku)
             .productName(sku.getProduct().getName())
             .skuIdentifier(sku.getSkuIdentifier())
-            .originalPrice(sku.getPrice())
-            .unitPrice(sku.getEffectivePrice())
+            .originalPrice(sku.getOriginalPrice())
+            .salePrice(sku.getSalePrice())
             .quantity(quantity)
             .discountAmount(0L)
-            .itemTotalAmount(sku.getEffectivePrice() * quantity)
+            .itemTotalAmount(sku.getSalePrice() * quantity)
             .status(OrderItemStatus.ORDERED)
             .build();
 
@@ -116,7 +116,7 @@ public class OrderItem extends BaseEntity {
     // ===== Calc =====
 
     public OrderItemCalculation toCalculation() {
-        return new OrderItemCalculation(getDeliveryType(), unitPrice, quantity, discountAmount);
+        return new OrderItemCalculation(getDeliveryType(), salePrice, quantity, discountAmount);
     }
 
     public void calcDiscountAmount(Long discountAmount) {

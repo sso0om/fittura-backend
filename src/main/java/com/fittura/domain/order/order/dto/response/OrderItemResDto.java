@@ -10,7 +10,7 @@ public record OrderItemResDto(
     String productName,
     String skuIdentifier,
     Long originalPrice,
-    Long unitPrice,
+    Long salePrice,
     Integer quantity,
     Long discountAmount,
     Long itemTotalAmount,

@@ -157,7 +157,7 @@ class SkuServiceTest {
         skuService.updateSku(product, reqDto);
 
         // then
-        assertThat(existing.getPrice()).isEqualTo(9000L);
+        assertThat(existing.getOriginalPrice()).isEqualTo(9000L);
         assertThat(existing.getStockQuantity()).isEqualTo(80);
         assertThat(existing.getColor().getName()).isEqualTo("Black");
         assertThat(existing.getMaterial().getName()).isEqualTo("Metal");

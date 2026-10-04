@@ -141,7 +141,7 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
                 orderItem.productName,
                 orderItem.skuIdentifier,
                 orderItem.originalPrice,
-                orderItem.unitPrice,
+                orderItem.salePrice,
                 orderItem.quantity,
                 orderItem.discountAmount,
                 orderItem.itemTotalAmount,
