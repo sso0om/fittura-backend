@@ -1,15 +1,22 @@
 package com.fittura.domain.order.facade;
 
+import com.fittura.domain.member.address.service.MemberAddressService;
 import com.fittura.domain.order.cart.entity.CartItem;
 import com.fittura.domain.order.cart.service.CartService;
+import com.fittura.domain.order.order.dto.request.CartOrderPreviewReqDto;
 import com.fittura.domain.order.order.dto.request.ClaimOrderReqDto;
 import com.fittura.domain.order.order.dto.request.OrderCreateReqDto;
 import com.fittura.domain.order.order.dto.request.OrderSearchCondition;
+import com.fittura.domain.order.order.dto.response.OrderPreviewItemResDto;
+import com.fittura.domain.order.order.dto.response.OrderPreviewResDto;
 import com.fittura.domain.order.order.dto.response.OrderWithAllResDto;
 import com.fittura.domain.order.order.dto.response.OrderWithDeliveryResDto;
 import com.fittura.domain.order.order.entity.Claim;
 import com.fittura.domain.order.order.entity.Order;
 import com.fittura.domain.order.order.service.OrderService;
+import com.fittura.domain.order.order.util.OrderCalculation;
+import com.fittura.domain.order.order.util.OrderCalculator;
+import com.fittura.domain.order.order.util.OrderItemCalculation;
 import com.fittura.domain.product.sku.service.SkuService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -26,6 +33,7 @@ public class OrderFacade {
     private final OrderService orderService;
     private final CartService cartService;
     private final SkuService skuService;
+    private final MemberAddressService addressService;
 
     @Transactional(readOnly = true)
     public Page<OrderWithDeliveryResDto> getOrders(Long memberId, OrderSearchCondition searchCondition, Pageable pageable) {
@@ -35,6 +43,23 @@ public class OrderFacade {
     @Transactional(readOnly = true)
     public OrderWithAllResDto getOrderByIdAndMember(Long orderId, Long memberId) {
         return orderService.getOrderDetail(orderId, memberId);
+    }
+
+    @Transactional(readOnly = true)
+    public OrderPreviewResDto getOrderPreviewCart(Long memberId, CartOrderPreviewReqDto reqDto) {
+        List<CartItem> cartItems = cartService.getItemsByIdAndMember(reqDto.cartItemIds(), memberId);
+        orderService.validateCartItems(cartItems);
+
+        // TODO: 권역 할증 도입 시 배송지 zipCode로 배송비 반영
+        if (reqDto.addressId() != null) {
+            addressService.getAddress(memberId, reqDto.addressId());
+        }
+
+        List<OrderPreviewItemResDto> previewItems = toPreviewItems(cartItems);
+        List<OrderItemCalculation> itemCalculations = getItemCalculations(cartItems);
+        OrderCalculation calculation = OrderCalculator.calculate(itemCalculations, 0L);
+
+        return OrderPreviewResDto.of(previewItems, calculation);
     }
 
     @Transactional
@@ -69,6 +94,7 @@ public class OrderFacade {
         // TODO: OrderItem status → CANCEL_REQUESTED
     }
 
+    @Transactional
     public void completeCancellation(Order order, Claim claim) {
         claim.approve();
         skuService.restoreStock(claim.getQuantityBySkuId());
@@ -81,5 +107,20 @@ public class OrderFacade {
         orderService.cancelItems(claim.getItems());
         // Delivery
         orderService.cancelIfAllItemsCancelled(order);
+    }
+
+
+    // ========== 헬퍼 메서드 ==========
+
+    private List<OrderPreviewItemResDto> toPreviewItems(List<CartItem> cartItems) {
+        return cartItems.stream()
+            .map(ci -> OrderPreviewItemResDto.from(ci.getProductSku(), ci.getQuantity()))
+            .toList();
+    }
+
+    private List<OrderItemCalculation> getItemCalculations(List<CartItem> cartItems) {
+        return cartItems.stream()
+            .map(ci -> OrderItemCalculation.of(ci.getProductSku(), ci.getQuantity()))
+            .toList();
     }
 }

@@ -1,9 +1,11 @@
 package com.fittura.domain.order.order.controller;
 
 import com.fittura.domain.order.facade.OrderFacade;
+import com.fittura.domain.order.order.dto.request.CartOrderPreviewReqDto;
 import com.fittura.domain.order.order.dto.request.ClaimOrderReqDto;
 import com.fittura.domain.order.order.dto.request.OrderCreateReqDto;
 import com.fittura.domain.order.order.dto.request.OrderSearchCondition;
+import com.fittura.domain.order.order.dto.response.OrderPreviewResDto;
 import com.fittura.domain.order.order.dto.response.OrderWithAllResDto;
 import com.fittura.domain.order.order.dto.response.OrderWithDeliveryResDto;
 import com.fittura.global.rsdata.RsData;
@@ -60,6 +62,16 @@ public class OrderController {
     ) {
         OrderWithAllResDto resDto = orderFacade.getOrderByIdAndMember(orderId, memberId);
         return ResponseEntity.ok(RsData.success("주문이 조회되었습니다.", resDto));
+    }
+
+    @PostMapping("/preview/cart")
+    @Operation(summary = "주문 전 조회 (장바구니)", description = "장바구니에서 넘어온 주문 전 조회 API")
+    public ResponseEntity<RsData<OrderPreviewResDto>> getOrderPreviewCart(
+        @LogInMemberId Long memberId,
+        @RequestBody @Valid CartOrderPreviewReqDto reqDto
+        ) {
+        OrderPreviewResDto resDto = orderFacade.getOrderPreviewCart(memberId, reqDto);
+        return ResponseEntity.ok(RsData.success("주문 정보가 조회되었습니다.", resDto));
     }
 
     @PostMapping

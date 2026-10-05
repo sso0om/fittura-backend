@@ -6,6 +6,10 @@ import com.fittura.domain.category.support.CategoryFixture;
 import com.fittura.domain.delivery.delivery.entitiy.Delivery;
 import com.fittura.domain.delivery.delivery.repository.DeliveryRepository;
 import com.fittura.domain.delivery.delivery.support.DeliveryFixture;
+import com.fittura.domain.member.address.entity.MemberAddress;
+import com.fittura.domain.member.address.error.MemberAddressError;
+import com.fittura.domain.member.address.repository.MemberAddressRepository;
+import com.fittura.domain.member.address.support.MemberAddressFixture;
 import com.fittura.domain.order.cart.entity.Cart;
 import com.fittura.domain.order.cart.entity.CartItem;
 import com.fittura.domain.order.cart.error.CartErrorCode;
@@ -23,6 +27,7 @@ import com.fittura.domain.order.order.repository.OrderRepository;
 import com.fittura.domain.order.order.support.OrderAddressFixture;
 import com.fittura.domain.order.order.support.OrderFixture;
 import com.fittura.domain.delivery.delivery.constant.DeliveryType;
+import com.fittura.domain.product.product.constant.ProductType;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.repository.ProductRepository;
 import com.fittura.domain.product.product.support.ProductFixture;
@@ -68,8 +73,11 @@ class OrderControllerTest extends IntegrationTestBase {
     private ProductSkuRepository productSkuRepository;
     @Autowired
     private DeliveryRepository deliveryRepository;
+    @Autowired
+    private MemberAddressRepository memberAddressRepository;
 
     private static final String ORDER_URL = "/api/v1/orders";
+    private static final String PREVIEW_CART_URL = ORDER_URL + "/preview/cart";
     private static final LocalDate SEARCH_START = LocalDate.now().minusMonths(1);
     private static final LocalDate SEARCH_END = LocalDate.now().plusDays(1);
 
@@ -278,6 +286,123 @@ class OrderControllerTest extends IntegrationTestBase {
             .andExpect(jsonPath("$.code").value(OrderErrorCode.NOT_FOUND_ORDER.getCode()));
     }
 
+
+    // ========== 주문 전 조회 (장바구니) ==========
+
+    @Test
+    @DisplayName("주문 전 조회 성공 - 일반배송·기사배송 묶음별 금액과 배송비")
+    void previewCartSuccess_deliveryGroups() throws Exception {
+        // given
+        Long memberId = 60L;
+        ProductSku parcelSku = savedSku(DeliveryType.PARCEL, 10000L);
+        ProductSku installSku = savedSku(DeliveryType.INSTALLATION, 200000L);
+        Cart cart = cartRepository.save(CartFixture.cart(memberId));
+        CartItem parcelItem = cartItemRepository.save(CartItemFixture.cartItem(cart, parcelSku, 2));
+        CartItem installItem = cartItemRepository.save(CartItemFixture.cartItem(cart, installSku, 1));
+
+        // 기사배송을 먼저 보내도 응답 묶음은 PARCEL → INSTALLATION 순서
+        String reqBody = """
+            { "cartItemIds": [%d, %d] }
+            """.formatted(installItem.getId(), parcelItem.getId());
+
+        // 금액 계산 규칙은 OrderCalculatorTest에서 검증. 여기서는 묶음 구성과 계산 결과 연결만 확인
+        long finalAmount = 220000 + DeliveryType.PARCEL.getBaseFee() + DeliveryType.INSTALLATION.getBaseFee();
+
+        // when & then
+        mockMvc.perform(post(PREVIEW_CART_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.deliveryGroups[0].deliveryType").value("PARCEL"))
+            .andExpect(jsonPath("$.data.deliveryGroups[0].items[0].skuId").value(parcelSku.getId()))
+            .andExpect(jsonPath("$.data.deliveryGroups[1].deliveryType").value("INSTALLATION"))
+            .andExpect(jsonPath("$.data.deliveryGroups[1].items[0].skuId").value(installSku.getId()))
+            .andExpect(jsonPath("$.data.finalAmount").value(finalAmount));
+
+        // 미리보기는 주문을 만들지 않고 재고도 예약하지 않는다
+        assertThat(orderRepository.count()).isZero();
+        assertThat(productSkuRepository.findById(parcelSku.getId()).orElseThrow().getReservedQuantity()).isZero();
+    }
+
+    @Test
+    @DisplayName("주문 전 조회 성공 - 할인 상품은 정가와 판매가를 함께 반환")
+    void previewCartSuccess_saleSku() throws Exception {
+        // given
+        Long memberId = 61L;
+        ProductSku sku = savedSaleSku(10000L, 8000L);
+        Cart cart = cartRepository.save(CartFixture.cart(memberId));
+        CartItem cartItem = cartItemRepository.save(CartItemFixture.cartItem(cart, sku, 2));
+
+        String reqBody = """
+            { "cartItemIds": [%d] }
+            """.formatted(cartItem.getId());
+
+        // when & then
+        mockMvc.perform(post(PREVIEW_CART_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.deliveryGroups[0].items[0].originalPrice").value(10000))
+            .andExpect(jsonPath("$.data.deliveryGroups[0].items[0].salePrice").value(8000))
+            .andExpect(jsonPath("$.data.totalOriginalAmount").value(20000))
+            .andExpect(jsonPath("$.data.totalAmount").value(16000));
+    }
+
+    @Test
+    @DisplayName("주문 전 조회 실패 - 다른 회원의 배송지 지정")
+    void previewCartFail_addressNotOwnedByMember() throws Exception {
+        // given
+        Long memberId = 63L;
+        Long otherMemberId = 64L;
+        ProductSku sku = savedDefaultSku();
+        Cart cart = cartRepository.save(CartFixture.cart(memberId));
+        CartItem cartItem = cartItemRepository.save(CartItemFixture.cartItem(cart, sku, 1));
+        MemberAddress otherAddress = memberAddressRepository.save(MemberAddressFixture.address(otherMemberId, true));
+
+        String reqBody = """
+            { "cartItemIds": [%d], "addressId": %d }
+            """.formatted(cartItem.getId(), otherAddress.getId());
+
+        // when & then
+        mockMvc.perform(post(PREVIEW_CART_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value(MemberAddressError.NOT_FOUND_ADDRESS.getCode()));
+    }
+
+    @Test
+    @DisplayName("주문 전 조회 실패 - 판매 불가(비활성) SKU 포함")
+    void previewCartFail_skuNotActive() throws Exception {
+        // given
+        Long memberId = 65L;
+        ProductSku sku = savedDefaultSku();
+        sku.pause();
+        productSkuRepository.save(sku);
+
+        Cart cart = cartRepository.save(CartFixture.cart(memberId));
+        CartItem cartItem = cartItemRepository.save(CartItemFixture.cartItem(cart, sku, 1));
+
+        String reqBody = """
+            { "cartItemIds": [%d] }
+            """.formatted(cartItem.getId());
+
+        // when & then
+        mockMvc.perform(post(PREVIEW_CART_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value(OrderErrorCode.CART_ITEMS_NOT_VALID.getCode()))
+            .andExpect(jsonPath("$.data[0].code").value(OrderErrorCode.SKU_MUST_ACTIVE.getCode()));
+    }
 
     // ========== 주문 생성 ==========
 
@@ -583,11 +708,19 @@ class OrderControllerTest extends IntegrationTestBase {
         return productSkuRepository.save(ProductSkuFixture.sku(product, 10000L, stock));
     }
 
-    private ProductSku savedSaleSku(Long price, Long salePrice) {
+    private ProductSku savedSku(DeliveryType deliveryType, Long originalPrice) {
+        Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Product product = productRepository.save(
+            ProductFixture.product(category, "A " + deliveryType.name(), ProductType.COMPONENT, deliveryType));
+        product.activate();
+        return productSkuRepository.save(ProductSkuFixture.sku(product, originalPrice, 100));
+    }
+
+    private ProductSku savedSaleSku(Long originalPrice, Long discountPrice) {
         Category category = categoryRepository.save(CategoryFixture.rootActive());
         Product product = productRepository.save(ProductFixture.component(category, "A Desk"));
         product.activate();
-        return productSkuRepository.save(ProductSkuFixture.sku(product, price, salePrice, 100));
+        return productSkuRepository.save(ProductSkuFixture.sku(product, originalPrice, discountPrice, 100));
     }
 
     private Order createOrderWithItem(Long memberId, ProductSku sku, Integer quantity) {
