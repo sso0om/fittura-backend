@@ -3,6 +3,7 @@ package com.fittura.domain.order.order.service;
 import com.fittura.domain.order.cart.entity.CartItem;
 import com.fittura.domain.order.order.constant.ClaimType;
 import com.fittura.domain.order.order.dto.request.*;
+import com.fittura.domain.order.order.dto.request.OrderSkuReqDto;
 import com.fittura.domain.order.order.dto.response.OrderWithAllResDto;
 import com.fittura.domain.order.order.dto.response.OrderWithDeliveryResDto;
 import com.fittura.domain.order.order.entity.*;
@@ -110,20 +111,34 @@ public class OrderService {
 
     // ========== 유효성 검사 ==========
 
+    public void validateNoDuplicateSku(List<OrderSkuReqDto> orderSkus) {
+        long distinctCnt = orderSkus.stream()
+            .map(OrderSkuReqDto::skuId)
+            .distinct()
+            .count();
+
+        if (distinctCnt != orderSkus.size()) {
+            throw new ServiceException(OrderErrorCode.DUPLICATE_SKU);
+        }
+    }
+
     public void validateCartItems(List<CartItem> cartItems) {
         List<ItemError> errors = new ArrayList<>();
 
         for (CartItem cartItem : cartItems) {
-            ProductSku sku = cartItem.getProductSku();
-            String productName = sku.getProduct().getName() + "(" + sku.getSkuIdentifier() + ")";
+            validateItem(errors, cartItem.getProductSku(), cartItem.getQuantity());
+        }
 
-            if (!sku.isActive()) {
-                errors.add(ItemError.of(productName, OrderErrorCode.SKU_MUST_ACTIVE));
-            } else if (!sku.getProduct().isActive()) {
-                errors.add(ItemError.of(productName, OrderErrorCode.PRODUCT_MUST_ACTIVE));
-            } else if (!sku.isStockValid(cartItem.getQuantity())) {
-                errors.add(ItemError.of(productName, OrderErrorCode.STOCK_NOT_VALID));
-            }
+        if (!errors.isEmpty()) {
+            throw new ServiceException(OrderErrorCode.CART_ITEMS_NOT_VALID, errors);
+        }
+    }
+
+    public void validatePreviewSkus(List<ProductSku> skus, Map<Long, Integer> quantityBySkuId) {
+        List<ItemError> errors = new ArrayList<>();
+
+        for (ProductSku sku : skus) {
+            validateItem(errors, sku, quantityBySkuId.get(sku.getId()));
         }
 
         if (!errors.isEmpty()) {
@@ -148,6 +163,18 @@ public class OrderService {
 
         if (!errors.isEmpty()) {
             throw new ServiceException(OrderErrorCode.CLAIM_ITEMS_NOT_VALID, errors);
+        }
+    }
+
+    private static void validateItem(List<ItemError> errors, ProductSku sku, Integer quantity) {
+        String productName = sku.getProduct().getName() + "(" + sku.getSkuIdentifier() + ")";
+
+        if (!sku.isActive()) {
+            errors.add(ItemError.of(productName, OrderErrorCode.SKU_MUST_ACTIVE));
+        } else if (!sku.getProduct().isActive()) {
+            errors.add(ItemError.of(productName, OrderErrorCode.PRODUCT_MUST_ACTIVE));
+        } else if (!sku.isStockValid(quantity)) {
+            errors.add(ItemError.of(productName, OrderErrorCode.STOCK_NOT_VALID));
         }
     }
 

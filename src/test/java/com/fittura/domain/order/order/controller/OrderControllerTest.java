@@ -29,12 +29,14 @@ import com.fittura.domain.order.order.support.OrderFixture;
 import com.fittura.domain.delivery.delivery.constant.DeliveryType;
 import com.fittura.domain.product.product.constant.ProductType;
 import com.fittura.domain.product.product.entity.Product;
+import com.fittura.domain.product.product.error.ProductErrorCode;
 import com.fittura.domain.product.product.repository.ProductRepository;
 import com.fittura.domain.product.product.support.ProductFixture;
 import com.fittura.domain.product.sku.entity.ProductSku;
 import com.fittura.domain.product.sku.repository.ProductSkuRepository;
 import com.fittura.domain.product.sku.support.ProductSkuFixture;
 import com.fittura.global.IntegrationTestBase;
+import com.fittura.global.error.CommonErrorCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -78,6 +80,7 @@ class OrderControllerTest extends IntegrationTestBase {
 
     private static final String ORDER_URL = "/api/v1/orders";
     private static final String PREVIEW_CART_URL = ORDER_URL + "/preview/cart";
+    private static final String PREVIEW_DIRECT_URL = ORDER_URL + "/preview/direct";
     private static final LocalDate SEARCH_START = LocalDate.now().minusMonths(1);
     private static final LocalDate SEARCH_END = LocalDate.now().plusDays(1);
 
@@ -375,6 +378,182 @@ class OrderControllerTest extends IntegrationTestBase {
             .andDo(print())
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.code").value(MemberAddressError.NOT_FOUND_ADDRESS.getCode()));
+    }
+
+
+    // ========== 주문 전 조회 (바로 주문) ==========
+
+    @Test
+    @DisplayName("바로 주문 전 조회 성공 - SKU별 수량이 맞게 연결되고 일반배송·기사배송 묶음으로 반환")
+    void previewDirectSuccess_deliveryGroups() throws Exception {
+        // given
+        Long memberId = 65L;
+        ProductSku parcelSku = savedSku(DeliveryType.PARCEL, 10000L);
+        ProductSku installSku = savedSku(DeliveryType.INSTALLATION, 200000L);
+
+        // 기사배송을 먼저 보내도 응답 묶음은 PARCEL → INSTALLATION 순서
+        String reqBody = """
+            {
+                "orderSkus": [
+                    { "skuId": %d, "quantity": 1 },
+                    { "skuId": %d, "quantity": 2 }
+                ]
+            }
+            """.formatted(installSku.getId(), parcelSku.getId());
+
+        // 금액 계산 규칙은 OrderCalculatorTest에서 검증. 여기서는 SKU별 수량 연결과 계산 결과 연결만 확인
+        long finalAmount = 220000 + DeliveryType.PARCEL.getBaseFee() + DeliveryType.INSTALLATION.getBaseFee();
+
+        // when & then
+        mockMvc.perform(post(PREVIEW_DIRECT_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.deliveryGroups[0].deliveryType").value("PARCEL"))
+            .andExpect(jsonPath("$.data.deliveryGroups[0].items[0].skuId").value(parcelSku.getId()))
+            .andExpect(jsonPath("$.data.deliveryGroups[0].items[0].quantity").value(2))
+            .andExpect(jsonPath("$.data.deliveryGroups[1].deliveryType").value("INSTALLATION"))
+            .andExpect(jsonPath("$.data.deliveryGroups[1].items[0].skuId").value(installSku.getId()))
+            .andExpect(jsonPath("$.data.deliveryGroups[1].items[0].quantity").value(1))
+            .andExpect(jsonPath("$.data.finalAmount").value(finalAmount));
+
+        // 미리보기는 주문을 만들지 않고 재고도 예약하지 않는다
+        assertThat(orderRepository.count()).isZero();
+        assertThat(productSkuRepository.findById(parcelSku.getId()).orElseThrow().getReservedQuantity()).isZero();
+    }
+
+    @Test
+    @DisplayName("바로 주문 전 조회 실패 - 같은 SKU가 중복 요청")
+    void previewDirectFail_duplicateSku() throws Exception {
+        // given
+        Long memberId = 66L;
+        ProductSku sku = savedDefaultSku();
+
+        String reqBody = """
+            {
+                "orderSkus": [
+                    { "skuId": %d, "quantity": 1 },
+                    { "skuId": %d, "quantity": 2 }
+                ]
+            }
+            """.formatted(sku.getId(), sku.getId());
+
+        // when & then
+        mockMvc.perform(post(PREVIEW_DIRECT_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value(OrderErrorCode.DUPLICATE_SKU.getCode()));
+    }
+
+    @Test
+    @DisplayName("바로 주문 전 조회 실패 - 존재하지 않는 SKU")
+    void previewDirectFail_notFoundSku() throws Exception {
+        // given
+        Long memberId = 67L;
+        ProductSku sku = savedDefaultSku();
+
+        String reqBody = """
+            {
+                "orderSkus": [
+                    { "skuId": %d, "quantity": 1 },
+                    { "skuId": 999999, "quantity": 1 }
+                ]
+            }
+            """.formatted(sku.getId());
+
+        // when & then
+        mockMvc.perform(post(PREVIEW_DIRECT_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value(ProductErrorCode.NOT_FOUND_SKU.getCode()));
+    }
+
+    @Test
+    @DisplayName("바로 주문 전 조회 실패 - 요청 수량이 재고보다 많음")
+    void previewDirectFail_stockNotValid() throws Exception {
+        // given
+        Long memberId = 68L;
+        ProductSku sku = savedDefaultSku(2);
+
+        String reqBody = """
+            {
+                "orderSkus": [
+                    { "skuId": %d, "quantity": 5 }
+                ]
+            }
+            """.formatted(sku.getId());
+
+        // when & then
+        mockMvc.perform(post(PREVIEW_DIRECT_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value(OrderErrorCode.CART_ITEMS_NOT_VALID.getCode()))
+            .andExpect(jsonPath("$.data.length()").value(1))
+            .andExpect(jsonPath("$.data[0].code").value(OrderErrorCode.STOCK_NOT_VALID.getCode()));
+    }
+
+    @Test
+    @DisplayName("바로 주문 전 조회 실패 - 다른 회원의 배송지 지정")
+    void previewDirectFail_addressNotOwnedByMember() throws Exception {
+        // given
+        Long memberId = 69L;
+        Long otherMemberId = 70L;
+        ProductSku sku = savedDefaultSku();
+        MemberAddress otherAddress = memberAddressRepository.save(MemberAddressFixture.address(otherMemberId, true));
+
+        String reqBody = """
+            {
+                "orderSkus": [
+                    { "skuId": %d, "quantity": 1 }
+                ],
+                "addressId": %d
+            }
+            """.formatted(sku.getId(), otherAddress.getId());
+
+        // when & then
+        mockMvc.perform(post(PREVIEW_DIRECT_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value(MemberAddressError.NOT_FOUND_ADDRESS.getCode()));
+    }
+
+    @Test
+    @DisplayName("바로 주문 전 조회 실패 - 요청 항목의 수량이 범위를 벗어남")
+    void previewDirectFail_invalidQuantity() throws Exception {
+        // given
+        Long memberId = 71L;
+        ProductSku sku = savedDefaultSku();
+
+        String reqBody = """
+            {
+                "orderSkus": [
+                    { "skuId": %d, "quantity": 0 }
+                ]
+            }
+            """.formatted(sku.getId());
+
+        // when & then
+        mockMvc.perform(post(PREVIEW_DIRECT_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value(CommonErrorCode.VALIDATION_ERROR.getCode()));
     }
 
 

@@ -8,6 +8,7 @@ import com.fittura.domain.order.order.constant.OrderStatus;
 import com.fittura.domain.order.order.dto.request.AddressCreateReqDto;
 import com.fittura.domain.order.order.dto.request.OrderCreateReqDto;
 import com.fittura.domain.order.order.dto.response.OrderAddressResDto;
+import com.fittura.domain.order.order.dto.request.OrderSkuReqDto;
 import com.fittura.domain.order.order.dto.response.OrderWithAllResDto;
 import com.fittura.domain.order.order.entity.Order;
 import com.fittura.domain.order.order.entity.OrderAddress;
@@ -22,7 +23,9 @@ import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.support.ProductFixture;
 import com.fittura.domain.product.sku.entity.ProductSku;
 import com.fittura.domain.product.sku.support.ProductSkuFixture;
+import com.fittura.global.error.ItemError;
 import com.fittura.global.exception.ServiceException;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,9 +35,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -157,5 +162,93 @@ class OrderServiceTest {
 
         // then
         verify(addressRepository).save(any(OrderAddress.class));
+    }
+
+
+    // ========== 바로 주문 SKU 중복 검사 ==========
+
+    @Test
+    @DisplayName("SKU 중복 검사 성공 - 서로 다른 SKU")
+    void validateNoDuplicateSkuSuccess() {
+        // given
+        List<OrderSkuReqDto> orderSkus = List.of(
+            new OrderSkuReqDto(1L, 2),
+            new OrderSkuReqDto(2L, 2)
+        );
+
+        // when & then
+        assertThatCode(() -> orderService.validateNoDuplicateSku(orderSkus))
+            .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("SKU 중복 검사 실패 - 같은 SKU가 수량만 다르게 중복")
+    void validateNoDuplicateSkuFail_sameSkuDifferentQuantity() {
+        // given
+        List<OrderSkuReqDto> orderSkus = List.of(
+            new OrderSkuReqDto(1L, 2),
+            new OrderSkuReqDto(1L, 3)
+        );
+
+        // when & then
+        assertThatThrownBy(() -> orderService.validateNoDuplicateSku(orderSkus))
+            .isInstanceOf(ServiceException.class)
+            .satisfies(e -> assertThat(((ServiceException) e).getErrorCode())
+                .isEqualTo(OrderErrorCode.DUPLICATE_SKU));
+    }
+
+
+    // ========== 바로 주문 SKU 검증 ==========
+
+    @Test
+    @DisplayName("바로 주문 SKU 검증 성공")
+    void validatePreviewSkusSuccess() {
+        // given
+        ProductSku sku = ProductSkuFixture.skuWithId(1L, activeProduct(), 10_000L);
+        ProductSku otherSku = ProductSkuFixture.skuWithId(2L, activeProduct(), 12_000L);
+
+        // when & then
+        assertThatCode(() -> orderService.validatePreviewSkus(
+            List.of(sku, otherSku),
+            Map.of(1L, 5, 2L, 50)   // 재고 50 → 경계값(재고와 같은 수량)까지 허용
+        )).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("바로 주문 SKU 검증 실패 - 항목마다 사유를 모아서 반환")
+    void validatePreviewSkusFail_collectsErrorsPerItem() {
+        // given
+        ProductSku pausedSku = ProductSkuFixture.skuWithId(1L, activeProduct(), 10_000L);
+        pausedSku.pause();
+        ProductSku disabledProductSku = ProductSkuFixture.skuWithId(
+            2L, ProductFixture.componentWithId(11L, "B Desk"), 10_000L);   // 상품 미활성(DISABLED)
+        ProductSku lowStockSku = ProductSkuFixture.skuWithId(3L, activeProduct(), 10_000L);   // 재고 50
+
+        // when & then
+        assertThatThrownBy(() -> orderService.validatePreviewSkus(
+            List.of(pausedSku, disabledProductSku, lowStockSku),
+            Map.of(1L, 1, 2L, 1, 3L, 51)
+        ))
+            .isInstanceOf(ServiceException.class)
+            .satisfies(e -> {
+                ServiceException exception = (ServiceException) e;
+                assertThat(exception.getErrorCode()).isEqualTo(OrderErrorCode.CART_ITEMS_NOT_VALID);
+                assertThat(exception.getDetail())
+                    .asInstanceOf(InstanceOfAssertFactories.list(ItemError.class))
+                    .extracting(ItemError::code)
+                    .containsExactly(
+                        OrderErrorCode.SKU_MUST_ACTIVE.getCode(),
+                        OrderErrorCode.PRODUCT_MUST_ACTIVE.getCode(),
+                        OrderErrorCode.STOCK_NOT_VALID.getCode());
+            });
+    }
+
+
+    // ========== 헬퍼 메서드 ==========
+
+    private Product activeProduct() {
+        Product product = ProductFixture.componentWithId(10L, "A Desk");
+        product.activate();
+        return product;
     }
 }

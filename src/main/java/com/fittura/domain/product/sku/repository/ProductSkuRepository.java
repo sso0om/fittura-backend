@@ -19,6 +19,9 @@ public interface ProductSkuRepository extends JpaRepository<ProductSku, Long>, P
     @EntityGraph(attributePaths = "product")
     List<ProductSku> findAllByIdInAndStatusNot(Set<Long> skuIds, SkuStatus skuStatus);
 
+    @EntityGraph(attributePaths = {"product", "product.mainImage", "color", "material"})
+    List<ProductSku> findAllWithDetailByIdInAndStatusNot(Set<Long> skuIds, SkuStatus skuStatus);
+
     List<ProductSku> findByProductIdAndStatusNot(Long productId, SkuStatus status);
 
     Optional<ProductSku> findByIdAndStatusNot(Long skuId, SkuStatus status);

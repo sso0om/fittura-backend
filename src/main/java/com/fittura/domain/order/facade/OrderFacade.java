@@ -3,20 +3,15 @@ package com.fittura.domain.order.facade;
 import com.fittura.domain.member.address.service.MemberAddressService;
 import com.fittura.domain.order.cart.entity.CartItem;
 import com.fittura.domain.order.cart.service.CartService;
-import com.fittura.domain.order.order.dto.request.CartOrderPreviewReqDto;
-import com.fittura.domain.order.order.dto.request.ClaimOrderReqDto;
-import com.fittura.domain.order.order.dto.request.OrderCreateReqDto;
-import com.fittura.domain.order.order.dto.request.OrderSearchCondition;
-import com.fittura.domain.order.order.dto.response.OrderPreviewItemResDto;
-import com.fittura.domain.order.order.dto.response.OrderPreviewResDto;
-import com.fittura.domain.order.order.dto.response.OrderWithAllResDto;
-import com.fittura.domain.order.order.dto.response.OrderWithDeliveryResDto;
+import com.fittura.domain.order.order.dto.request.*;
+import com.fittura.domain.order.order.dto.response.*;
 import com.fittura.domain.order.order.entity.Claim;
 import com.fittura.domain.order.order.entity.Order;
 import com.fittura.domain.order.order.service.OrderService;
 import com.fittura.domain.order.order.util.OrderCalculation;
 import com.fittura.domain.order.order.util.OrderCalculator;
 import com.fittura.domain.order.order.util.OrderItemCalculation;
+import com.fittura.domain.product.sku.entity.ProductSku;
 import com.fittura.domain.product.sku.service.SkuService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -25,6 +20,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -57,6 +54,26 @@ public class OrderFacade {
 
         List<OrderPreviewItemResDto> previewItems = toPreviewItems(cartItems);
         List<OrderItemCalculation> itemCalculations = getItemCalculations(cartItems);
+        OrderCalculation calculation = OrderCalculator.calculate(itemCalculations, 0L);
+
+        return OrderPreviewResDto.of(previewItems, calculation);
+    }
+
+    @Transactional(readOnly = true)
+    public OrderPreviewResDto getOrderPreviewDirect(Long memberId, DirectOrderPreviewReqDto reqDto) {
+        orderService.validateNoDuplicateSku(reqDto.orderSkus());
+
+        Map<Long, Integer> quantityBySkuId = toQuantityBySkuId(reqDto);
+        List<ProductSku> skus = skuService.getSkusWithDetailById(quantityBySkuId.keySet());
+        orderService.validatePreviewSkus(skus, quantityBySkuId);
+
+        // TODO: 권역 할증 도입 시 배송지 zipCode로 배송비 반영
+        if (reqDto.addressId() != null) {
+            addressService.getAddress(memberId, reqDto.addressId());
+        }
+
+        List<OrderPreviewItemResDto> previewItems = toPreviewItems(skus, quantityBySkuId);
+        List<OrderItemCalculation> itemCalculations = getItemCalculations(skus, quantityBySkuId);
         OrderCalculation calculation = OrderCalculator.calculate(itemCalculations, 0L);
 
         return OrderPreviewResDto.of(previewItems, calculation);
@@ -112,15 +129,32 @@ public class OrderFacade {
 
     // ========== 헬퍼 메서드 ==========
 
+    private Map<Long, Integer> toQuantityBySkuId(DirectOrderPreviewReqDto reqDto) {
+        return reqDto.orderSkus().stream()
+            .collect(Collectors.toMap(OrderSkuReqDto::skuId, OrderSkuReqDto::quantity));
+    }
+
     private List<OrderPreviewItemResDto> toPreviewItems(List<CartItem> cartItems) {
         return cartItems.stream()
             .map(ci -> OrderPreviewItemResDto.from(ci.getProductSku(), ci.getQuantity()))
             .toList();
     }
 
+    private List<OrderPreviewItemResDto> toPreviewItems(List<ProductSku> skus, Map<Long, Integer> quantityBySkuId) {
+        return skus.stream()
+            .map(sku -> OrderPreviewItemResDto.from(sku, quantityBySkuId.get(sku.getId())))
+            .toList();
+    }
+
     private List<OrderItemCalculation> getItemCalculations(List<CartItem> cartItems) {
         return cartItems.stream()
             .map(ci -> OrderItemCalculation.of(ci.getProductSku(), ci.getQuantity()))
+            .toList();
+    }
+
+    private List<OrderItemCalculation> getItemCalculations(List<ProductSku> skus, Map<Long, Integer> quantityBySkuId) {
+        return skus.stream()
+            .map(sku -> OrderItemCalculation.of(sku, quantityBySkuId.get(sku.getId())))
             .toList();
     }
 }

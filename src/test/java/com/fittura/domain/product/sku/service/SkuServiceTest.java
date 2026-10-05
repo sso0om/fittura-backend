@@ -110,6 +110,43 @@ class SkuServiceTest {
     }
 
 
+    // ========== SKU 상세 목록 조회 ==========
+
+    @Test
+    @DisplayName("SKU 상세 목록 조회 성공 - 판매 중지 SKU도 포함해 id 오름차순으로 반환")
+    void getSkusWithDetailByIdSuccess() {
+        // given
+        Product product = activeProduct();
+        ProductSku sku = ProductSkuFixture.skuWithId(1L, product, 10_000L);
+        ProductSku pausedSku = ProductSkuFixture.skuWithId(2L, product, 12_000L);
+        pausedSku.pause();   // 판매 가능 여부는 주문 검증에서 판단하므로 여기서는 걸러내지 않는다
+        given(productSkuRepository.findAllWithDetailByIdInAndStatusNot(Set.of(1L, 2L), SkuStatus.ARCHIVED))
+            .willReturn(List.of(pausedSku, sku));
+
+        // when
+        List<ProductSku> result = skuService.getSkusWithDetailById(Set.of(1L, 2L));
+
+        // then
+        assertThat(result).containsExactly(sku, pausedSku);
+    }
+
+    @Test
+    @DisplayName("SKU 상세 목록 조회 실패 - 요청한 id 중 없는 SKU가 있음")
+    void getSkusWithDetailByIdFail_notFound() {
+        // given
+        Product product = activeProduct();
+        ProductSku sku = ProductSkuFixture.skuWithId(1L, product, 10_000L);
+        given(productSkuRepository.findAllWithDetailByIdInAndStatusNot(Set.of(1L, 2L), SkuStatus.ARCHIVED))
+            .willReturn(List.of(sku));
+
+        // when & then
+        assertThatThrownBy(() -> skuService.getSkusWithDetailById(Set.of(1L, 2L)))
+            .isInstanceOf(ServiceException.class)
+            .satisfies(e -> assertThat(((ServiceException) e).getErrorCode())
+                .isEqualTo(ProductErrorCode.NOT_FOUND_SKU));
+    }
+
+
     // ========== SKU 생성 ==========
 
     @Test
