@@ -120,7 +120,7 @@ public class CategoryService {
             .orElseThrow(() -> new ServiceException(CategoryErrorCode.NOT_FOUND_PARENT_CATEGORY));
     }
 
-    private static List<CategoryTreeResDto> buildCategoryTree(List<Category> categories) {
+    private List<CategoryTreeResDto> buildCategoryTree(List<Category> categories) {
         Map<Long, List<Category>> childrenMap = categories.stream()
             .filter(c -> c.getParent() != null)
             .collect(Collectors.groupingBy(c -> c.getParent().getId()));
