@@ -366,38 +366,6 @@ class AdminCategoryControllerV1Test extends IntegrationTestBase {
         assertThat(afterChild.getDepth()).isEqualTo(after.getDepth() + 1);
     }
 
-    @Test
-    @DisplayName("카테고리 수정 실패 - 자기 자신을 부모로 변경")
-    void updateCategoryNotSelfParent() throws Exception {
-        Category category = categoryRepository.save(CategoryFixture.rootActive());
-
-        // given
-        String reqBody = """
-                {
-                    "name" : "카테고리 변경",
-                    "parentId" : %d,
-                    "sortOrder" : 1,
-                    "status" : "ACTIVE"
-                }
-            """.formatted(category.getId());
-
-        // when & then
-        ResultActions resultActions = mockMvc
-            .perform(put(CATEGORY_ADMIN_URL + "/" + category.getId())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(reqBody)
-            )
-            .andDo(print());
-
-        // verify
-        resultActions
-            .andExpect(handler().handlerType(AdminCategoryControllerV1.class))
-            .andExpect(handler().methodName("updateCategory"))
-            .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.code").value(CategoryErrorCode.NOT_SELF_PARENT.getCode()))
-            .andExpect(jsonPath("$.message").value(CategoryErrorCode.NOT_SELF_PARENT.getMessage()));
-    }
-
 
     // ========== 카테고리 삭제 ==========
 

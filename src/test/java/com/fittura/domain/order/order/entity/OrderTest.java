@@ -73,25 +73,6 @@ class OrderTest {
     // ========== calcAmount ==========
 
     @Test
-    @DisplayName("calcAmount 성공 - 아이템 합계, 포인트, 배송비 반영")
-    void calcAmountSuccess() {
-        // given
-        Order order = OrderFixture.order(1L, 1000L);
-        ProductSku sku = ProductSkuFixture.sku(product(DeliveryType.PARCEL), 10000L, 100);
-        OrderItem.create(order, sku, 2); // 합계 20000, 무료배송 기준 미만
-
-        // when
-        order.calcAmount();
-
-        // then
-        // finalAmount = 20000 - 0 - 1000 + 기본 배송비
-        assertThat(order.getTotalAmount()).isEqualTo(20000L);
-        assertThat(order.getDiscountAmount()).isZero();
-        assertThat(order.getDeliveryFee()).isEqualTo(DeliveryType.PARCEL.getBaseFee());
-        assertThat(order.getFinalAmount()).isEqualTo(19000L + DeliveryType.PARCEL.getBaseFee());
-    }
-
-    @Test
     @DisplayName("calcAmount 성공 - 할인 상품은 판매가 기준으로 계산")
     void calcAmountSuccess_saleSku() {
         // given

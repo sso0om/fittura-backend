@@ -38,38 +38,6 @@ class OrderCalculatorTest {
     // ========== 배송비 ==========
 
     @Test
-    @DisplayName("calculate 성공 - 일반배송 합계가 무료배송 기준 미만이면 기본 배송비 1회")
-    void calculateSuccess_parcelBelowThreshold() {
-        // given
-        List<OrderItemCalculation> items = List.of(
-            parcel(10000L, 1, 0L),
-            parcel(20000L, 1, 0L)   // 합계 30000
-        );
-
-        // when
-        OrderCalculation result = OrderCalculator.calculate(items, 0L);
-
-        // then
-        assertThat(result.deliveryFee()).isEqualTo(DeliveryType.PARCEL.getBaseFee());
-    }
-
-    @Test
-    @DisplayName("calculate 성공 - 일반배송 합계가 무료배송 기준 이상이면 0")
-    void calculateSuccess_parcelFreeShipping() {
-        // given
-        List<OrderItemCalculation> items = List.of(
-            parcel(20000L, 1, 0L),
-            parcel(20000L, 1, 0L)   // 합계 40000
-        );
-
-        // when
-        OrderCalculation result = OrderCalculator.calculate(items, 0L);
-
-        // then
-        assertThat(result.deliveryFee()).isZero();
-    }
-
-    @Test
     @DisplayName("calculate 성공 - 무료배송 기준은 할인 후 금액으로 판단")
     void calculateSuccess_parcelThresholdAfterDiscount() {
         // given

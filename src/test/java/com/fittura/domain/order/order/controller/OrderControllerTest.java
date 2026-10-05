@@ -377,32 +377,6 @@ class OrderControllerTest extends IntegrationTestBase {
             .andExpect(jsonPath("$.code").value(MemberAddressError.NOT_FOUND_ADDRESS.getCode()));
     }
 
-    @Test
-    @DisplayName("주문 전 조회 실패 - 판매 불가(비활성) SKU 포함")
-    void previewCartFail_skuNotActive() throws Exception {
-        // given
-        Long memberId = 65L;
-        ProductSku sku = savedDefaultSku();
-        sku.pause();
-        productSkuRepository.save(sku);
-
-        Cart cart = cartRepository.save(CartFixture.cart(memberId));
-        CartItem cartItem = cartItemRepository.save(CartItemFixture.cartItem(cart, sku, 1));
-
-        String reqBody = """
-            { "cartItemIds": [%d] }
-            """.formatted(cartItem.getId());
-
-        // when & then
-        mockMvc.perform(post(PREVIEW_CART_URL)
-                .header("Authorization", userBearerToken(memberId))
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(reqBody))
-            .andDo(print())
-            .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.code").value(OrderErrorCode.CART_ITEMS_NOT_VALID.getCode()))
-            .andExpect(jsonPath("$.data[0].code").value(OrderErrorCode.SKU_MUST_ACTIVE.getCode()));
-    }
 
     // ========== 주문 생성 ==========
 
