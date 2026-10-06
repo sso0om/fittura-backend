@@ -79,6 +79,8 @@ class OrderControllerTest extends IntegrationTestBase {
     private MemberAddressRepository memberAddressRepository;
 
     private static final String ORDER_URL = "/api/v1/orders";
+    private static final String ORDER_CART_URL = ORDER_URL + "/cart";
+    private static final String ORDER_DIRECT_URL = ORDER_URL + "/direct";
     private static final String PREVIEW_CART_URL = ORDER_URL + "/preview/cart";
     private static final String PREVIEW_DIRECT_URL = ORDER_URL + "/preview/direct";
     private static final LocalDate SEARCH_START = LocalDate.now().minusMonths(1);
@@ -92,7 +94,7 @@ class OrderControllerTest extends IntegrationTestBase {
         // given
         Long memberId = 40L;
         ProductSku sku = savedDefaultSku();
-        createOrderWithDelivery(memberId, sku, 2, DeliveryType.PARCEL);
+        createOrderCartWithDelivery(memberId, sku, 2, DeliveryType.PARCEL);
 
         // when & then
         mockMvc.perform(get(ORDER_URL)
@@ -117,7 +119,7 @@ class OrderControllerTest extends IntegrationTestBase {
         Long memberId = 41L;
         ProductSku parcelSku = savedDefaultSku();
         ProductSku installSku = savedDefaultSku();
-        createOrderWithMultipleDeliveries(memberId, parcelSku, installSku);
+        createOrderCartWithMultipleDeliveries(memberId, parcelSku, installSku);
 
         // when & then
         mockMvc.perform(get(ORDER_URL)
@@ -138,7 +140,7 @@ class OrderControllerTest extends IntegrationTestBase {
         // given
         Long memberId = 42L;
         ProductSku sku = savedDefaultSku();
-        createOrderWithItem(memberId, sku, 1);   // 배송 미생성
+        createOrderCartWithItem(memberId, sku, 1);   // 배송 미생성
 
         // when & then
         mockMvc.perform(get(ORDER_URL)
@@ -157,8 +159,8 @@ class OrderControllerTest extends IntegrationTestBase {
         Long memberId = 43L;
         Long otherMemberId = 44L;
         ProductSku sku = savedDefaultSku();
-        createOrderWithDelivery(memberId, sku, 1, DeliveryType.PARCEL);
-        createOrderWithDelivery(otherMemberId, sku, 1, DeliveryType.PARCEL);
+        createOrderCartWithDelivery(memberId, sku, 1, DeliveryType.PARCEL);
+        createOrderCartWithDelivery(otherMemberId, sku, 1, DeliveryType.PARCEL);
 
         // when & then
         mockMvc.perform(get(ORDER_URL)
@@ -175,7 +177,7 @@ class OrderControllerTest extends IntegrationTestBase {
         // given
         Long memberId = 45L;
         ProductSku sku = savedDefaultSku();   // "A Desk"
-        createOrderWithDelivery(memberId, sku, 1, DeliveryType.PARCEL);
+        createOrderCartWithDelivery(memberId, sku, 1, DeliveryType.PARCEL);
 
         // 매칭
         mockMvc.perform(get(ORDER_URL)
@@ -223,7 +225,7 @@ class OrderControllerTest extends IntegrationTestBase {
         // given
         Long memberId = 30L;
         ProductSku sku = savedDefaultSku();
-        Order order = createOrderWithItem(memberId, sku, 2);
+        Order order = createOrderCartWithItem(memberId, sku, 2);
 
         // when & then
         mockMvc.perform(get(ORDER_URL + "/{id}", order.getId())
@@ -246,7 +248,7 @@ class OrderControllerTest extends IntegrationTestBase {
         // given
         Long memberId = 34L;
         ProductSku sku = savedSaleSku(10000L, 8000L);
-        Order order = createOrderWithItem(memberId, sku, 2);
+        Order order = createOrderCartWithItem(memberId, sku, 2);
 
         // when & then
         mockMvc.perform(get(ORDER_URL + "/{id}", order.getId())
@@ -279,7 +281,7 @@ class OrderControllerTest extends IntegrationTestBase {
         Long ownerMemberId = 32L;
         Long attackerMemberId = 33L;
         ProductSku sku = savedDefaultSku();
-        Order order = createOrderWithItem(ownerMemberId, sku, 1);
+        Order order = createOrderCartWithItem(ownerMemberId, sku, 1);
 
         // when & then
         mockMvc.perform(get(ORDER_URL + "/{id}", order.getId())
@@ -557,11 +559,11 @@ class OrderControllerTest extends IntegrationTestBase {
     }
 
 
-    // ========== 주문 생성 ==========
+    // ========== 장바구니 주문 생성 ==========
 
     @Test
-    @DisplayName("주문 생성 성공 - 제품 1개")
-    void createOrderSuccess() throws Exception {
+    @DisplayName("장바구니 주문 생성 성공 - 제품 1개")
+    void createOrderCartSuccess() throws Exception {
         // given
         Long memberId = 1L;
         ProductSku sku = savedDefaultSku();
@@ -585,7 +587,7 @@ class OrderControllerTest extends IntegrationTestBase {
             """.formatted(cartItem.getId());
 
         // when & then
-        mockMvc.perform(post(ORDER_URL)
+        mockMvc.perform(post(ORDER_CART_URL)
                 .header("Authorization", userBearerToken(memberId))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(reqBody))
@@ -607,8 +609,8 @@ class OrderControllerTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("주문 생성 성공 - 제품 여러개")
-    void createOrderSuccess_multipleCartItems() throws Exception {
+    @DisplayName("장바구니 주문 생성 성공 - 제품 여러개")
+    void createOrderCartSuccess_multipleCartItems() throws Exception {
         // given
         Long memberId = 2L;
         ProductSku sku1 = savedDefaultSku();
@@ -633,7 +635,7 @@ class OrderControllerTest extends IntegrationTestBase {
             """.formatted(cartItem1.getId(), cartItem2.getId());
 
         // when & then
-        mockMvc.perform(post(ORDER_URL)
+        mockMvc.perform(post(ORDER_CART_URL)
                 .header("Authorization", userBearerToken(memberId))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(reqBody))
@@ -645,8 +647,8 @@ class OrderControllerTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("주문 생성 실패 - 다른 회원의 장바구니 아이템으로 주문 시도")
-    void createOrderFail_cartItemNotOwnedByMember() throws Exception {
+    @DisplayName("장바구니 주문 생성 실패 - 다른 회원의 장바구니 아이템으로 주문 시도")
+    void createOrderCartFail_cartItemNotOwnedByMember() throws Exception {
         // given
         Long ownerMemberId = 20L;
         Long attackerMemberId = 21L;
@@ -670,7 +672,7 @@ class OrderControllerTest extends IntegrationTestBase {
             """.formatted(ownerItem.getId());
 
         // when & then
-        mockMvc.perform(post(ORDER_URL)
+        mockMvc.perform(post(ORDER_CART_URL)
                 .header("Authorization", userBearerToken(attackerMemberId))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(reqBody))
@@ -680,8 +682,8 @@ class OrderControllerTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("주문 생성 실패 - 존재하지 않는 장바구니 아이템")
-    void createOrderFail_cartItemNotFound() throws Exception {
+    @DisplayName("장바구니 주문 생성 실패 - 존재하지 않는 장바구니 아이템")
+    void createOrderCartFail_cartItemNotFound() throws Exception {
         // given
         Long memberId = 10L;
 
@@ -701,7 +703,7 @@ class OrderControllerTest extends IntegrationTestBase {
             """;
 
         // when & then
-        mockMvc.perform(post(ORDER_URL)
+        mockMvc.perform(post(ORDER_CART_URL)
                 .header("Authorization", userBearerToken(memberId))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(reqBody))
@@ -715,8 +717,8 @@ class OrderControllerTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("주문 생성 실패 - 비활성(품절) SKU 주문 시도")
-    void createOrderFail_skuNotActive() throws Exception {
+    @DisplayName("장바구니 주문 생성 실패 - 비활성(품절) SKU 주문 시도")
+    void createOrderCartFail_skuNotActive() throws Exception {
         // given
         Long memberId = 11L;
         ProductSku sku = savedDefaultSku(10);
@@ -742,7 +744,7 @@ class OrderControllerTest extends IntegrationTestBase {
             """.formatted(cartItem.getId());
 
         // when & then
-        mockMvc.perform(post(ORDER_URL)
+        mockMvc.perform(post(ORDER_CART_URL)
                 .header("Authorization", userBearerToken(memberId))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(reqBody))
@@ -759,8 +761,8 @@ class OrderControllerTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("주문 생성 실패 - 재고 부족")
-    void createOrderFail_stockNotValid() throws Exception {
+    @DisplayName("장바구니 주문 생성 실패 - 재고 부족")
+    void createOrderCartFail_stockNotValid() throws Exception {
         // given
         Long memberId = 12L;
         ProductSku sku = savedDefaultSku(2);
@@ -785,7 +787,7 @@ class OrderControllerTest extends IntegrationTestBase {
             """.formatted(cartItem.getId());
 
         // when & then
-        mockMvc.perform(post(ORDER_URL)
+        mockMvc.perform(post(ORDER_CART_URL)
                 .header("Authorization", userBearerToken(memberId))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(reqBody))
@@ -802,8 +804,8 @@ class OrderControllerTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("주문 생성 실패 - 여러 항목이 각각의 사유로 실패")
-    void createOrderFail_multipleInvalidItems() throws Exception {
+    @DisplayName("장바구니 주문 생성 실패 - 여러 항목이 각각의 사유로 실패")
+    void createOrderCartFail_multipleInvalidItems() throws Exception {
         // given
         Long memberId = 13L;
         ProductSku pausedSku = savedDefaultSku(10);
@@ -831,7 +833,7 @@ class OrderControllerTest extends IntegrationTestBase {
             """.formatted(item1.getId(), item2.getId());
 
         // when & then
-        mockMvc.perform(post(ORDER_URL)
+        mockMvc.perform(post(ORDER_CART_URL)
                 .header("Authorization", userBearerToken(memberId))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(reqBody))
@@ -876,7 +878,7 @@ class OrderControllerTest extends IntegrationTestBase {
         return productSkuRepository.save(ProductSkuFixture.sku(product, originalPrice, discountPrice, 100));
     }
 
-    private Order createOrderWithItem(Long memberId, ProductSku sku, Integer quantity) {
+    private Order createOrderCartWithItem(Long memberId, ProductSku sku, Integer quantity) {
         Order order = OrderFixture.orderWithItem(memberId, 1000L, sku, quantity);
         order.prepare();
         orderRepository.save(order);
@@ -889,7 +891,7 @@ class OrderControllerTest extends IntegrationTestBase {
         return order;
     }
 
-    private Order createOrderWithDelivery(Long memberId, ProductSku sku, Integer quantity, DeliveryType type) {
+    private Order createOrderCartWithDelivery(Long memberId, ProductSku sku, Integer quantity, DeliveryType type) {
         Order order = OrderFixture.orderWithItem(memberId, 0L, sku, quantity);
         OrderItem item = order.getItems().get(0);
         order.prepare();
@@ -907,7 +909,7 @@ class OrderControllerTest extends IntegrationTestBase {
         return order;
     }
 
-    private Order createOrderWithMultipleDeliveries(Long memberId, ProductSku parcelSku, ProductSku installSku) {
+    private Order createOrderCartWithMultipleDeliveries(Long memberId, ProductSku parcelSku, ProductSku installSku) {
         Order order = OrderFixture.orderWithItems(memberId, 0L, parcelSku, installSku);
         OrderItem parcelItem = order.getItems().get(0);
         OrderItem installItem = order.getItems().get(1);

@@ -6,7 +6,7 @@ import com.fittura.domain.order.cart.support.CartFixture;
 import com.fittura.domain.order.cart.support.CartItemFixture;
 import com.fittura.domain.order.order.constant.OrderStatus;
 import com.fittura.domain.order.order.dto.request.AddressCreateReqDto;
-import com.fittura.domain.order.order.dto.request.OrderCreateReqDto;
+import com.fittura.domain.order.order.dto.request.CartOrderCreateReqDto;
 import com.fittura.domain.order.order.dto.response.OrderAddressResDto;
 import com.fittura.domain.order.order.dto.request.OrderSkuReqDto;
 import com.fittura.domain.order.order.dto.response.OrderWithAllResDto;
@@ -108,14 +108,14 @@ class OrderServiceTest {
 
     @Test
     @DisplayName("주문 생성 성공")
-    void createOrderSuccess() {
+    void createOrderCartSuccess() {
         // given
         Long memberId = 1L;
-        OrderCreateReqDto reqDto = new OrderCreateReqDto(List.of(1L), 1000L, OrderAddressFixture.addressReqDto());
+        CartOrderCreateReqDto reqDto = new CartOrderCreateReqDto(List.of(1L), 1000L, OrderAddressFixture.addressReqDto());
         given(orderRepository.save(any(Order.class))).willAnswer(inv -> inv.getArgument(0));
 
         // when
-        Order result = orderService.createOrder(memberId, reqDto);
+        Order result = orderService.createOrderCart(memberId, reqDto);
 
         // then
         assertThat(result.getMemberId()).isEqualTo(memberId);
@@ -130,7 +130,7 @@ class OrderServiceTest {
 
     @Test
     @DisplayName("주문 아이템 생성 성공")
-    void createOrderItemSuccess() {
+    void createOrderCartItemSuccess() {
         // given
         Long memberId = 1L;
         Product product = ProductFixture.component("A Desk");
@@ -152,7 +152,7 @@ class OrderServiceTest {
 
     @Test
     @DisplayName("주문 주소 생성 성공")
-    void createOrderAddressSuccess() {
+    void createOrderCartAddressSuccess() {
         // given
         Order order = OrderFixture.order(1L);
         AddressCreateReqDto reqDto = OrderAddressFixture.addressReqDto();

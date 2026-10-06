@@ -3,7 +3,7 @@ package com.fittura.domain.order.order.controller;
 import com.fittura.domain.order.facade.OrderFacade;
 import com.fittura.domain.order.order.dto.request.CartOrderPreviewReqDto;
 import com.fittura.domain.order.order.dto.request.ClaimOrderReqDto;
-import com.fittura.domain.order.order.dto.request.OrderCreateReqDto;
+import com.fittura.domain.order.order.dto.request.CartOrderCreateReqDto;
 import com.fittura.domain.order.order.dto.request.OrderSearchCondition;
 import com.fittura.domain.order.order.dto.request.DirectOrderPreviewReqDto;
 import com.fittura.domain.order.order.dto.response.OrderPreviewResDto;
@@ -85,13 +85,13 @@ public class OrderController {
         return ResponseEntity.ok(RsData.success("주문 정보가 조회되었습니다.", resDto));
     }
 
-    @PostMapping
-    @Operation(summary = "주문 생성", description = "주문 생성 API")
-    public ResponseEntity<RsData<Long>> createOrder(
+    @PostMapping("/cart")
+    @Operation(summary = "장바구니 주문 생성", description = "장바구니에서 넘어온 주문 생성 API")
+    public ResponseEntity<RsData<Long>> createOrderCart(
         @LogInMemberId Long memberId,
-        @RequestBody @Valid OrderCreateReqDto reqDto
+        @RequestBody @Valid CartOrderCreateReqDto reqDto
     ) {
-        Long orderId = orderFacade.createOrder(memberId, reqDto);
+        Long orderId = orderFacade.createOrderCart(memberId, reqDto);
         return ResponseEntity
             .status(HttpStatus.CREATED)
             .body(RsData.createSuccess("주문이 생성되었습니다.", orderId));

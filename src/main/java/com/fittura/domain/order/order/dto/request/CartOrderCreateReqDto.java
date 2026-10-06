@@ -9,7 +9,7 @@ import jakarta.validation.constraints.Size;
 import java.util.List;
 
 @Schema(description = "주문 생성 요청 DTO")
-public record OrderCreateReqDto(
+public record CartOrderCreateReqDto(
 
     @Schema(example = "[1, 2, 3]")
     @NotNull @Size(min = 1)

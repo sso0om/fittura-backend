@@ -9,7 +9,7 @@ import com.fittura.domain.order.cart.repository.CartItemRepository;
 import com.fittura.domain.order.cart.repository.CartRepository;
 import com.fittura.domain.order.facade.OrderFacade;
 import com.fittura.domain.order.order.dto.request.AddressCreateReqDto;
-import com.fittura.domain.order.order.dto.request.OrderCreateReqDto;
+import com.fittura.domain.order.order.dto.request.CartOrderCreateReqDto;
 import com.fittura.domain.order.order.repository.OrderAddressRepository;
 import com.fittura.domain.order.order.repository.OrderItemRepository;
 import com.fittura.domain.order.order.repository.OrderRepository;
@@ -130,12 +130,12 @@ public class OrderConcurrencyTest extends IntegrationTestBase {
                     readyLatch.countDown();
                     startLatch.await();
 
-                    OrderCreateReqDto reqDto = new OrderCreateReqDto(
+                    CartOrderCreateReqDto reqDto = new CartOrderCreateReqDto(
                         List.of(cartItemId),
                         0L,
                         addressDto()
                     );
-                    orderFacade.createOrder(memberId, reqDto);
+                    orderFacade.createOrderCart(memberId, reqDto);
                     successCnt.incrementAndGet();
                 } catch (Exception e) {
                     failures.add(e);
@@ -206,9 +206,9 @@ public class OrderConcurrencyTest extends IntegrationTestBase {
                 try {
                     readyLatch.countDown();
                     startLatch.await();
-                    orderFacade.createOrder(
+                    orderFacade.createOrderCart(
                         task.memberId(),
-                        new OrderCreateReqDto(task.cartItemIds(), 0L, address)
+                        new CartOrderCreateReqDto(task.cartItemIds(), 0L, address)
                     );
                 } catch (Throwable e) {
                     failures.add(e);
@@ -289,7 +289,7 @@ public class OrderConcurrencyTest extends IntegrationTestBase {
                 throw new AssertionError("스레드 A가 락을 획득하지 못했습니다 (A가 아직 실행 중)");
             }
             long start = System.nanoTime();
-            orderFacade.createOrder(memberY, new OrderCreateReqDto(List.of(itemYBlue.getId()), 0L, address));
+            orderFacade.createOrderCart(memberY, new CartOrderCreateReqDto(List.of(itemYBlue.getId()), 0L, address));
             return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
         });
 
