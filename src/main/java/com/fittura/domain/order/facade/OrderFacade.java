@@ -1,10 +1,14 @@
 package com.fittura.domain.order.facade;
 
+import com.fittura.domain.member.address.entity.MemberAddress;
 import com.fittura.domain.member.address.service.MemberAddressService;
 import com.fittura.domain.order.cart.entity.CartItem;
 import com.fittura.domain.order.cart.service.CartService;
 import com.fittura.domain.order.order.dto.request.*;
-import com.fittura.domain.order.order.dto.response.*;
+import com.fittura.domain.order.order.dto.response.OrderPreviewItemResDto;
+import com.fittura.domain.order.order.dto.response.OrderPreviewResDto;
+import com.fittura.domain.order.order.dto.response.OrderWithAllResDto;
+import com.fittura.domain.order.order.dto.response.OrderWithDeliveryResDto;
 import com.fittura.domain.order.order.entity.Claim;
 import com.fittura.domain.order.order.entity.Order;
 import com.fittura.domain.order.order.service.OrderService;
@@ -84,11 +88,13 @@ public class OrderFacade {
         List<CartItem> cartItems = cartService.getItemsByIdAndMemberForUpdate(reqDto.cartItemIds(), memberId);
         orderService.validateCartItems(cartItems);
 
+        MemberAddress memberAddress = addressService.getAddressByIdAndMember(reqDto.addressId(), memberId);
+
         Order order = orderService.createOrderCart(memberId, reqDto);
         for (CartItem cartItem : cartItems) {
             orderService.createOrderItem(cartItem, order);
         }
-        orderService.createOrderAddress(order, reqDto.orderAddress());
+        orderService.createOrderAddress(order, memberAddress, reqDto.deliveryMemo());
         order.calcAmount();
         return order.getId();
     }

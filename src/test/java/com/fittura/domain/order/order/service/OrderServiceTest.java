@@ -1,11 +1,12 @@
 package com.fittura.domain.order.order.service;
 
+import com.fittura.domain.member.address.entity.MemberAddress;
+import com.fittura.domain.member.address.support.MemberAddressFixture;
 import com.fittura.domain.order.cart.entity.Cart;
 import com.fittura.domain.order.cart.entity.CartItem;
 import com.fittura.domain.order.cart.support.CartFixture;
 import com.fittura.domain.order.cart.support.CartItemFixture;
 import com.fittura.domain.order.order.constant.OrderStatus;
-import com.fittura.domain.order.order.dto.request.AddressCreateReqDto;
 import com.fittura.domain.order.order.dto.request.CartOrderCreateReqDto;
 import com.fittura.domain.order.order.dto.response.OrderAddressResDto;
 import com.fittura.domain.order.order.dto.request.OrderSkuReqDto;
@@ -17,7 +18,6 @@ import com.fittura.domain.order.order.error.OrderErrorCode;
 import com.fittura.domain.order.order.repository.OrderAddressRepository;
 import com.fittura.domain.order.order.repository.OrderItemRepository;
 import com.fittura.domain.order.order.repository.OrderRepository;
-import com.fittura.domain.order.order.support.OrderAddressFixture;
 import com.fittura.domain.order.order.support.OrderFixture;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.support.ProductFixture;
@@ -29,6 +29,7 @@ import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -111,7 +112,7 @@ class OrderServiceTest {
     void createOrderCartSuccess() {
         // given
         Long memberId = 1L;
-        CartOrderCreateReqDto reqDto = new CartOrderCreateReqDto(List.of(1L), 1000L, OrderAddressFixture.addressReqDto());
+        CartOrderCreateReqDto reqDto = new CartOrderCreateReqDto(List.of(1L), 1000L, 1L, null);
         given(orderRepository.save(any(Order.class))).willAnswer(inv -> inv.getArgument(0));
 
         // when
@@ -151,17 +152,32 @@ class OrderServiceTest {
     // ========== 주문 주소 생성 ==========
 
     @Test
-    @DisplayName("주문 주소 생성 성공")
+    @DisplayName("주문 주소 생성 성공 - 배송지 정보를 복사하고 배송 메모는 요청 값 사용")
     void createOrderCartAddressSuccess() {
         // given
         Order order = OrderFixture.order(1L);
-        AddressCreateReqDto reqDto = OrderAddressFixture.addressReqDto();
+        MemberAddress memberAddress = MemberAddressFixture.address(1L, true);
+        String deliveryMemo = "문앞에 놓아주세요.";
+        ArgumentCaptor<OrderAddress> captor = ArgumentCaptor.forClass(OrderAddress.class);
 
         // when
-        orderService.createOrderAddress(order, reqDto);
+        orderService.createOrderAddress(order, memberAddress, deliveryMemo);
 
         // then
-        verify(addressRepository).save(any(OrderAddress.class));
+        verify(addressRepository).save(captor.capture());
+        OrderAddress saved = captor.getValue();
+        assertThat(saved.getOrder()).isEqualTo(order);
+        assertThat(saved).extracting(
+            OrderAddress::getReceiverName, OrderAddress::getPhoneNumber,
+            OrderAddress::getZipCode, OrderAddress::getAddress,
+            OrderAddress::getAddressDetail, OrderAddress::getSido,
+            OrderAddress::getSigungu, OrderAddress::getDeliveryMemo
+        ).containsExactly(
+            memberAddress.getReceiverName(), memberAddress.getPhoneNumber(),
+            memberAddress.getZipCode(), memberAddress.getAddress(),
+            memberAddress.getAddressDetail(), memberAddress.getSido(),
+            memberAddress.getSigungu(), deliveryMemo
+        );
     }
 
 

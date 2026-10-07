@@ -569,22 +569,16 @@ class OrderControllerTest extends IntegrationTestBase {
         ProductSku sku = savedDefaultSku();
         Cart cart = cartRepository.save(CartFixture.cart(memberId));
         CartItem cartItem = cartItemRepository.save(CartItemFixture.cartItem(cart, sku, 2));
+        MemberAddress address = savedAddress(memberId);
 
         String reqBody = """
             {
                 "cartItemIds": [%d],
-                "pointUsedAmount": 1000,
-                "orderAddress": {
-                    "receiverName": "홍길동",
-                    "phoneNumber": "01012341234",
-                    "zipCode": "12345",
-                    "address": "서울특별시 중구 서소문로 127",
-                    "addressDetail": "시청역",
-                    "sido": "서울특별시",
-                    "sigungu": "중구"
-                }
+                "addressId": %d,
+                "deliveryMemo": "문앞에 놓아주세요.",
+                "pointUsedAmount": 1000
             }
-            """.formatted(cartItem.getId());
+            """.formatted(cartItem.getId(), address.getId());
 
         // when & then
         mockMvc.perform(post(ORDER_CART_URL)
@@ -600,6 +594,11 @@ class OrderControllerTest extends IntegrationTestBase {
         assertThat(orderRepository.count()).isEqualTo(1);
         assertThat(orderItemRepository.count()).isEqualTo(1);
         assertThat(addressRepository.count()).isEqualTo(1);
+
+        // 배송지는 회원 배송지에서 복사, 배송 메모는 요청 값
+        OrderAddress orderAddress = addressRepository.findAll().getFirst();
+        assertThat(orderAddress.getReceiverName()).isEqualTo(address.getReceiverName());
+        assertThat(orderAddress.getDeliveryMemo()).isEqualTo("문앞에 놓아주세요.");
 
         // 일반배송 20000원 (무료배송 기준 미만) → 기본 배송비 적용
         Order order = orderRepository.findAll().getFirst();
@@ -618,21 +617,15 @@ class OrderControllerTest extends IntegrationTestBase {
         Cart cart = cartRepository.save(CartFixture.cart(memberId));
         CartItem cartItem1 = cartItemRepository.save(CartItemFixture.cartItem(cart, sku1, 1));
         CartItem cartItem2 = cartItemRepository.save(CartItemFixture.cartItem(cart, sku2, 3));
+        MemberAddress address = savedAddress(memberId);
 
         String reqBody = """
             {
                 "cartItemIds": [%d, %d],
-                "pointUsedAmount": 500,
-                "orderAddress": {
-                    "receiverName": "홍길동",
-                    "phoneNumber": "01012341234",
-                    "zipCode": "12345",
-                    "address": "서울특별시 중구 서소문로 127",
-                    "sido": "서울특별시",
-                    "sigungu": "중구"
-                }
+                "addressId": %d,
+                "pointUsedAmount": 500
             }
-            """.formatted(cartItem1.getId(), cartItem2.getId());
+            """.formatted(cartItem1.getId(), cartItem2.getId(), address.getId());
 
         // when & then
         mockMvc.perform(post(ORDER_CART_URL)
@@ -655,21 +648,15 @@ class OrderControllerTest extends IntegrationTestBase {
         ProductSku sku = savedDefaultSku();
         Cart ownerCart = cartRepository.save(CartFixture.cart(ownerMemberId));
         CartItem ownerItem = cartItemRepository.save(CartItemFixture.cartItem(ownerCart, sku, 1));
+        MemberAddress attackerAddress = savedAddress(attackerMemberId);
 
         String reqBody = """
             {
                 "cartItemIds": [%d],
-                "pointUsedAmount": 0,
-                "orderAddress": {
-                    "receiverName": "홍길동",
-                    "phoneNumber": "01012341234",
-                    "zipCode": "12345",
-                    "address": "서울특별시 중구 서소문로 127",
-                    "sido": "서울특별시",
-                    "sigungu": "중구"
-                }
+                "addressId": %d,
+                "pointUsedAmount": 0
             }
-            """.formatted(ownerItem.getId());
+            """.formatted(ownerItem.getId(), attackerAddress.getId());
 
         // when & then
         mockMvc.perform(post(ORDER_CART_URL)
@@ -686,21 +673,15 @@ class OrderControllerTest extends IntegrationTestBase {
     void createOrderCartFail_cartItemNotFound() throws Exception {
         // given
         Long memberId = 10L;
+        MemberAddress address = savedAddress(memberId);
 
         String reqBody = """
             {
                 "cartItemIds": [9999],
-                "pointUsedAmount": 1000,
-                "orderAddress": {
-                    "receiverName": "홍길동",
-                    "phoneNumber": "01012341234",
-                    "zipCode": "12345",
-                    "address": "서울특별시 중구 서소문로 127",
-                    "sido": "서울특별시",
-                    "sigungu": "중구"
-                }
+                "addressId": %d,
+                "pointUsedAmount": 1000
             }
-            """;
+            """.formatted(address.getId());
 
         // when & then
         mockMvc.perform(post(ORDER_CART_URL)
@@ -727,21 +708,15 @@ class OrderControllerTest extends IntegrationTestBase {
 
         Cart cart = cartRepository.save(CartFixture.cart(memberId));
         CartItem cartItem = cartItemRepository.save(CartItemFixture.cartItem(cart, sku, 1));
+        MemberAddress address = savedAddress(memberId);
 
         String reqBody = """
             {
                 "cartItemIds": [%d],
-                "pointUsedAmount": 1000,
-                "orderAddress": {
-                    "receiverName": "홍길동",
-                    "phoneNumber": "01012341234",
-                    "zipCode": "12345",
-                    "address": "서울특별시 중구 서소문로 127",
-                    "sido": "서울특별시",
-                    "sigungu": "중구"
-                }
+                "addressId": %d,
+                "pointUsedAmount": 1000
             }
-            """.formatted(cartItem.getId());
+            """.formatted(cartItem.getId(), address.getId());
 
         // when & then
         mockMvc.perform(post(ORDER_CART_URL)
@@ -770,21 +745,15 @@ class OrderControllerTest extends IntegrationTestBase {
 
         Cart cart = cartRepository.save(CartFixture.cart(memberId));
         CartItem cartItem = cartItemRepository.save(CartItemFixture.cartItem(cart, sku, 5));
+        MemberAddress address = savedAddress(memberId);
 
         String reqBody = """
             {
                 "cartItemIds": [%d],
-                "pointUsedAmount": 1000,
-                "orderAddress": {
-                    "receiverName": "홍길동",
-                    "phoneNumber": "01012341234",
-                    "zipCode": "12345",
-                    "address": "서울특별시 중구 서소문로 127",
-                    "sido": "서울특별시",
-                    "sigungu": "중구"
-                }
+                "addressId": %d,
+                "pointUsedAmount": 1000
             }
-            """.formatted(cartItem.getId());
+            """.formatted(cartItem.getId(), address.getId());
 
         // when & then
         mockMvc.perform(post(ORDER_CART_URL)
@@ -816,21 +785,15 @@ class OrderControllerTest extends IntegrationTestBase {
         Cart cart = cartRepository.save(CartFixture.cart(memberId));
         CartItem item1 = cartItemRepository.save(CartItemFixture.cartItem(cart, pausedSku, 1));
         CartItem item2 = cartItemRepository.save(CartItemFixture.cartItem(cart, lowStockSku, 5));
+        MemberAddress address = savedAddress(memberId);
 
         String reqBody = """
             {
                 "cartItemIds": [%d, %d],
-                "pointUsedAmount": 0,
-                "orderAddress": {
-                    "receiverName": "홍길동",
-                    "phoneNumber": "01012341234",
-                    "zipCode": "12345",
-                    "address": "서울특별시 중구 서소문로 127",
-                    "sido": "서울특별시",
-                    "sigungu": "중구"
-                }
+                "addressId": %d,
+                "pointUsedAmount": 0
             }
-            """.formatted(item1.getId(), item2.getId());
+            """.formatted(item1.getId(), item2.getId(), address.getId());
 
         // when & then
         mockMvc.perform(post(ORDER_CART_URL)
@@ -849,8 +812,73 @@ class OrderControllerTest extends IntegrationTestBase {
         assertThat(orderRepository.count()).isEqualTo(0);
     }
 
+    @Test
+    @DisplayName("장바구니 주문 생성 실패 - 다른 회원의 배송지 지정")
+    void createOrderCartFail_addressNotOwnedByMember() throws Exception {
+        // given
+        Long memberId = 14L;
+        Long otherMemberId = 15L;
+        ProductSku sku = savedDefaultSku();
+        Cart cart = cartRepository.save(CartFixture.cart(memberId));
+        CartItem cartItem = cartItemRepository.save(CartItemFixture.cartItem(cart, sku, 1));
+        MemberAddress otherAddress = savedAddress(otherMemberId);
+
+        String reqBody = """
+            {
+                "cartItemIds": [%d],
+                "addressId": %d,
+                "pointUsedAmount": 0
+            }
+            """.formatted(cartItem.getId(), otherAddress.getId());
+
+        // when & then
+        mockMvc.perform(post(ORDER_CART_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value(MemberAddressError.NOT_FOUND_ADDRESS.getCode()));
+
+        assertThat(orderRepository.count()).isEqualTo(0);
+        assertThat(addressRepository.count()).isEqualTo(0);
+        assertThat(cartItemRepository.findById(cartItem.getId())).isPresent();
+    }
+
+    @Test
+    @DisplayName("장바구니 주문 생성 실패 - 배송지 ID 누락")
+    void createOrderCartFail_addressIdMissing() throws Exception {
+        // given
+        Long memberId = 16L;
+        ProductSku sku = savedDefaultSku();
+        Cart cart = cartRepository.save(CartFixture.cart(memberId));
+        CartItem cartItem = cartItemRepository.save(CartItemFixture.cartItem(cart, sku, 1));
+
+        String reqBody = """
+            {
+                "cartItemIds": [%d],
+                "pointUsedAmount": 0
+            }
+            """.formatted(cartItem.getId());
+
+        // when & then
+        mockMvc.perform(post(ORDER_CART_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value(CommonErrorCode.VALIDATION_ERROR.getCode()));
+
+        assertThat(orderRepository.count()).isEqualTo(0);
+    }
+
 
     // ========== 헬퍼 메서드 ==========
+
+    private MemberAddress savedAddress(Long memberId) {
+        return memberAddressRepository.save(MemberAddressFixture.address(memberId, true));
+    }
 
     private ProductSku savedDefaultSku() {
         return savedDefaultSku(100);

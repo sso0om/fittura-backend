@@ -1,5 +1,6 @@
 package com.fittura.domain.order.order.service;
 
+import com.fittura.domain.member.address.entity.MemberAddress;
 import com.fittura.domain.order.cart.entity.CartItem;
 import com.fittura.domain.order.order.constant.ClaimType;
 import com.fittura.domain.order.order.dto.request.*;
@@ -69,12 +70,13 @@ public class OrderService {
 
     // ========== 주문 주소 ==========
 
-    public void createOrderAddress(Order order, AddressCreateReqDto reqDto) {
+    public void createOrderAddress(Order order, MemberAddress memberAddress, String deliveryMemo) {
         OrderAddress orderAddress = OrderAddress.create(
-            order, reqDto.receiverName(), reqDto.phoneNumber(),
-            reqDto.zipCode(), reqDto.address(), reqDto.addressDetail(),
-            reqDto.sido(), reqDto.sigungu(), reqDto.deliveryMemo()
+            order, memberAddress.getReceiverName(), memberAddress.getPhoneNumber(),
+            memberAddress.getZipCode(), memberAddress.getAddress(), memberAddress.getAddressDetail(),
+            memberAddress.getSido(), memberAddress.getSigungu(), deliveryMemo
         );
+
         addressRepository.save(orderAddress);
     }
 

@@ -3,12 +3,14 @@ package com.fittura.domain.order.order.controller;
 import com.fittura.domain.category.entity.Category;
 import com.fittura.domain.category.repository.CategoryRepository;
 import com.fittura.domain.category.support.CategoryFixture;
+import com.fittura.domain.member.address.entity.MemberAddress;
+import com.fittura.domain.member.address.repository.MemberAddressRepository;
+import com.fittura.domain.member.address.support.MemberAddressFixture;
 import com.fittura.domain.order.cart.entity.Cart;
 import com.fittura.domain.order.cart.entity.CartItem;
 import com.fittura.domain.order.cart.repository.CartItemRepository;
 import com.fittura.domain.order.cart.repository.CartRepository;
 import com.fittura.domain.order.facade.OrderFacade;
-import com.fittura.domain.order.order.dto.request.AddressCreateReqDto;
 import com.fittura.domain.order.order.dto.request.CartOrderCreateReqDto;
 import com.fittura.domain.order.order.repository.OrderAddressRepository;
 import com.fittura.domain.order.order.repository.OrderItemRepository;
@@ -66,6 +68,8 @@ public class OrderConcurrencyTest extends IntegrationTestBase {
     @Autowired
     private CartItemRepository cartItemRepository;
     @Autowired
+    private MemberAddressRepository memberAddressRepository;
+    @Autowired
     private PlatformTransactionManager transactionManager;
 
     private Category category;
@@ -83,6 +87,7 @@ public class OrderConcurrencyTest extends IntegrationTestBase {
         orderRepository.deleteAll();
         cartItemRepository.deleteAll();
         cartRepository.deleteAll();
+        memberAddressRepository.deleteAll();
         skuRepository.deleteAll();
         productRepository.deleteAll();
         categoryRepository.deleteAll();
@@ -102,6 +107,7 @@ public class OrderConcurrencyTest extends IntegrationTestBase {
             .toList();
 
         List<Long> cartItemIds = new ArrayList<>();
+        List<Long> addressIds = new ArrayList<>();
         for (Long memberId : memberIds) {
             Cart cart = Cart.create(memberId);
             cartRepository.save(cart);
@@ -109,6 +115,7 @@ public class OrderConcurrencyTest extends IntegrationTestBase {
             CartItem item = CartItem.create(cart, chairSku, 1);
             cartItemRepository.save(item);
             cartItemIds.add(item.getId());
+            addressIds.add(savedAddress(memberId).getId());
         }
 
         // ===== 동시 실행 =====
@@ -124,6 +131,7 @@ public class OrderConcurrencyTest extends IntegrationTestBase {
         for (int i = 0; i < memberCnt; i++) {
             Long memberId = memberIds.get(i);
             Long cartItemId = cartItemIds.get(i);
+            Long addressId = addressIds.get(i);
 
             executor.submit(() -> {
                 try {
@@ -133,7 +141,8 @@ public class OrderConcurrencyTest extends IntegrationTestBase {
                     CartOrderCreateReqDto reqDto = new CartOrderCreateReqDto(
                         List.of(cartItemId),
                         0L,
-                        addressDto()
+                        addressId,
+                        null
                     );
                     orderFacade.createOrderCart(memberId, reqDto);
                     successCnt.incrementAndGet();
@@ -189,10 +198,9 @@ public class OrderConcurrencyTest extends IntegrationTestBase {
         List<Long> cartItemIdsY = List.of(itemYB.getId(), itemYA.getId());
 
         List<OrderTask> tasks = List.of(
-            new OrderTask(memberX, cartItemIdsX),
-            new OrderTask(memberY, cartItemIdsY)
+            new OrderTask(memberX, cartItemIdsX, savedAddress(memberX).getId()),
+            new OrderTask(memberY, cartItemIdsY, savedAddress(memberY).getId())
         );
-        AddressCreateReqDto address = addressDto();
 
         // ===== 동시 실행 =====
         ExecutorService executor = Executors.newFixedThreadPool(tasks.size());
@@ -208,7 +216,7 @@ public class OrderConcurrencyTest extends IntegrationTestBase {
                     startLatch.await();
                     orderFacade.createOrderCart(
                         task.memberId(),
-                        new CartOrderCreateReqDto(task.cartItemIds(), 0L, address)
+                        new CartOrderCreateReqDto(task.cartItemIds(), 0L, task.addressId(), null)
                     );
                 } catch (Throwable e) {
                     failures.add(e);
@@ -259,7 +267,7 @@ public class OrderConcurrencyTest extends IntegrationTestBase {
         CartItem itemYBlue = CartItem.create(cartY, chairBlue, 1);
         cartItemRepository.save(itemYBlue);
 
-        AddressCreateReqDto address = addressDto();
+        Long addressIdY = savedAddress(memberY).getId();
         TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
         ExecutorService executor = Executors.newFixedThreadPool(2);
         CountDownLatch lockAcquiredLatch = new CountDownLatch(1);
@@ -289,7 +297,7 @@ public class OrderConcurrencyTest extends IntegrationTestBase {
                 throw new AssertionError("스레드 A가 락을 획득하지 못했습니다 (A가 아직 실행 중)");
             }
             long start = System.nanoTime();
-            orderFacade.createOrderCart(memberY, new CartOrderCreateReqDto(List.of(itemYBlue.getId()), 0L, address));
+            orderFacade.createOrderCart(memberY, new CartOrderCreateReqDto(List.of(itemYBlue.getId()), 0L, addressIdY, null));
             return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
         });
 
@@ -306,14 +314,11 @@ public class OrderConcurrencyTest extends IntegrationTestBase {
 
     // ========== 헬퍼 메서드 ==========
 
-    private record OrderTask(Long memberId, List<Long> cartItemIds) {
+    private record OrderTask(Long memberId, List<Long> cartItemIds, Long addressId) {
     }
 
-    private AddressCreateReqDto addressDto() {
-        return new AddressCreateReqDto(
-            "홍길동", "01012341234", "12345",
-            "서울특별시 중구 서소문로 127", null, "서울특별시", "중구", null
-        );
+    private MemberAddress savedAddress(Long memberId) {
+        return memberAddressRepository.save(MemberAddressFixture.address(memberId, true));
     }
 
     private Product createActiveProduct(String name) {

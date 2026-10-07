@@ -101,7 +101,7 @@ public class MemberAddressService {
         return addressRepository.findFirstByMemberIdAndDefaultAddressTrueOrderByIdDesc(memberId);
     }
 
-    private MemberAddress getAddressByIdAndMember(Long addressId, Long memberId) {
+    public MemberAddress getAddressByIdAndMember(Long addressId, Long memberId) {
         return addressRepository.findByIdAndMemberId(addressId, memberId)
             .orElseThrow(() -> new ServiceException(MemberAddressError.NOT_FOUND_ADDRESS));
     }

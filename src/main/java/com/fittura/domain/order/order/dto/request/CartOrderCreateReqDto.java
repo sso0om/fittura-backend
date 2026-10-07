@@ -1,7 +1,6 @@
 package com.fittura.domain.order.order.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
@@ -19,9 +18,14 @@ public record CartOrderCreateReqDto(
     @NotNull @PositiveOrZero
     Long pointUsedAmount,
 
-    // TODO: Promotion 추가 시 적용 쿠폰 정보 추가 필요
+    @Schema(example = "1")
+    @NotNull
+    Long addressId,
 
-    @Valid @NotNull
-    AddressCreateReqDto orderAddress
+    @Schema(example = "문앞에 놓아주세요.")
+    @Size(max = 255)
+    String deliveryMemo
+
+    // TODO: Promotion 추가 시 적용 쿠폰 정보 추가 필요
 ) {
 }
