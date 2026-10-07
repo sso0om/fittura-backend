@@ -8,7 +8,7 @@ import com.fittura.domain.order.order.entity.Order;
 import com.fittura.domain.order.order.repository.OrderItemRepository;
 import com.fittura.domain.order.order.repository.OrderRepository;
 import com.fittura.domain.order.order.support.OrderFixture;
-import com.fittura.domain.payment.facde.PaymentFacade;
+import com.fittura.domain.payment.facade.PaymentFacade;
 import com.fittura.domain.payment.payment.constant.PaymentStatus;
 import com.fittura.domain.payment.payment.dto.request.PaymentApproveReqDto;
 import com.fittura.domain.payment.payment.entity.Payment;

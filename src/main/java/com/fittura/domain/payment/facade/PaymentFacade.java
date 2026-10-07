@@ -1,4 +1,4 @@
-package com.fittura.domain.payment.facde;
+package com.fittura.domain.payment.facade;
 
 import com.fittura.domain.order.cart.service.CartService;
 import com.fittura.domain.order.order.entity.Order;
