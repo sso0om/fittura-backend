@@ -141,7 +141,7 @@ class OrderServiceTest {
         Order order = OrderFixture.order(memberId);
 
         // when
-        orderService.createOrderItem(cartItem, order);
+        orderService.createOrderItem(cartItem.getProductSku(), cartItem.getQuantity(), order);
 
         // then
         assertThat(sku.getReservedQuantity()).isEqualTo(3);
