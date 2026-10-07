@@ -51,8 +51,8 @@ public class OrderService {
             .orElseThrow(() -> new ServiceException(OrderErrorCode.NOT_FOUND_ORDER));
     }
 
-    public Order createOrderCart(Long memberId, CartOrderCreateReqDto reqDto) {
-        Order order = Order.create(memberId, reqDto.pointUsedAmount());
+    public Order createOrder(Long memberId, Long pointUsedAmount) {
+        Order order = Order.create(memberId, pointUsedAmount);
         orderRepository.save(order);
         return order;
     }

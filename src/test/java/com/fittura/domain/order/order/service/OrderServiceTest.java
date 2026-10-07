@@ -109,14 +109,14 @@ class OrderServiceTest {
 
     @Test
     @DisplayName("주문 생성 성공")
-    void createOrderCartSuccess() {
+    void createOrderSuccess() {
         // given
         Long memberId = 1L;
         CartOrderCreateReqDto reqDto = new CartOrderCreateReqDto(List.of(1L), 1000L, 1L, null);
         given(orderRepository.save(any(Order.class))).willAnswer(inv -> inv.getArgument(0));
 
         // when
-        Order result = orderService.createOrderCart(memberId, reqDto);
+        Order result = orderService.createOrder(memberId, reqDto.pointUsedAmount());
 
         // then
         assertThat(result.getMemberId()).isEqualTo(memberId);
@@ -131,7 +131,7 @@ class OrderServiceTest {
 
     @Test
     @DisplayName("주문 아이템 생성 성공")
-    void createOrderCartItemSuccess() {
+    void createOrderItemSuccess() {
         // given
         Long memberId = 1L;
         Product product = ProductFixture.component("A Desk");
@@ -153,7 +153,7 @@ class OrderServiceTest {
 
     @Test
     @DisplayName("주문 주소 생성 성공 - 배송지 정보를 복사하고 배송 메모는 요청 값 사용")
-    void createOrderCartAddressSuccess() {
+    void createOrderAddressSuccess() {
         // given
         Order order = OrderFixture.order(1L);
         MemberAddress memberAddress = MemberAddressFixture.address(1L, true);

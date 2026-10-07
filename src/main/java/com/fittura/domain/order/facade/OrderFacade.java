@@ -90,7 +90,7 @@ public class OrderFacade {
 
         MemberAddress memberAddress = addressService.getAddressByIdAndMember(reqDto.addressId(), memberId);
 
-        Order order = orderService.createOrderCart(memberId, reqDto);
+        Order order = orderService.createOrder(memberId, reqDto.pointUsedAmount());
         for (CartItem cartItem : cartItems) {
             orderService.createOrderItem(cartItem.getProductSku(), cartItem.getQuantity(), order);
         }
