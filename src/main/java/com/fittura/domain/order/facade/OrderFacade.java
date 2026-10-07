@@ -67,7 +67,7 @@ public class OrderFacade {
     public OrderPreviewResDto getOrderPreviewDirect(Long memberId, DirectOrderPreviewReqDto reqDto) {
         orderService.validateNoDuplicateSku(reqDto.orderSkus());
 
-        Map<Long, Integer> quantityBySkuId = toQuantityBySkuId(reqDto);
+        Map<Long, Integer> quantityBySkuId = toQuantityBySkuId(reqDto.orderSkus());
         List<ProductSku> skus = skuService.getSkusWithDetailById(quantityBySkuId.keySet());
         orderService.validateDirectSkus(skus, quantityBySkuId);
 
@@ -135,8 +135,8 @@ public class OrderFacade {
 
     // ========== 헬퍼 메서드 ==========
 
-    private Map<Long, Integer> toQuantityBySkuId(DirectOrderPreviewReqDto reqDto) {
-        return reqDto.orderSkus().stream()
+    private Map<Long, Integer> toQuantityBySkuId(List<OrderSkuReqDto> orderSkus) {
+        return orderSkus.stream()
             .collect(Collectors.toMap(OrderSkuReqDto::skuId, OrderSkuReqDto::quantity));
     }
 
