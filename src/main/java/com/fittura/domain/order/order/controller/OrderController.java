@@ -1,11 +1,7 @@
 package com.fittura.domain.order.order.controller;
 
 import com.fittura.domain.order.facade.OrderFacade;
-import com.fittura.domain.order.order.dto.request.CartOrderPreviewReqDto;
-import com.fittura.domain.order.order.dto.request.ClaimOrderReqDto;
-import com.fittura.domain.order.order.dto.request.CartOrderCreateReqDto;
-import com.fittura.domain.order.order.dto.request.OrderSearchCondition;
-import com.fittura.domain.order.order.dto.request.DirectOrderPreviewReqDto;
+import com.fittura.domain.order.order.dto.request.*;
 import com.fittura.domain.order.order.dto.response.OrderPreviewResDto;
 import com.fittura.domain.order.order.dto.response.OrderWithAllResDto;
 import com.fittura.domain.order.order.dto.response.OrderWithDeliveryResDto;
@@ -92,6 +88,18 @@ public class OrderController {
         @RequestBody @Valid CartOrderCreateReqDto reqDto
     ) {
         Long orderId = orderFacade.createOrderCart(memberId, reqDto);
+        return ResponseEntity
+            .status(HttpStatus.CREATED)
+            .body(RsData.createSuccess("주문이 생성되었습니다.", orderId));
+    }
+
+    @PostMapping("/direct")
+    @Operation(summary = "바로 주문 생성", description = "상품 선택 후 바로 넘어온 주문 생성 API")
+    public ResponseEntity<RsData<Long>> createOrderDirect(
+        @LogInMemberId Long memberId,
+        @RequestBody @Valid DirectOrderCreateReqDto reqDto
+    ) {
+        Long orderId = orderFacade.createOrderDirect(memberId, reqDto);
         return ResponseEntity
             .status(HttpStatus.CREATED)
             .body(RsData.createSuccess("주문이 생성되었습니다.", orderId));

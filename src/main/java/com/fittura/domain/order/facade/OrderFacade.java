@@ -100,6 +100,26 @@ public class OrderFacade {
     }
 
     @Transactional
+    public Long createOrderDirect(Long memberId, DirectOrderCreateReqDto reqDto) {
+        orderService.validateNoDuplicateSku(reqDto.orderSkus());
+
+        // TODO: 권역 할증 도입 시 배송지 zipCode로 배송비 반영
+        MemberAddress memberAddress = addressService.getAddressByIdAndMember(reqDto.addressId(), memberId);
+
+        Map<Long, Integer> quantityBySkuId = toQuantityBySkuId(reqDto.orderSkus());
+        List<ProductSku> skus = skuService.getSkusWithDetailByIdForUpdate(quantityBySkuId.keySet());
+        orderService.validateDirectSkus(skus, quantityBySkuId);
+
+        Order order = orderService.createOrder(memberId, reqDto.pointUsedAmount());
+        for (ProductSku sku : skus) {
+            orderService.createOrderItem(sku, quantityBySkuId.get(sku.getId()), order);
+        }
+        orderService.createOrderAddress(order, memberAddress, reqDto.deliveryMemo());
+        order.calcAmount();
+        return order.getId();
+    }
+
+    @Transactional
     public void cancelOrder(Long memberId, Long orderId, ClaimOrderReqDto reqDto) {
         Order order = orderService.getOrder(orderId, memberId);
         order.validateCancel();
