@@ -2,6 +2,9 @@ package com.fittura.domain.order.order.entity;
 
 import com.fittura.domain.category.support.CategoryFixture;
 import com.fittura.domain.delivery.delivery.constant.DeliveryType;
+import com.fittura.domain.order.cart.entity.CartItem;
+import com.fittura.domain.order.cart.support.CartFixture;
+import com.fittura.domain.order.cart.support.CartItemFixture;
 import com.fittura.domain.order.order.constant.OrderStatus;
 import com.fittura.domain.order.order.error.OrderErrorCode;
 import com.fittura.domain.order.order.support.OrderFixture;
@@ -13,6 +16,7 @@ import com.fittura.domain.product.sku.support.ProductSkuFixture;
 import com.fittura.global.exception.ServiceException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -85,6 +89,25 @@ class OrderTest {
 
         // then
         assertThat(order.getTotalAmount()).isEqualTo(16000L);
+    }
+
+
+    // ========== getCartItemIds ==========
+
+    @Test
+    @DisplayName("getCartItemIds 성공 - 장바구니에서 생성된 아이템의 cartItemId만 반환")
+    void getCartItemIdsSuccess() {
+        // given
+        Order order = OrderFixture.order(1L);
+        Product product = ProductFixture.component("A Desk");
+        CartItem cartItem = CartItemFixture.cartItem(CartFixture.cart(1L), ProductSkuFixture.sku(product, 10000L, 100), 2);
+        ReflectionTestUtils.setField(cartItem, "id", 10L);
+
+        OrderItem.create(order, cartItem);
+        OrderItem.create(order, ProductSkuFixture.sku(product, 20000L, 100), 1);
+
+        // when & then
+        assertThat(order.getCartItemIds()).containsExactly(10L);
     }
 
 

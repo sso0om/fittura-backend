@@ -33,6 +33,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -130,22 +131,45 @@ class OrderServiceTest {
     // ========== 주문 아이템 생성 ==========
 
     @Test
-    @DisplayName("주문 아이템 생성 성공")
-    void createOrderItemSuccess() {
+    @DisplayName("주문 아이템 생성 성공 - 장바구니 주문은 cartItemId 저장")
+    void createOrderItemSuccess_cart() {
         // given
         Long memberId = 1L;
         Product product = ProductFixture.component("A Desk");
         ProductSku sku = ProductSkuFixture.sku(product, 20000L, 10);
         Cart cart = CartFixture.cart(memberId);
         CartItem cartItem = CartItemFixture.cartItem(cart, sku, 3);
+        ReflectionTestUtils.setField(cartItem, "id", 10L);
         Order order = OrderFixture.order(memberId);
 
         // when
-        orderService.createOrderItem(cartItem.getProductSku(), cartItem.getQuantity(), order);
+        orderService.createOrderItem(cartItem, order);
 
         // then
         assertThat(sku.getReservedQuantity()).isEqualTo(3);
-        verify(itemRepository).save(any(OrderItem.class));
+
+        ArgumentCaptor<OrderItem> captor = ArgumentCaptor.forClass(OrderItem.class);
+        verify(itemRepository).save(captor.capture());
+        assertThat(captor.getValue().getCartItemId()).isEqualTo(10L);
+    }
+
+    @Test
+    @DisplayName("주문 아이템 생성 성공 - 바로구매 주문은 cartItemId 없음")
+    void createOrderItemSuccess_direct() {
+        // given
+        Product product = ProductFixture.component("A Desk");
+        ProductSku sku = ProductSkuFixture.sku(product, 20000L, 10);
+        Order order = OrderFixture.order(1L);
+
+        // when
+        orderService.createOrderItem(sku, 3, order);
+
+        // then
+        assertThat(sku.getReservedQuantity()).isEqualTo(3);
+
+        ArgumentCaptor<OrderItem> captor = ArgumentCaptor.forClass(OrderItem.class);
+        verify(itemRepository).save(captor.capture());
+        assertThat(captor.getValue().getCartItemId()).isNull();
     }
 
 

@@ -107,8 +107,9 @@ public class CartService {
         item.changeSkuAndQuantity(changeSku, quantity);
     }
 
-    public void deleteCartItems(Long memberId, Set<Long> skuIds) {
-        cartItemRepository.deleteByMemberIdAndSkuIds(memberId, skuIds);
+    public void deleteCartItems(Long memberId, Set<Long> cartItemIds) {
+        if (cartItemIds.isEmpty()) return;
+        cartItemRepository.deleteCartItems(cartItemIds, memberId);
     }
 
     public void deleteCartItem(Long memberId, Long itemId) {

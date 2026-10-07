@@ -321,13 +321,23 @@ class CartServiceTest {
     void deleteCartItemsSuccess() {
         // given
         Long memberId = 1L;
-        Set<Long> skuIds = Set.of(1L, 2L);
+        Set<Long> cartItemIds = Set.of(1L, 2L);
 
         // when
-        cartService.deleteCartItems(memberId, skuIds);
+        cartService.deleteCartItems(memberId, cartItemIds);
 
         // then
-        verify(cartItemRepository).deleteByMemberIdAndSkuIds(memberId, skuIds);
+        verify(cartItemRepository).deleteCartItems(cartItemIds, memberId);
+    }
+
+    @Test
+    @DisplayName("장바구니 아이템 일괄 삭제 - 삭제할 아이템이 없으면 쿼리를 실행하지 않음")
+    void deleteCartItemsSuccess_emptyIds() {
+        // when
+        cartService.deleteCartItems(1L, Set.of());
+
+        // then
+        verify(cartItemRepository, never()).deleteCartItems(any(), anyLong());
     }
 
     @Test

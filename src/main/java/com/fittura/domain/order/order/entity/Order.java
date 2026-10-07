@@ -17,6 +17,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.summingInt;
@@ -121,6 +122,13 @@ public class Order extends BaseEntity {
                 oi -> oi.getSku().getId(),
                 summingInt(OrderItem::getQuantity)
             ));
+    }
+
+    public Set<Long> getCartItemIds() {
+        return items.stream()
+            .map(OrderItem::getCartItemId)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
     }
 
 
