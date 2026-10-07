@@ -92,7 +92,7 @@ public class OrderFacade {
 
         Order order = orderService.createOrder(memberId, reqDto.pointUsedAmount());
         for (CartItem cartItem : cartItems) {
-            orderService.createOrderItem(cartItem.getProductSku(), cartItem.getQuantity(), order);
+            orderService.createOrderItem(cartItem, order);
         }
         orderService.createOrderAddress(order, memberAddress, reqDto.deliveryMemo());
         order.calcAmount();

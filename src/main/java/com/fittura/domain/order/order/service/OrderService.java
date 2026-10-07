@@ -60,6 +60,12 @@ public class OrderService {
 
     // ========== 주문 제품 ==========
 
+    public void createOrderItem(CartItem cartItem, Order order) {
+        OrderItem orderItem = OrderItem.create(order, cartItem);
+        cartItem.getProductSku().reserveQuantity(cartItem.getQuantity());
+        orderItemRepository.save(orderItem);
+    }
+
     public void createOrderItem(ProductSku sku, Integer quantity, Order order) {
         OrderItem orderItem = OrderItem.create(order, sku, quantity);
         sku.reserveQuantity(quantity);

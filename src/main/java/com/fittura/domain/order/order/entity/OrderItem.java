@@ -1,6 +1,7 @@
 package com.fittura.domain.order.order.entity;
 
 import com.fittura.domain.delivery.delivery.constant.DeliveryType;
+import com.fittura.domain.order.cart.entity.CartItem;
 import com.fittura.domain.order.order.constant.OrderItemStatus;
 import com.fittura.domain.order.order.error.OrderErrorCode;
 import com.fittura.domain.order.order.util.OrderItemCalculation;
@@ -78,14 +79,13 @@ public class OrderItem extends BaseEntity {
     @Column(nullable = false, length = 20)
     private OrderItemStatus status;
 
+    @Column
+    private Long cartItemId;
+
 
     // ===== 생성 =====
 
-    public static OrderItem create(
-        Order order,
-        ProductSku sku,
-        Integer quantity
-    ) {
+    public static OrderItem create(Order order, ProductSku sku, Integer quantity) {
         Objects.requireNonNull(order, "order must not be null");
         Objects.requireNonNull(sku, "sku must not be null");
         validateQuantity(quantity);
@@ -105,6 +105,14 @@ public class OrderItem extends BaseEntity {
 
         order.addItem(orderItem);
 
+        return orderItem;
+    }
+
+    public static OrderItem create(Order order, CartItem cartItem) {
+        Objects.requireNonNull(cartItem, "cartItem must not be null");
+
+        OrderItem orderItem = create(order, cartItem.getProductSku(), cartItem.getQuantity());
+        orderItem.cartItemId = cartItem.getId();
         return orderItem;
     }
 

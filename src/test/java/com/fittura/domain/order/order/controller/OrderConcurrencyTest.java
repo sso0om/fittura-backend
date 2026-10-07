@@ -110,66 +110,25 @@ public class OrderConcurrencyTest extends IntegrationTestBase {
             .boxed()
             .toList();
 
-        List<Long> cartItemIds = new ArrayList<>();
-        List<Long> addressIds = new ArrayList<>();
+        List<CartOrderTask> tasks = new ArrayList<>();
         for (Long memberId : memberIds) {
             Cart cart = Cart.create(memberId);
             cartRepository.save(cart);
 
             CartItem item = CartItem.create(cart, chairSku, 1);
             cartItemRepository.save(item);
-            cartItemIds.add(item.getId());
-            addressIds.add(savedAddress(memberId).getId());
+            tasks.add(new CartOrderTask(memberId, List.of(item.getId()), savedAddress(memberId).getId()));
         }
 
-        // ===== 동시 실행 =====
-        ExecutorService executor = Executors.newFixedThreadPool(memberCnt);
-
-        CountDownLatch readyLatch = new CountDownLatch(memberCnt);
-        CountDownLatch startLatch = new CountDownLatch(1);
-        CountDownLatch doneLatch = new CountDownLatch(memberCnt);
-
-        List<Throwable> failures = Collections.synchronizedList(new ArrayList<>());
-        AtomicInteger successCnt = new AtomicInteger();
-
-        for (int i = 0; i < memberCnt; i++) {
-            Long memberId = memberIds.get(i);
-            Long cartItemId = cartItemIds.get(i);
-            Long addressId = addressIds.get(i);
-
-            executor.submit(() -> {
-                try {
-                    readyLatch.countDown();
-                    startLatch.await();
-
-                    CartOrderCreateReqDto reqDto = new CartOrderCreateReqDto(
-                        List.of(cartItemId),
-                        0L,
-                        addressId,
-                        null
-                    );
-                    orderFacade.createOrderCart(memberId, reqDto);
-                    successCnt.incrementAndGet();
-                } catch (Exception e) {
-                    failures.add(e);
-                } finally {
-                    doneLatch.countDown();
-                }
-            });
-
-        }
-        readyLatch.await();
-        startLatch.countDown();
-        boolean finished = doneLatch.await(10, TimeUnit.SECONDS);
-        executor.shutdown();
+        ConcurrentResult result = orderCartConcurrently(tasks);
 
         // ===== 검증 =====
-        assertThat(finished).isTrue();
+        assertThat(result.finished()).isTrue();
 
-        ProductSku result = skuRepository.findById(chairSku.getId()).orElseThrow();
-        assertThat(result.getReservedQuantity()).isLessThanOrEqualTo(result.getStockQuantity());
-        assertThat(successCnt.get()).isEqualTo(initialStock);
-        assertThat(failures).hasSize(memberCnt - initialStock);
+        ProductSku updated = skuRepository.findById(chairSku.getId()).orElseThrow();
+        assertThat(updated.getReservedQuantity()).isLessThanOrEqualTo(updated.getStockQuantity());
+        assertThat(result.successCnt()).isEqualTo(initialStock);
+        assertThat(result.failures()).hasSize(memberCnt - initialStock);
     }
 
     @Test
@@ -201,42 +160,16 @@ public class OrderConcurrencyTest extends IntegrationTestBase {
         cartItemRepository.save(itemYA);
         List<Long> cartItemIdsY = List.of(itemYB.getId(), itemYA.getId());
 
-        List<OrderTask> tasks = List.of(
-            new OrderTask(memberX, cartItemIdsX, savedAddress(memberX).getId()),
-            new OrderTask(memberY, cartItemIdsY, savedAddress(memberY).getId())
+        List<CartOrderTask> tasks = List.of(
+            new CartOrderTask(memberX, cartItemIdsX, savedAddress(memberX).getId()),
+            new CartOrderTask(memberY, cartItemIdsY, savedAddress(memberY).getId())
         );
 
-        // ===== 동시 실행 =====
-        ExecutorService executor = Executors.newFixedThreadPool(tasks.size());
-        CountDownLatch readyLatch = new CountDownLatch(tasks.size());
-        CountDownLatch startLatch = new CountDownLatch(1);
-        CountDownLatch doneLatch = new CountDownLatch(tasks.size());
-        List<Throwable> failures = Collections.synchronizedList(new ArrayList<>());
-
-        for (OrderTask task : tasks) {
-            executor.submit(() -> {
-                try {
-                    readyLatch.countDown();
-                    startLatch.await();
-                    orderFacade.createOrderCart(
-                        task.memberId(),
-                        new CartOrderCreateReqDto(task.cartItemIds(), 0L, task.addressId(), null)
-                    );
-                } catch (Throwable e) {
-                    failures.add(e);
-                } finally {
-                    doneLatch.countDown();
-                }
-            });
-        }
-
-        readyLatch.await();
-        startLatch.countDown();
-        boolean finished = doneLatch.await(10, TimeUnit.SECONDS);
-        executor.shutdown();
+        ConcurrentResult result = orderCartConcurrently(tasks);
+        List<Throwable> failures = result.failures();
 
         // ===== 검증 =====
-        assertThat(finished).isTrue();
+        assertThat(result.finished()).isTrue();
 
         if (!failures.isEmpty()) {
             failures.forEach(e -> System.out.println(
@@ -431,13 +364,47 @@ public class OrderConcurrencyTest extends IntegrationTestBase {
 
     // ========== 헬퍼 메서드 ==========
 
-    private record OrderTask(Long memberId, List<Long> cartItemIds, Long addressId) {
+    private record CartOrderTask(Long memberId, List<Long> cartItemIds, Long addressId) {
     }
 
     private record DirectOrderTask(Long memberId, Long addressId, List<OrderSkuReqDto> orderSkus) {
     }
 
     private record ConcurrentResult(boolean finished, int successCnt, List<Throwable> failures) {
+    }
+
+    private ConcurrentResult orderCartConcurrently(List<CartOrderTask> tasks) throws InterruptedException {
+        ExecutorService executor = Executors.newFixedThreadPool(tasks.size());
+        CountDownLatch readyLatch = new CountDownLatch(tasks.size());
+        CountDownLatch startLatch = new CountDownLatch(1);
+        CountDownLatch doneLatch = new CountDownLatch(tasks.size());
+        List<Throwable> failures = Collections.synchronizedList(new ArrayList<>());
+        AtomicInteger successCnt = new AtomicInteger();
+
+        for (CartOrderTask task : tasks) {
+            executor.submit(() -> {
+                try {
+                    readyLatch.countDown();
+                    startLatch.await();
+                    orderFacade.createOrderCart(
+                        task.memberId(),
+                        new CartOrderCreateReqDto(task.cartItemIds(), 0L, task.addressId(), null)
+                    );
+                    successCnt.incrementAndGet();
+                } catch (Throwable e) {
+                    failures.add(e);
+                } finally {
+                    doneLatch.countDown();
+                }
+            });
+        }
+
+        readyLatch.await();
+        startLatch.countDown();
+        boolean finished = doneLatch.await(10, TimeUnit.SECONDS);
+        executor.shutdown();
+
+        return new ConcurrentResult(finished, successCnt.get(), failures);
     }
 
     private ConcurrentResult orderDirectConcurrently(List<DirectOrderTask> tasks) throws InterruptedException {
