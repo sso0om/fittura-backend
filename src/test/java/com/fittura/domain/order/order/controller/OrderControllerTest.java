@@ -46,6 +46,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.LocalDate;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -871,6 +872,205 @@ class OrderControllerTest extends IntegrationTestBase {
             .andExpect(jsonPath("$.code").value(CommonErrorCode.VALIDATION_ERROR.getCode()));
 
         assertThat(orderRepository.count()).isEqualTo(0);
+    }
+
+
+    // ========== 바로 주문 생성 ==========
+
+    @Test
+    @DisplayName("바로 주문 생성 성공 - SKU별 수량이 맞게 연결되고 배송 메모가 저장됨")
+    void createOrderDirectSuccess() throws Exception {
+        // given
+        Long memberId = 72L;
+        ProductSku parcelSku = savedSku(DeliveryType.PARCEL, 10000L);
+        ProductSku installSku = savedSku(DeliveryType.INSTALLATION, 200000L);
+        MemberAddress address = savedAddress(memberId);
+
+        String reqBody = """
+            {
+                "orderSkus": [
+                    { "skuId": %d, "quantity": 1 },
+                    { "skuId": %d, "quantity": 2 }
+                ],
+                "addressId": %d,
+                "deliveryMemo": "문앞에 놓아주세요.",
+                "pointUsedAmount": 1000
+            }
+            """.formatted(installSku.getId(), parcelSku.getId(), address.getId());
+
+        // when & then
+        mockMvc.perform(post(ORDER_DIRECT_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.code").value("S201-01"))
+            .andExpect(jsonPath("$.message").value("주문이 생성되었습니다."))
+            .andExpect(jsonPath("$.data").isNumber());
+
+        // 금액 계산은 OrderCalculatorTest, 주소 복사는 OrderServiceTest에서 검증. 여기서는 SKU별 수량 연결과 요청 값 연결만 확인
+        assertThat(orderRepository.count()).isEqualTo(1);
+        assertThat(orderItemRepository.findAll())
+            .extracting(oi -> oi.getSku().getId(), OrderItem::getQuantity)
+            .containsExactlyInAnyOrder(
+                tuple(installSku.getId(), 1),
+                tuple(parcelSku.getId(), 2));
+        assertThat(addressRepository.findAll().getFirst().getDeliveryMemo()).isEqualTo("문앞에 놓아주세요.");
+    }
+
+    @Test
+    @DisplayName("바로 주문 생성 실패 - 같은 SKU가 중복 요청")
+    void createOrderDirectFail_duplicateSku() throws Exception {
+        // given
+        Long memberId = 73L;
+        ProductSku sku = savedDefaultSku();
+        MemberAddress address = savedAddress(memberId);
+
+        String reqBody = """
+            {
+                "orderSkus": [
+                    { "skuId": %d, "quantity": 1 },
+                    { "skuId": %d, "quantity": 2 }
+                ],
+                "addressId": %d,
+                "pointUsedAmount": 0
+            }
+            """.formatted(sku.getId(), sku.getId(), address.getId());
+
+        // when & then
+        mockMvc.perform(post(ORDER_DIRECT_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value(OrderErrorCode.DUPLICATE_SKU.getCode()));
+
+        assertThat(orderRepository.count()).isZero();
+    }
+
+    @Test
+    @DisplayName("바로 주문 생성 실패 - 존재하지 않는 SKU")
+    void createOrderDirectFail_notFoundSku() throws Exception {
+        // given
+        Long memberId = 74L;
+        ProductSku sku = savedDefaultSku();
+        MemberAddress address = savedAddress(memberId);
+
+        String reqBody = """
+            {
+                "orderSkus": [
+                    { "skuId": %d, "quantity": 1 },
+                    { "skuId": 999999, "quantity": 1 }
+                ],
+                "addressId": %d,
+                "pointUsedAmount": 0
+            }
+            """.formatted(sku.getId(), address.getId());
+
+        // when & then
+        mockMvc.perform(post(ORDER_DIRECT_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value(ProductErrorCode.NOT_FOUND_SKU.getCode()));
+
+        assertThat(orderRepository.count()).isZero();
+    }
+
+    @Test
+    @DisplayName("바로 주문 생성 실패 - 요청 수량이 재고보다 많음")
+    void createOrderDirectFail_stockNotValid() throws Exception {
+        // given
+        Long memberId = 75L;
+        ProductSku sku = savedDefaultSku(2);
+        MemberAddress address = savedAddress(memberId);
+
+        String reqBody = """
+            {
+                "orderSkus": [
+                    { "skuId": %d, "quantity": 5 }
+                ],
+                "addressId": %d,
+                "pointUsedAmount": 0
+            }
+            """.formatted(sku.getId(), address.getId());
+
+        // when & then
+        mockMvc.perform(post(ORDER_DIRECT_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value(OrderErrorCode.DIRECT_SKUS_NOT_VALID.getCode()))
+            .andExpect(jsonPath("$.data.length()").value(1))
+            .andExpect(jsonPath("$.data[0].code").value(OrderErrorCode.STOCK_NOT_VALID.getCode()));
+
+        assertThat(orderRepository.count()).isZero();
+        assertThat(productSkuRepository.findById(sku.getId()).orElseThrow().getReservedQuantity()).isZero();
+    }
+
+    @Test
+    @DisplayName("바로 주문 생성 실패 - 다른 회원의 배송지 지정")
+    void createOrderDirectFail_addressNotOwnedByMember() throws Exception {
+        // given
+        Long memberId = 76L;
+        Long otherMemberId = 77L;
+        ProductSku sku = savedDefaultSku();
+        MemberAddress otherAddress = savedAddress(otherMemberId);
+
+        String reqBody = """
+            {
+                "orderSkus": [
+                    { "skuId": %d, "quantity": 1 }
+                ],
+                "addressId": %d,
+                "pointUsedAmount": 0
+            }
+            """.formatted(sku.getId(), otherAddress.getId());
+
+        // when & then
+        mockMvc.perform(post(ORDER_DIRECT_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value(MemberAddressError.NOT_FOUND_ADDRESS.getCode()));
+
+        assertThat(orderRepository.count()).isZero();
+    }
+
+    @Test
+    @DisplayName("바로 주문 생성 실패 - 배송지 ID 누락")
+    void createOrderDirectFail_addressIdMissing() throws Exception {
+        // given
+        Long memberId = 78L;
+        ProductSku sku = savedDefaultSku();
+
+        String reqBody = """
+            {
+                "orderSkus": [
+                    { "skuId": %d, "quantity": 1 }
+                ],
+                "pointUsedAmount": 0
+            }
+            """.formatted(sku.getId());
+
+        // when & then
+        mockMvc.perform(post(ORDER_DIRECT_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value(CommonErrorCode.VALIDATION_ERROR.getCode()));
+
+        assertThat(orderRepository.count()).isZero();
     }
 
 

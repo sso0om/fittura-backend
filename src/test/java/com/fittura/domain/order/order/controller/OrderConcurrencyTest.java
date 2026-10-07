@@ -12,12 +12,15 @@ import com.fittura.domain.order.cart.repository.CartItemRepository;
 import com.fittura.domain.order.cart.repository.CartRepository;
 import com.fittura.domain.order.facade.OrderFacade;
 import com.fittura.domain.order.order.dto.request.CartOrderCreateReqDto;
+import com.fittura.domain.order.order.dto.request.DirectOrderCreateReqDto;
+import com.fittura.domain.order.order.dto.request.OrderSkuReqDto;
 import com.fittura.domain.order.order.repository.OrderAddressRepository;
 import com.fittura.domain.order.order.repository.OrderItemRepository;
 import com.fittura.domain.order.order.repository.OrderRepository;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.repository.ProductRepository;
 import com.fittura.domain.product.product.support.ProductFixture;
+import com.fittura.domain.product.sku.constant.SkuStatus;
 import com.fittura.domain.product.sku.entity.ProductSku;
 import com.fittura.domain.product.sku.repository.ProductSkuRepository;
 import com.fittura.domain.product.sku.support.ProductSkuFixture;
@@ -38,6 +41,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.LongStream;
@@ -312,9 +316,162 @@ public class OrderConcurrencyTest extends IntegrationTestBase {
     }
 
 
+    // ========== 바로 주문 ==========
+
+    @Test
+    @DisplayName("재고보다 많은 바로 주문이 동시에 들어와도 초과 판매되지 않음")
+    void concurrentDirectOrdersDoNotExceedStock() throws InterruptedException {
+        int initialStock = 3;
+        int memberCnt = 5;
+
+        ProductSku chairSku = getProductSku("의자", initialStock);
+
+        List<DirectOrderTask> tasks = LongStream.rangeClosed(1, memberCnt)
+            .map(i -> 93000L + i)
+            .boxed()
+            .map(memberId -> new DirectOrderTask(
+                memberId,
+                savedAddress(memberId).getId(),
+                List.of(new OrderSkuReqDto(chairSku.getId(), 1))
+            ))
+            .toList();
+
+        ConcurrentResult result = orderDirectConcurrently(tasks);
+
+        assertThat(result.finished()).isTrue();
+
+        ProductSku updated = skuRepository.findById(chairSku.getId()).orElseThrow();
+        assertThat(updated.getReservedQuantity()).isEqualTo(initialStock);
+        assertThat(result.successCnt()).isEqualTo(initialStock);
+        assertThat(result.failures()).hasSize(memberCnt - initialStock);
+    }
+
+    @Test
+    @DisplayName("서로 다른 순서로 요청한 바로 주문을 동시에 처리해도 데드락이 발생하지 않음")
+    void concurrentDirectOrdersWithReversedSkuOrderDoNotDeadlock() throws InterruptedException {
+        ProductSku skuA = getProductSku("의자A", 5);
+        ProductSku skuB = getProductSku("의자B", 5);
+
+        Long memberX = 94001L;
+        Long memberY = 94002L;
+
+        // 회원 X는 [A, B], 회원 Y는 [B, A] 순서로 요청. 락은 요청 순서와 무관하게 id 오름차순
+        List<DirectOrderTask> tasks = List.of(
+            new DirectOrderTask(memberX, savedAddress(memberX).getId(), List.of(
+                new OrderSkuReqDto(skuA.getId(), 1),
+                new OrderSkuReqDto(skuB.getId(), 1)
+            )),
+            new DirectOrderTask(memberY, savedAddress(memberY).getId(), List.of(
+                new OrderSkuReqDto(skuB.getId(), 1),
+                new OrderSkuReqDto(skuA.getId(), 1)
+            ))
+        );
+
+        ConcurrentResult result = orderDirectConcurrently(tasks);
+
+        assertThat(result.finished()).isTrue();
+        assertThat(result.failures()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("같은 상품의 다른 SKU를 동시에 바로 주문해도 Product 락 경합 없이 독립적으로 처리됨")
+    void concurrentDirectOrdersOnSameProductDifferentSkuAreIndependent() throws Exception {
+        long holdMillis = 2000L;
+
+        Product chair = createActiveProduct("의자");
+        ProductSku chairRed = createSku(chair, 5);
+        ProductSku chairBlue = createSku(chair, 5);
+
+        Long memberY = 95002L;
+        Long addressIdY = savedAddress(memberY).getId();
+
+        TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        CountDownLatch lockAcquiredLatch = new CountDownLatch(1);
+
+        // 스레드 A: chairRed 락을 잡고 holdMillis 동안 트랜잭션을 붙잡고 있음
+        Future<?> threadA = executor.submit(() -> {
+            transactionTemplate.execute(status -> {
+                skuRepository.findAllByIdForUpdate(Set.of(chairRed.getId()), SkuStatus.ARCHIVED);
+                lockAcquiredLatch.countDown();
+                try {
+                    Thread.sleep(holdMillis);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                return null;
+            });
+            return null;
+        });
+
+        // 스레드 B: A가 락을 잡은 직후, 같은 Product의 다른 SKU(blue) 바로 주문 + 실행 시간 측정
+        Future<Long> threadB = executor.submit(() -> {
+            if (!lockAcquiredLatch.await(2, TimeUnit.SECONDS)) {
+                if (threadA.isDone()) {
+                    threadA.get();
+                }
+                throw new AssertionError("스레드 A가 락을 획득하지 못했습니다 (A가 아직 실행 중)");
+            }
+            long start = System.nanoTime();
+            orderFacade.createOrderDirect(memberY, new DirectOrderCreateReqDto(
+                List.of(new OrderSkuReqDto(chairBlue.getId(), 1)), 0L, addressIdY, null
+            ));
+            return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
+        });
+
+        Long executionTimeB = threadB.get(3, TimeUnit.SECONDS);
+
+        // 락이 SKU 행 단위라서, A가 다른 SKU의 락을 잡고 있어도 B는 대기 없이 완료해야 함
+        assertThat(executionTimeB).isLessThan(holdMillis - 500L);
+
+        threadA.get(10, TimeUnit.SECONDS);
+        executor.shutdown();
+    }
+
+
     // ========== 헬퍼 메서드 ==========
 
     private record OrderTask(Long memberId, List<Long> cartItemIds, Long addressId) {
+    }
+
+    private record DirectOrderTask(Long memberId, Long addressId, List<OrderSkuReqDto> orderSkus) {
+    }
+
+    private record ConcurrentResult(boolean finished, int successCnt, List<Throwable> failures) {
+    }
+
+    private ConcurrentResult orderDirectConcurrently(List<DirectOrderTask> tasks) throws InterruptedException {
+        ExecutorService executor = Executors.newFixedThreadPool(tasks.size());
+        CountDownLatch readyLatch = new CountDownLatch(tasks.size());
+        CountDownLatch startLatch = new CountDownLatch(1);
+        CountDownLatch doneLatch = new CountDownLatch(tasks.size());
+        List<Throwable> failures = Collections.synchronizedList(new ArrayList<>());
+        AtomicInteger successCnt = new AtomicInteger();
+
+        for (DirectOrderTask task : tasks) {
+            executor.submit(() -> {
+                try {
+                    readyLatch.countDown();
+                    startLatch.await();
+                    orderFacade.createOrderDirect(
+                        task.memberId(),
+                        new DirectOrderCreateReqDto(task.orderSkus(), 0L, task.addressId(), null)
+                    );
+                    successCnt.incrementAndGet();
+                } catch (Throwable e) {
+                    failures.add(e);
+                } finally {
+                    doneLatch.countDown();
+                }
+            });
+        }
+
+        readyLatch.await();
+        startLatch.countDown();
+        boolean finished = doneLatch.await(10, TimeUnit.SECONDS);
+        executor.shutdown();
+
+        return new ConcurrentResult(finished, successCnt.get(), failures);
     }
 
     private MemberAddress savedAddress(Long memberId) {
