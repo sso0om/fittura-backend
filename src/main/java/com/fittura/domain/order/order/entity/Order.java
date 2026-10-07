@@ -186,6 +186,9 @@ public class Order extends BaseEntity {
     // ===== 헬퍼 메서드 =====
 
     private void applyCalculation(OrderCalculation calculation) {
+        if (calculation.finalAmount() <= 0) {
+            throw new ServiceException(OrderErrorCode.POINT_EXCEEDS_PAYABLE_AMOUNT);
+        }
         this.totalAmount = calculation.totalAmount();
         this.discountAmount = calculation.discountAmount();
         this.deliveryFee = calculation.deliveryFee();
