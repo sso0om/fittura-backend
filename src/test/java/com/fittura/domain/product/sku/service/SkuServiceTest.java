@@ -25,6 +25,7 @@ import com.fittura.global.exception.ServiceException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -141,6 +142,48 @@ class SkuServiceTest {
 
         // when & then
         assertThatThrownBy(() -> skuService.getSkusWithDetailById(Set.of(1L, 2L)))
+            .isInstanceOf(ServiceException.class)
+            .satisfies(e -> assertThat(((ServiceException) e).getErrorCode())
+                .isEqualTo(ProductErrorCode.NOT_FOUND_SKU));
+    }
+
+
+    // ========== SKU 상세 목록 조회 (락) ==========
+
+    @Test
+    @DisplayName("SKU 상세 목록 락 조회 성공 - 락 조회 후 상세 조회 순서로 호출하고 id 오름차순으로 반환")
+    void getSkusWithDetailByIdForUpdateSuccess() {
+        // given
+        Product product = activeProduct();
+        ProductSku sku = ProductSkuFixture.skuWithId(1L, product, 10_000L);
+        ProductSku otherSku = ProductSkuFixture.skuWithId(2L, product, 12_000L);
+        Set<Long> skuIds = Set.of(1L, 2L);
+        given(productSkuRepository.findAllWithDetailByIdInAndStatusNot(skuIds, SkuStatus.ARCHIVED))
+            .willReturn(List.of(otherSku, sku));
+
+        // when
+        List<ProductSku> result = skuService.getSkusWithDetailByIdForUpdate(skuIds);
+
+        // then
+        assertThat(result).containsExactly(sku, otherSku);
+
+        // 락이 상세 조회보다 먼저여야 세션에 최신 재고가 캐싱된다
+        InOrder inOrder = inOrder(productSkuRepository);
+        inOrder.verify(productSkuRepository).findAllByIdForUpdate(skuIds, SkuStatus.ARCHIVED);
+        inOrder.verify(productSkuRepository).findAllWithDetailByIdInAndStatusNot(skuIds, SkuStatus.ARCHIVED);
+    }
+
+    @Test
+    @DisplayName("SKU 상세 목록 락 조회 실패 - 요청한 id 중 없는 SKU가 있음")
+    void getSkusWithDetailByIdForUpdateFail_notFound() {
+        // given
+        Product product = activeProduct();
+        ProductSku sku = ProductSkuFixture.skuWithId(1L, product, 10_000L);
+        given(productSkuRepository.findAllWithDetailByIdInAndStatusNot(Set.of(1L, 2L), SkuStatus.ARCHIVED))
+            .willReturn(List.of(sku));
+
+        // when & then
+        assertThatThrownBy(() -> skuService.getSkusWithDetailByIdForUpdate(Set.of(1L, 2L)))
             .isInstanceOf(ServiceException.class)
             .satisfies(e -> assertThat(((ServiceException) e).getErrorCode())
                 .isEqualTo(ProductErrorCode.NOT_FOUND_SKU));

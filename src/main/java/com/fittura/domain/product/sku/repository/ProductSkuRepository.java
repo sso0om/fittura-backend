@@ -2,10 +2,8 @@ package com.fittura.domain.product.sku.repository;
 
 import com.fittura.domain.product.sku.constant.SkuStatus;
 import com.fittura.domain.product.sku.entity.ProductSku;
-import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
@@ -21,6 +19,15 @@ public interface ProductSkuRepository extends JpaRepository<ProductSku, Long>, P
 
     @EntityGraph(attributePaths = {"product", "product.mainImage", "color", "material"})
     List<ProductSku> findAllWithDetailByIdInAndStatusNot(Set<Long> skuIds, SkuStatus skuStatus);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        SELECT s FROM ProductSku s
+        WHERE s.id IN :skuIds
+        AND s.status <> :status
+        ORDER BY s.id ASC
+        """)
+    List<ProductSku> findAllByIdForUpdate(@Param("skuIds") Set<Long> skuIds, @Param("status") SkuStatus status);
 
     List<ProductSku> findByProductIdAndStatusNot(Long productId, SkuStatus status);
 

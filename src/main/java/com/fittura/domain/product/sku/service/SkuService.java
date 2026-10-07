@@ -51,6 +51,11 @@ public class SkuService {
         return productSkus;
     }
 
+    public List<ProductSku> getSkusWithDetailByIdForUpdate(Set<Long> skuIds) {
+        productSkuRepository.findAllByIdForUpdate(skuIds, SkuStatus.ARCHIVED);
+        return getSkusWithDetailById(skuIds);
+    }
+
     public List<SkuResDto> getProductSkuResDto(Long productId) {
         return productSkuRepository.findSkuDtosByProductId(productId);
     }
