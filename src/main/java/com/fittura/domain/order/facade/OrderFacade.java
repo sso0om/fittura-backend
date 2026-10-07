@@ -69,7 +69,7 @@ public class OrderFacade {
 
         Map<Long, Integer> quantityBySkuId = toQuantityBySkuId(reqDto);
         List<ProductSku> skus = skuService.getSkusWithDetailById(quantityBySkuId.keySet());
-        orderService.validatePreviewSkus(skus, quantityBySkuId);
+        orderService.validateDirectSkus(skus, quantityBySkuId);
 
         // TODO: 권역 할증 도입 시 배송지 zipCode로 배송비 반영
         if (reqDto.addressId() != null) {

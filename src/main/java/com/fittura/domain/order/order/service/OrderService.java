@@ -136,7 +136,7 @@ public class OrderService {
         }
     }
 
-    public void validatePreviewSkus(List<ProductSku> skus, Map<Long, Integer> quantityBySkuId) {
+    public void validateDirectSkus(List<ProductSku> skus, Map<Long, Integer> quantityBySkuId) {
         List<ItemError> errors = new ArrayList<>();
 
         for (ProductSku sku : skus) {
@@ -144,7 +144,7 @@ public class OrderService {
         }
 
         if (!errors.isEmpty()) {
-            throw new ServiceException(OrderErrorCode.CART_ITEMS_NOT_VALID, errors);
+            throw new ServiceException(OrderErrorCode.DIRECT_SKUS_NOT_VALID, errors);
         }
     }
 

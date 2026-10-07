@@ -218,13 +218,13 @@ class OrderServiceTest {
 
     @Test
     @DisplayName("바로 주문 SKU 검증 성공")
-    void validatePreviewSkusSuccess() {
+    void validateDirectSkusSuccess() {
         // given
         ProductSku sku = ProductSkuFixture.skuWithId(1L, activeProduct(), 10_000L);
         ProductSku otherSku = ProductSkuFixture.skuWithId(2L, activeProduct(), 12_000L);
 
         // when & then
-        assertThatCode(() -> orderService.validatePreviewSkus(
+        assertThatCode(() -> orderService.validateDirectSkus(
             List.of(sku, otherSku),
             Map.of(1L, 5, 2L, 50)   // 재고 50 → 경계값(재고와 같은 수량)까지 허용
         )).doesNotThrowAnyException();
@@ -232,7 +232,7 @@ class OrderServiceTest {
 
     @Test
     @DisplayName("바로 주문 SKU 검증 실패 - 항목마다 사유를 모아서 반환")
-    void validatePreviewSkusFail_collectsErrorsPerItem() {
+    void validateDirectSkusFail_collectsErrorsPerItem() {
         // given
         ProductSku pausedSku = ProductSkuFixture.skuWithId(1L, activeProduct(), 10_000L);
         pausedSku.pause();
@@ -241,14 +241,14 @@ class OrderServiceTest {
         ProductSku lowStockSku = ProductSkuFixture.skuWithId(3L, activeProduct(), 10_000L);   // 재고 50
 
         // when & then
-        assertThatThrownBy(() -> orderService.validatePreviewSkus(
+        assertThatThrownBy(() -> orderService.validateDirectSkus(
             List.of(pausedSku, disabledProductSku, lowStockSku),
             Map.of(1L, 1, 2L, 1, 3L, 51)
         ))
             .isInstanceOf(ServiceException.class)
             .satisfies(e -> {
                 ServiceException exception = (ServiceException) e;
-                assertThat(exception.getErrorCode()).isEqualTo(OrderErrorCode.CART_ITEMS_NOT_VALID);
+                assertThat(exception.getErrorCode()).isEqualTo(OrderErrorCode.DIRECT_SKUS_NOT_VALID);
                 assertThat(exception.getDetail())
                     .asInstanceOf(InstanceOfAssertFactories.list(ItemError.class))
                     .extracting(ItemError::code)

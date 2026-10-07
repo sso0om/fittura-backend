@@ -500,7 +500,7 @@ class OrderControllerTest extends IntegrationTestBase {
                 .content(reqBody))
             .andDo(print())
             .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.code").value(OrderErrorCode.CART_ITEMS_NOT_VALID.getCode()))
+            .andExpect(jsonPath("$.code").value(OrderErrorCode.DIRECT_SKUS_NOT_VALID.getCode()))
             .andExpect(jsonPath("$.data.length()").value(1))
             .andExpect(jsonPath("$.data[0].code").value(OrderErrorCode.STOCK_NOT_VALID.getCode()));
     }
