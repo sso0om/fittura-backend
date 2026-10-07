@@ -18,7 +18,7 @@ public record ProductWithAllResDto(
     DeliveryType deliveryType,
     Long deliveryFee,
     ProductStatus status,
-    Long basePrice,
+    Long baseOriginalPrice,
     Long baseSalePrice,
     Long discountRate,
     Double weight,
@@ -34,12 +34,12 @@ public record ProductWithAllResDto(
     public ProductWithAllResDto(
         Long id, String name, String description,
         ProductType productType, DeliveryType deliveryType, ProductStatus status,
-        Long basePrice, Long baseSalePrice,
+        Long baseOriginalPrice, Long baseSalePrice,
         Double weight, Double width, Double height, Double depth, boolean isSoldOut
     ) {
         this(id, name, description,
             productType, deliveryType, deliveryType.getBaseFee(), status,
-            basePrice, baseSalePrice, PriceCalculator.discountRate(basePrice, baseSalePrice),
+            baseOriginalPrice, baseSalePrice, PriceCalculator.discountRate(baseOriginalPrice, baseSalePrice),
             weight, width, height, depth, isSoldOut, List.of(), List.of(), List.of());
     }
 }

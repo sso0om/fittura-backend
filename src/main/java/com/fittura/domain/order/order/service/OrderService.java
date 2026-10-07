@@ -1,8 +1,10 @@
 package com.fittura.domain.order.order.service;
 
+import com.fittura.domain.member.address.entity.MemberAddress;
 import com.fittura.domain.order.cart.entity.CartItem;
 import com.fittura.domain.order.order.constant.ClaimType;
 import com.fittura.domain.order.order.dto.request.*;
+import com.fittura.domain.order.order.dto.request.OrderSkuReqDto;
 import com.fittura.domain.order.order.dto.response.OrderWithAllResDto;
 import com.fittura.domain.order.order.dto.response.OrderWithDeliveryResDto;
 import com.fittura.domain.order.order.entity.*;
@@ -49,37 +51,37 @@ public class OrderService {
             .orElseThrow(() -> new ServiceException(OrderErrorCode.NOT_FOUND_ORDER));
     }
 
-    public Order createOrder(Long memberId, OrderCreateReqDto reqDto) {
-        Order order = Order.create(memberId, reqDto.pointUsedAmount());
+    public Order createOrder(Long memberId, Long pointUsedAmount) {
+        Order order = Order.create(memberId, pointUsedAmount);
         orderRepository.save(order);
         return order;
-    }
-
-    public void calcAmount(Order order) {
-        // TODO: calcDiscountAmount
-        order.calcDeliveryFee();
-        order.calcFinalAmount();
     }
 
 
     // ========== 주문 제품 ==========
 
     public void createOrderItem(CartItem cartItem, Order order) {
-        ProductSku sku = cartItem.getProductSku();
-        OrderItem orderItem = OrderItem.create(order, sku, cartItem.getQuantity());
-        sku.reserveQuantity(cartItem.getQuantity());
+        OrderItem orderItem = OrderItem.create(order, cartItem);
+        cartItem.getProductSku().reserveQuantity(cartItem.getQuantity());
+        orderItemRepository.save(orderItem);
+    }
+
+    public void createOrderItem(ProductSku sku, Integer quantity, Order order) {
+        OrderItem orderItem = OrderItem.create(order, sku, quantity);
+        sku.reserveQuantity(quantity);
         orderItemRepository.save(orderItem);
     }
 
 
     // ========== 주문 주소 ==========
 
-    public void createOrderAddress(Order order, AddressCreateReqDto reqDto) {
+    public void createOrderAddress(Order order, MemberAddress memberAddress, String deliveryMemo) {
         OrderAddress orderAddress = OrderAddress.create(
-            order, reqDto.receiverName(), reqDto.phoneNumber(),
-            reqDto.zipCode(), reqDto.address(), reqDto.addressDetail(),
-            reqDto.sido(), reqDto.sigungu(), reqDto.deliveryMemo()
+            order, memberAddress.getReceiverName(), memberAddress.getPhoneNumber(),
+            memberAddress.getZipCode(), memberAddress.getAddress(), memberAddress.getAddressDetail(),
+            memberAddress.getSido(), memberAddress.getSigungu(), deliveryMemo
         );
+
         addressRepository.save(orderAddress);
     }
 
@@ -116,24 +118,38 @@ public class OrderService {
 
     // ========== 유효성 검사 ==========
 
+    public void validateNoDuplicateSku(List<OrderSkuReqDto> orderSkus) {
+        long distinctCnt = orderSkus.stream()
+            .map(OrderSkuReqDto::skuId)
+            .distinct()
+            .count();
+
+        if (distinctCnt != orderSkus.size()) {
+            throw new ServiceException(OrderErrorCode.DUPLICATE_SKU);
+        }
+    }
+
     public void validateCartItems(List<CartItem> cartItems) {
         List<ItemError> errors = new ArrayList<>();
 
         for (CartItem cartItem : cartItems) {
-            ProductSku sku = cartItem.getProductSku();
-            String productName = sku.getProduct().getName() + "(" + sku.getSkuIdentifier() + ")";
-
-            if (!sku.isActive()) {
-                errors.add(ItemError.of(productName, OrderErrorCode.SKU_MUST_ACTIVE));
-            } else if (!sku.getProduct().isActive()) {
-                errors.add(ItemError.of(productName, OrderErrorCode.PRODUCT_MUST_ACTIVE));
-            } else if (!sku.isStockValid(cartItem.getQuantity())) {
-                errors.add(ItemError.of(productName, OrderErrorCode.STOCK_NOT_VALID));
-            }
+            validateItem(errors, cartItem.getProductSku(), cartItem.getQuantity());
         }
 
         if (!errors.isEmpty()) {
             throw new ServiceException(OrderErrorCode.CART_ITEMS_NOT_VALID, errors);
+        }
+    }
+
+    public void validateDirectSkus(List<ProductSku> skus, Map<Long, Integer> quantityBySkuId) {
+        List<ItemError> errors = new ArrayList<>();
+
+        for (ProductSku sku : skus) {
+            validateItem(errors, sku, quantityBySkuId.get(sku.getId()));
+        }
+
+        if (!errors.isEmpty()) {
+            throw new ServiceException(OrderErrorCode.DIRECT_SKUS_NOT_VALID, errors);
         }
     }
 
@@ -154,6 +170,18 @@ public class OrderService {
 
         if (!errors.isEmpty()) {
             throw new ServiceException(OrderErrorCode.CLAIM_ITEMS_NOT_VALID, errors);
+        }
+    }
+
+    private static void validateItem(List<ItemError> errors, ProductSku sku, Integer quantity) {
+        String productName = sku.getProduct().getName() + "(" + sku.getSkuIdentifier() + ")";
+
+        if (!sku.isActive()) {
+            errors.add(ItemError.of(productName, OrderErrorCode.SKU_MUST_ACTIVE));
+        } else if (!sku.getProduct().isActive()) {
+            errors.add(ItemError.of(productName, OrderErrorCode.PRODUCT_MUST_ACTIVE));
+        } else if (!sku.isStockValid(quantity)) {
+            errors.add(ItemError.of(productName, OrderErrorCode.STOCK_NOT_VALID));
         }
     }
 

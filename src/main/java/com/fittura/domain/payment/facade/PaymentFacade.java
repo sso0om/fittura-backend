@@ -1,4 +1,4 @@
-package com.fittura.domain.payment.facde;
+package com.fittura.domain.payment.facade;
 
 import com.fittura.domain.order.cart.service.CartService;
 import com.fittura.domain.order.order.entity.Order;
@@ -15,8 +15,6 @@ import com.fittura.domain.product.sku.service.SkuService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -49,12 +47,10 @@ public class PaymentFacade {
         paymentService.validatePgResponse(payment, paymentRes);
 
         paymentService.approvePayment(payment, paymentRes);
-
-        Map<Long, Integer> quantityBySkuId = order.getQuantityBySkuId();
-        skuService.confirmSku(quantityBySkuId);
+        skuService.confirmSku(order.getQuantityBySkuId());
         order.paid();
 
-        cartService.deleteCartItems(memberId, quantityBySkuId.keySet());
+        cartService.deleteCartItems(memberId, order.getCartItemIds());
 
         return order.getId();
     }

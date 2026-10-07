@@ -20,8 +20,8 @@ public class ProductSkuRepositoryImpl implements ProductSkuRepositoryCustom {
         return queryFactory
             .select(Projections.constructor(SkuResDto.class,
                 productSku.id,
-                productSku.price,
-                productSku.salePrice,
+                productSku.originalPrice,
+                productSku.discountPrice,
                 productSku.status,
                 productSku.color.name,
                 productSku.material.name,

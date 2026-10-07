@@ -47,11 +47,17 @@ public class CartService {
 
     public List<CartItem> getItemsByIdAndMember(List<Long> itemIds, Long memberId) {
         List<Long> distinctIds = itemIds.stream().distinct().toList();
+        List<CartItem> cartItems = cartItemRepository.findAllWithSku(distinctIds, memberId);
+
+        validateAllFound(cartItems, distinctIds);
+        return cartItems;
+    }
+
+    public List<CartItem> getItemsByIdAndMemberForUpdate(List<Long> itemIds, Long memberId) {
+        List<Long> distinctIds = itemIds.stream().distinct().toList();
         List<CartItem> cartItems = cartItemRepository.findAllWithSkuForUpdate(distinctIds, memberId);
 
-        if (cartItems.size() != distinctIds.size()) {
-            throw new ServiceException(CartErrorCode.NOT_FOUND_ITEM);
-        }
+        validateAllFound(cartItems, distinctIds);
         return cartItems;
     }
 
@@ -101,13 +107,23 @@ public class CartService {
         item.changeSkuAndQuantity(changeSku, quantity);
     }
 
-    public void deleteCartItems(Long memberId, Set<Long> skuIds) {
-        cartItemRepository.deleteByMemberIdAndSkuIds(memberId, skuIds);
+    public void deleteCartItems(Long memberId, Set<Long> cartItemIds) {
+        if (cartItemIds.isEmpty()) return;
+        cartItemRepository.deleteCartItems(cartItemIds, memberId);
     }
 
     public void deleteCartItem(Long memberId, Long itemId) {
         CartItem item = getItemByIdAndMember(itemId, memberId);
         cartItemRepository.deleteById(item.getId());
+    }
+
+
+    //  ===== 유효성 검증 =====
+
+    private void validateAllFound(List<CartItem> cartItems, List<Long> distinctIds) {
+        if (cartItems.size() != distinctIds.size()) {
+            throw new ServiceException(CartErrorCode.NOT_FOUND_ITEM);
+        }
     }
 
 

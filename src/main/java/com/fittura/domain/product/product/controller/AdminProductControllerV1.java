@@ -29,7 +29,7 @@ public class AdminProductControllerV1 {
     private final ProductFacade productFacade;
 
     @GetMapping
-    @Operation(summary = "제품 목록 조회", description = "관리자용 제품 목록 조회 API - sort 예시: basePrice,desc / createdDate,desc")
+    @Operation(summary = "제품 목록 조회", description = "관리자용 제품 목록 조회 API - sort 예시: baseOriginalPrice,desc / createdDate,desc")
     public ResponseEntity<RsData<Page<ProductResDto>>> getProducts(
         @ParameterObject AdminProductSearchReqDto reqDto,
         @ParameterObject Pageable pageable

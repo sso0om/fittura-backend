@@ -97,7 +97,7 @@ class CartControllerV1Test extends IntegrationTestBase {
             .andExpect(jsonPath("$.data.items[0].originalPrice").value(10_000))
             .andExpect(jsonPath("$.data.items[0].salePrice").value(10_000))
             .andExpect(jsonPath("$.data.items[0].discountRate").value(0))
-            .andExpect(jsonPath("$.data.items[0].itemTotalPrice").value(30_000));
+            .andExpect(jsonPath("$.data.items[0].itemTotalAmount").value(30_000));
     }
 
     @Test
@@ -118,7 +118,7 @@ class CartControllerV1Test extends IntegrationTestBase {
             .andExpect(jsonPath("$.data.items[0].deliveryType").value("INSTALLATION"))
             .andExpect(jsonPath("$.data.items[0].deliveryFee")
                 .value(DeliveryType.INSTALLATION.getBaseFee().intValue() * 3))
-            .andExpect(jsonPath("$.data.items[0].itemTotalPrice").value(600_000));
+            .andExpect(jsonPath("$.data.items[0].itemTotalAmount").value(600_000));
     }
 
     @Test
@@ -139,7 +139,7 @@ class CartControllerV1Test extends IntegrationTestBase {
             .andExpect(jsonPath("$.data.items[0].originalPrice").value(100_000))
             .andExpect(jsonPath("$.data.items[0].salePrice").value(80_000))
             .andExpect(jsonPath("$.data.items[0].discountRate").value(20))
-            .andExpect(jsonPath("$.data.items[0].itemTotalPrice").value(160_000));
+            .andExpect(jsonPath("$.data.items[0].itemTotalAmount").value(160_000));
     }
 
     @Test

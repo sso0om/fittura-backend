@@ -24,10 +24,10 @@ public interface CartItemRepository extends JpaRepository<CartItem, Long>, CartI
     @Modifying
     @Query("""
         DELETE FROM CartItem ci
-        WHERE ci.cart.memberId = :memberId
-        AND ci.productSku.id IN :skuIds
+        WHERE ci.id IN :cartItemIds
+        AND ci.cart.memberId = :memberId
         """)
-    void deleteByMemberIdAndSkuIds(@Param("memberId") Long memberId, @Param("skuIds") Set<Long> skuIds);
+    void deleteCartItems(@Param("cartItemIds") Set<Long> cartItemIds, @Param("memberId") Long memberId);
 
     boolean existsByCart_IdAndProductSku_Id(Long cartId, Long productSkuId);
 }

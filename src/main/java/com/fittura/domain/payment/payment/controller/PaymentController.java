@@ -1,6 +1,6 @@
 package com.fittura.domain.payment.payment.controller;
 
-import com.fittura.domain.payment.facde.PaymentFacade;
+import com.fittura.domain.payment.facade.PaymentFacade;
 import com.fittura.domain.payment.payment.dto.request.PaymentApproveReqDto;
 import com.fittura.domain.payment.payment.dto.request.PaymentPrepareReqDto;
 import com.fittura.domain.payment.payment.dto.response.PaymentPrepareResDto;

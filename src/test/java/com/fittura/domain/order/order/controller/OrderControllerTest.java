@@ -6,6 +6,10 @@ import com.fittura.domain.category.support.CategoryFixture;
 import com.fittura.domain.delivery.delivery.entitiy.Delivery;
 import com.fittura.domain.delivery.delivery.repository.DeliveryRepository;
 import com.fittura.domain.delivery.delivery.support.DeliveryFixture;
+import com.fittura.domain.member.address.entity.MemberAddress;
+import com.fittura.domain.member.address.error.MemberAddressError;
+import com.fittura.domain.member.address.repository.MemberAddressRepository;
+import com.fittura.domain.member.address.support.MemberAddressFixture;
 import com.fittura.domain.order.cart.entity.Cart;
 import com.fittura.domain.order.cart.entity.CartItem;
 import com.fittura.domain.order.cart.error.CartErrorCode;
@@ -22,15 +26,17 @@ import com.fittura.domain.order.order.repository.OrderItemRepository;
 import com.fittura.domain.order.order.repository.OrderRepository;
 import com.fittura.domain.order.order.support.OrderAddressFixture;
 import com.fittura.domain.order.order.support.OrderFixture;
-import com.fittura.domain.order.order.support.OrderItemFixture;
 import com.fittura.domain.delivery.delivery.constant.DeliveryType;
+import com.fittura.domain.product.product.constant.ProductType;
 import com.fittura.domain.product.product.entity.Product;
+import com.fittura.domain.product.product.error.ProductErrorCode;
 import com.fittura.domain.product.product.repository.ProductRepository;
 import com.fittura.domain.product.product.support.ProductFixture;
 import com.fittura.domain.product.sku.entity.ProductSku;
 import com.fittura.domain.product.sku.repository.ProductSkuRepository;
 import com.fittura.domain.product.sku.support.ProductSkuFixture;
 import com.fittura.global.IntegrationTestBase;
+import com.fittura.global.error.CommonErrorCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +46,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.LocalDate;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -69,8 +76,14 @@ class OrderControllerTest extends IntegrationTestBase {
     private ProductSkuRepository productSkuRepository;
     @Autowired
     private DeliveryRepository deliveryRepository;
+    @Autowired
+    private MemberAddressRepository memberAddressRepository;
 
     private static final String ORDER_URL = "/api/v1/orders";
+    private static final String ORDER_CART_URL = ORDER_URL + "/cart";
+    private static final String ORDER_DIRECT_URL = ORDER_URL + "/direct";
+    private static final String PREVIEW_CART_URL = ORDER_URL + "/preview/cart";
+    private static final String PREVIEW_DIRECT_URL = ORDER_URL + "/preview/direct";
     private static final LocalDate SEARCH_START = LocalDate.now().minusMonths(1);
     private static final LocalDate SEARCH_END = LocalDate.now().plusDays(1);
 
@@ -82,7 +95,7 @@ class OrderControllerTest extends IntegrationTestBase {
         // given
         Long memberId = 40L;
         ProductSku sku = savedDefaultSku();
-        createOrderWithDelivery(memberId, sku, 2, DeliveryType.PARCEL);
+        createOrderCartWithDelivery(memberId, sku, 2, DeliveryType.PARCEL);
 
         // when & then
         mockMvc.perform(get(ORDER_URL)
@@ -107,7 +120,7 @@ class OrderControllerTest extends IntegrationTestBase {
         Long memberId = 41L;
         ProductSku parcelSku = savedDefaultSku();
         ProductSku installSku = savedDefaultSku();
-        createOrderWithMultipleDeliveries(memberId, parcelSku, installSku);
+        createOrderCartWithMultipleDeliveries(memberId, parcelSku, installSku);
 
         // when & then
         mockMvc.perform(get(ORDER_URL)
@@ -128,7 +141,7 @@ class OrderControllerTest extends IntegrationTestBase {
         // given
         Long memberId = 42L;
         ProductSku sku = savedDefaultSku();
-        createOrderWithItem(memberId, sku, 1);   // 배송 미생성
+        createOrderCartWithItem(memberId, sku, 1);   // 배송 미생성
 
         // when & then
         mockMvc.perform(get(ORDER_URL)
@@ -147,8 +160,8 @@ class OrderControllerTest extends IntegrationTestBase {
         Long memberId = 43L;
         Long otherMemberId = 44L;
         ProductSku sku = savedDefaultSku();
-        createOrderWithDelivery(memberId, sku, 1, DeliveryType.PARCEL);
-        createOrderWithDelivery(otherMemberId, sku, 1, DeliveryType.PARCEL);
+        createOrderCartWithDelivery(memberId, sku, 1, DeliveryType.PARCEL);
+        createOrderCartWithDelivery(otherMemberId, sku, 1, DeliveryType.PARCEL);
 
         // when & then
         mockMvc.perform(get(ORDER_URL)
@@ -165,7 +178,7 @@ class OrderControllerTest extends IntegrationTestBase {
         // given
         Long memberId = 45L;
         ProductSku sku = savedDefaultSku();   // "A Desk"
-        createOrderWithDelivery(memberId, sku, 1, DeliveryType.PARCEL);
+        createOrderCartWithDelivery(memberId, sku, 1, DeliveryType.PARCEL);
 
         // 매칭
         mockMvc.perform(get(ORDER_URL)
@@ -213,7 +226,7 @@ class OrderControllerTest extends IntegrationTestBase {
         // given
         Long memberId = 30L;
         ProductSku sku = savedDefaultSku();
-        Order order = createOrderWithItem(memberId, sku, 2);
+        Order order = createOrderCartWithItem(memberId, sku, 2);
 
         // when & then
         mockMvc.perform(get(ORDER_URL + "/{id}", order.getId())
@@ -228,6 +241,24 @@ class OrderControllerTest extends IntegrationTestBase {
             .andExpect(jsonPath("$.data.address.sido").value("서울특별시"))
             .andExpect(jsonPath("$.data.items.length()").value(1))
             .andExpect(jsonPath("$.data.items[0].quantity").value(2));
+    }
+
+    @Test
+    @DisplayName("주문 조회 성공 - 할인 상품은 정가와 판매가를 함께 반환")
+    void getOrderSuccess_saleSku() throws Exception {
+        // given
+        Long memberId = 34L;
+        ProductSku sku = savedSaleSku(10000L, 8000L);
+        Order order = createOrderCartWithItem(memberId, sku, 2);
+
+        // when & then
+        mockMvc.perform(get(ORDER_URL + "/{id}", order.getId())
+                .header("Authorization", userBearerToken(memberId)))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.items[0].originalPrice").value(10000))
+            .andExpect(jsonPath("$.data.items[0].salePrice").value(8000))
+            .andExpect(jsonPath("$.data.items[0].itemTotalAmount").value(16000));
     }
 
     @Test
@@ -251,7 +282,7 @@ class OrderControllerTest extends IntegrationTestBase {
         Long ownerMemberId = 32L;
         Long attackerMemberId = 33L;
         ProductSku sku = savedDefaultSku();
-        Order order = createOrderWithItem(ownerMemberId, sku, 1);
+        Order order = createOrderCartWithItem(ownerMemberId, sku, 1);
 
         // when & then
         mockMvc.perform(get(ORDER_URL + "/{id}", order.getId())
@@ -262,35 +293,296 @@ class OrderControllerTest extends IntegrationTestBase {
     }
 
 
-    // ========== 주문 생성 ==========
+    // ========== 주문 전 조회 (장바구니) ==========
 
     @Test
-    @DisplayName("주문 생성 성공 - 제품 1개")
-    void createOrderSuccess() throws Exception {
+    @DisplayName("주문 전 조회 성공 - 일반배송·기사배송 묶음별 금액과 배송비")
+    void previewCartSuccess_deliveryGroups() throws Exception {
+        // given
+        Long memberId = 60L;
+        ProductSku parcelSku = savedSku(DeliveryType.PARCEL, 10000L);
+        ProductSku installSku = savedSku(DeliveryType.INSTALLATION, 200000L);
+        Cart cart = cartRepository.save(CartFixture.cart(memberId));
+        CartItem parcelItem = cartItemRepository.save(CartItemFixture.cartItem(cart, parcelSku, 2));
+        CartItem installItem = cartItemRepository.save(CartItemFixture.cartItem(cart, installSku, 1));
+
+        // 기사배송을 먼저 보내도 응답 묶음은 PARCEL → INSTALLATION 순서
+        String reqBody = """
+            { "cartItemIds": [%d, %d] }
+            """.formatted(installItem.getId(), parcelItem.getId());
+
+        // 금액 계산 규칙은 OrderCalculatorTest에서 검증. 여기서는 묶음 구성과 계산 결과 연결만 확인
+        long finalAmount = 220000 + DeliveryType.PARCEL.getBaseFee() + DeliveryType.INSTALLATION.getBaseFee();
+
+        // when & then
+        mockMvc.perform(post(PREVIEW_CART_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.deliveryGroups[0].deliveryType").value("PARCEL"))
+            .andExpect(jsonPath("$.data.deliveryGroups[0].items[0].skuId").value(parcelSku.getId()))
+            .andExpect(jsonPath("$.data.deliveryGroups[1].deliveryType").value("INSTALLATION"))
+            .andExpect(jsonPath("$.data.deliveryGroups[1].items[0].skuId").value(installSku.getId()))
+            .andExpect(jsonPath("$.data.finalAmount").value(finalAmount));
+
+        // 미리보기는 주문을 만들지 않고 재고도 예약하지 않는다
+        assertThat(orderRepository.count()).isZero();
+        assertThat(productSkuRepository.findById(parcelSku.getId()).orElseThrow().getReservedQuantity()).isZero();
+    }
+
+    @Test
+    @DisplayName("주문 전 조회 성공 - 할인 상품은 정가와 판매가를 함께 반환")
+    void previewCartSuccess_saleSku() throws Exception {
+        // given
+        Long memberId = 61L;
+        ProductSku sku = savedSaleSku(10000L, 8000L);
+        Cart cart = cartRepository.save(CartFixture.cart(memberId));
+        CartItem cartItem = cartItemRepository.save(CartItemFixture.cartItem(cart, sku, 2));
+
+        String reqBody = """
+            { "cartItemIds": [%d] }
+            """.formatted(cartItem.getId());
+
+        // when & then
+        mockMvc.perform(post(PREVIEW_CART_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.deliveryGroups[0].items[0].originalPrice").value(10000))
+            .andExpect(jsonPath("$.data.deliveryGroups[0].items[0].salePrice").value(8000))
+            .andExpect(jsonPath("$.data.totalOriginalAmount").value(20000))
+            .andExpect(jsonPath("$.data.totalAmount").value(16000));
+    }
+
+    @Test
+    @DisplayName("주문 전 조회 실패 - 다른 회원의 배송지 지정")
+    void previewCartFail_addressNotOwnedByMember() throws Exception {
+        // given
+        Long memberId = 63L;
+        Long otherMemberId = 64L;
+        ProductSku sku = savedDefaultSku();
+        Cart cart = cartRepository.save(CartFixture.cart(memberId));
+        CartItem cartItem = cartItemRepository.save(CartItemFixture.cartItem(cart, sku, 1));
+        MemberAddress otherAddress = memberAddressRepository.save(MemberAddressFixture.address(otherMemberId, true));
+
+        String reqBody = """
+            { "cartItemIds": [%d], "addressId": %d }
+            """.formatted(cartItem.getId(), otherAddress.getId());
+
+        // when & then
+        mockMvc.perform(post(PREVIEW_CART_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value(MemberAddressError.NOT_FOUND_ADDRESS.getCode()));
+    }
+
+
+    // ========== 주문 전 조회 (바로 주문) ==========
+
+    @Test
+    @DisplayName("바로 주문 전 조회 성공 - SKU별 수량이 맞게 연결되고 일반배송·기사배송 묶음으로 반환")
+    void previewDirectSuccess_deliveryGroups() throws Exception {
+        // given
+        Long memberId = 65L;
+        ProductSku parcelSku = savedSku(DeliveryType.PARCEL, 10000L);
+        ProductSku installSku = savedSku(DeliveryType.INSTALLATION, 200000L);
+
+        // 기사배송을 먼저 보내도 응답 묶음은 PARCEL → INSTALLATION 순서
+        String reqBody = """
+            {
+                "orderSkus": [
+                    { "skuId": %d, "quantity": 1 },
+                    { "skuId": %d, "quantity": 2 }
+                ]
+            }
+            """.formatted(installSku.getId(), parcelSku.getId());
+
+        // 금액 계산 규칙은 OrderCalculatorTest에서 검증. 여기서는 SKU별 수량 연결과 계산 결과 연결만 확인
+        long finalAmount = 220000 + DeliveryType.PARCEL.getBaseFee() + DeliveryType.INSTALLATION.getBaseFee();
+
+        // when & then
+        mockMvc.perform(post(PREVIEW_DIRECT_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.deliveryGroups[0].deliveryType").value("PARCEL"))
+            .andExpect(jsonPath("$.data.deliveryGroups[0].items[0].skuId").value(parcelSku.getId()))
+            .andExpect(jsonPath("$.data.deliveryGroups[0].items[0].quantity").value(2))
+            .andExpect(jsonPath("$.data.deliveryGroups[1].deliveryType").value("INSTALLATION"))
+            .andExpect(jsonPath("$.data.deliveryGroups[1].items[0].skuId").value(installSku.getId()))
+            .andExpect(jsonPath("$.data.deliveryGroups[1].items[0].quantity").value(1))
+            .andExpect(jsonPath("$.data.finalAmount").value(finalAmount));
+
+        // 미리보기는 주문을 만들지 않고 재고도 예약하지 않는다
+        assertThat(orderRepository.count()).isZero();
+        assertThat(productSkuRepository.findById(parcelSku.getId()).orElseThrow().getReservedQuantity()).isZero();
+    }
+
+    @Test
+    @DisplayName("바로 주문 전 조회 실패 - 같은 SKU가 중복 요청")
+    void previewDirectFail_duplicateSku() throws Exception {
+        // given
+        Long memberId = 66L;
+        ProductSku sku = savedDefaultSku();
+
+        String reqBody = """
+            {
+                "orderSkus": [
+                    { "skuId": %d, "quantity": 1 },
+                    { "skuId": %d, "quantity": 2 }
+                ]
+            }
+            """.formatted(sku.getId(), sku.getId());
+
+        // when & then
+        mockMvc.perform(post(PREVIEW_DIRECT_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value(OrderErrorCode.DUPLICATE_SKU.getCode()));
+    }
+
+    @Test
+    @DisplayName("바로 주문 전 조회 실패 - 존재하지 않는 SKU")
+    void previewDirectFail_notFoundSku() throws Exception {
+        // given
+        Long memberId = 67L;
+        ProductSku sku = savedDefaultSku();
+
+        String reqBody = """
+            {
+                "orderSkus": [
+                    { "skuId": %d, "quantity": 1 },
+                    { "skuId": 999999, "quantity": 1 }
+                ]
+            }
+            """.formatted(sku.getId());
+
+        // when & then
+        mockMvc.perform(post(PREVIEW_DIRECT_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value(ProductErrorCode.NOT_FOUND_SKU.getCode()));
+    }
+
+    @Test
+    @DisplayName("바로 주문 전 조회 실패 - 요청 수량이 재고보다 많음")
+    void previewDirectFail_stockNotValid() throws Exception {
+        // given
+        Long memberId = 68L;
+        ProductSku sku = savedDefaultSku(2);
+
+        String reqBody = """
+            {
+                "orderSkus": [
+                    { "skuId": %d, "quantity": 5 }
+                ]
+            }
+            """.formatted(sku.getId());
+
+        // when & then
+        mockMvc.perform(post(PREVIEW_DIRECT_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value(OrderErrorCode.DIRECT_SKUS_NOT_VALID.getCode()))
+            .andExpect(jsonPath("$.data.length()").value(1))
+            .andExpect(jsonPath("$.data[0].code").value(OrderErrorCode.STOCK_NOT_VALID.getCode()));
+    }
+
+    @Test
+    @DisplayName("바로 주문 전 조회 실패 - 다른 회원의 배송지 지정")
+    void previewDirectFail_addressNotOwnedByMember() throws Exception {
+        // given
+        Long memberId = 69L;
+        Long otherMemberId = 70L;
+        ProductSku sku = savedDefaultSku();
+        MemberAddress otherAddress = memberAddressRepository.save(MemberAddressFixture.address(otherMemberId, true));
+
+        String reqBody = """
+            {
+                "orderSkus": [
+                    { "skuId": %d, "quantity": 1 }
+                ],
+                "addressId": %d
+            }
+            """.formatted(sku.getId(), otherAddress.getId());
+
+        // when & then
+        mockMvc.perform(post(PREVIEW_DIRECT_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value(MemberAddressError.NOT_FOUND_ADDRESS.getCode()));
+    }
+
+    @Test
+    @DisplayName("바로 주문 전 조회 실패 - 요청 항목의 수량이 범위를 벗어남")
+    void previewDirectFail_invalidQuantity() throws Exception {
+        // given
+        Long memberId = 71L;
+        ProductSku sku = savedDefaultSku();
+
+        String reqBody = """
+            {
+                "orderSkus": [
+                    { "skuId": %d, "quantity": 0 }
+                ]
+            }
+            """.formatted(sku.getId());
+
+        // when & then
+        mockMvc.perform(post(PREVIEW_DIRECT_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value(CommonErrorCode.VALIDATION_ERROR.getCode()));
+    }
+
+
+    // ========== 장바구니 주문 생성 ==========
+
+    @Test
+    @DisplayName("장바구니 주문 생성 성공 - 제품 1개")
+    void createOrderCartSuccess() throws Exception {
         // given
         Long memberId = 1L;
         ProductSku sku = savedDefaultSku();
         Cart cart = cartRepository.save(CartFixture.cart(memberId));
         CartItem cartItem = cartItemRepository.save(CartItemFixture.cartItem(cart, sku, 2));
+        MemberAddress address = savedAddress(memberId);
 
         String reqBody = """
             {
-                "cartItems": [%d],
-                "pointUsedAmount": 1000,
-                "orderAddress": {
-                    "receiverName": "홍길동",
-                    "phoneNumber": "01012341234",
-                    "zipCode": "12345",
-                    "address": "서울특별시 중구 서소문로 127",
-                    "addressDetail": "시청역",
-                    "sido": "서울특별시",
-                    "sigungu": "중구"
-                }
+                "cartItemIds": [%d],
+                "addressId": %d,
+                "deliveryMemo": "문앞에 놓아주세요.",
+                "pointUsedAmount": 1000
             }
-            """.formatted(cartItem.getId());
+            """.formatted(cartItem.getId(), address.getId());
 
         // when & then
-        mockMvc.perform(post(ORDER_URL)
+        mockMvc.perform(post(ORDER_CART_URL)
                 .header("Authorization", userBearerToken(memberId))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(reqBody))
@@ -304,6 +596,11 @@ class OrderControllerTest extends IntegrationTestBase {
         assertThat(orderItemRepository.count()).isEqualTo(1);
         assertThat(addressRepository.count()).isEqualTo(1);
 
+        // 배송지는 회원 배송지에서 복사, 배송 메모는 요청 값
+        OrderAddress orderAddress = addressRepository.findAll().getFirst();
+        assertThat(orderAddress.getReceiverName()).isEqualTo(address.getReceiverName());
+        assertThat(orderAddress.getDeliveryMemo()).isEqualTo("문앞에 놓아주세요.");
+
         // 일반배송 20000원 (무료배송 기준 미만) → 기본 배송비 적용
         Order order = orderRepository.findAll().getFirst();
         long deliveryFee = DeliveryType.PARCEL.getBaseFee();
@@ -312,8 +609,8 @@ class OrderControllerTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("주문 생성 성공 - 제품 여러개")
-    void createOrderSuccess_multipleCartItems() throws Exception {
+    @DisplayName("장바구니 주문 생성 성공 - 제품 여러개")
+    void createOrderCartSuccess_multipleCartItems() throws Exception {
         // given
         Long memberId = 2L;
         ProductSku sku1 = savedDefaultSku();
@@ -321,24 +618,18 @@ class OrderControllerTest extends IntegrationTestBase {
         Cart cart = cartRepository.save(CartFixture.cart(memberId));
         CartItem cartItem1 = cartItemRepository.save(CartItemFixture.cartItem(cart, sku1, 1));
         CartItem cartItem2 = cartItemRepository.save(CartItemFixture.cartItem(cart, sku2, 3));
+        MemberAddress address = savedAddress(memberId);
 
         String reqBody = """
             {
-                "cartItems": [%d, %d],
-                "pointUsedAmount": 500,
-                "orderAddress": {
-                    "receiverName": "홍길동",
-                    "phoneNumber": "01012341234",
-                    "zipCode": "12345",
-                    "address": "서울특별시 중구 서소문로 127",
-                    "sido": "서울특별시",
-                    "sigungu": "중구"
-                }
+                "cartItemIds": [%d, %d],
+                "addressId": %d,
+                "pointUsedAmount": 500
             }
-            """.formatted(cartItem1.getId(), cartItem2.getId());
+            """.formatted(cartItem1.getId(), cartItem2.getId(), address.getId());
 
         // when & then
-        mockMvc.perform(post(ORDER_URL)
+        mockMvc.perform(post(ORDER_CART_URL)
                 .header("Authorization", userBearerToken(memberId))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(reqBody))
@@ -350,32 +641,26 @@ class OrderControllerTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("주문 생성 실패 - 다른 회원의 장바구니 아이템으로 주문 시도")
-    void createOrderFail_cartItemNotOwnedByMember() throws Exception {
+    @DisplayName("장바구니 주문 생성 실패 - 다른 회원의 장바구니 아이템으로 주문 시도")
+    void createOrderCartFail_cartItemNotOwnedByMember() throws Exception {
         // given
         Long ownerMemberId = 20L;
         Long attackerMemberId = 21L;
         ProductSku sku = savedDefaultSku();
         Cart ownerCart = cartRepository.save(CartFixture.cart(ownerMemberId));
         CartItem ownerItem = cartItemRepository.save(CartItemFixture.cartItem(ownerCart, sku, 1));
+        MemberAddress attackerAddress = savedAddress(attackerMemberId);
 
         String reqBody = """
             {
-                "cartItems": [%d],
-                "pointUsedAmount": 0,
-                "orderAddress": {
-                    "receiverName": "홍길동",
-                    "phoneNumber": "01012341234",
-                    "zipCode": "12345",
-                    "address": "서울특별시 중구 서소문로 127",
-                    "sido": "서울특별시",
-                    "sigungu": "중구"
-                }
+                "cartItemIds": [%d],
+                "addressId": %d,
+                "pointUsedAmount": 0
             }
-            """.formatted(ownerItem.getId());
+            """.formatted(ownerItem.getId(), attackerAddress.getId());
 
         // when & then
-        mockMvc.perform(post(ORDER_URL)
+        mockMvc.perform(post(ORDER_CART_URL)
                 .header("Authorization", userBearerToken(attackerMemberId))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(reqBody))
@@ -385,28 +670,22 @@ class OrderControllerTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("주문 생성 실패 - 존재하지 않는 장바구니 아이템")
-    void createOrderFail_cartItemNotFound() throws Exception {
+    @DisplayName("장바구니 주문 생성 실패 - 존재하지 않는 장바구니 아이템")
+    void createOrderCartFail_cartItemNotFound() throws Exception {
         // given
         Long memberId = 10L;
+        MemberAddress address = savedAddress(memberId);
 
         String reqBody = """
             {
-                "cartItems": [9999],
-                "pointUsedAmount": 1000,
-                "orderAddress": {
-                    "receiverName": "홍길동",
-                    "phoneNumber": "01012341234",
-                    "zipCode": "12345",
-                    "address": "서울특별시 중구 서소문로 127",
-                    "sido": "서울특별시",
-                    "sigungu": "중구"
-                }
+                "cartItemIds": [9999],
+                "addressId": %d,
+                "pointUsedAmount": 1000
             }
-            """;
+            """.formatted(address.getId());
 
         // when & then
-        mockMvc.perform(post(ORDER_URL)
+        mockMvc.perform(post(ORDER_CART_URL)
                 .header("Authorization", userBearerToken(memberId))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(reqBody))
@@ -420,8 +699,8 @@ class OrderControllerTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("주문 생성 실패 - 비활성(품절) SKU 주문 시도")
-    void createOrderFail_skuNotActive() throws Exception {
+    @DisplayName("장바구니 주문 생성 실패 - 비활성(품절) SKU 주문 시도")
+    void createOrderCartFail_skuNotActive() throws Exception {
         // given
         Long memberId = 11L;
         ProductSku sku = savedDefaultSku(10);
@@ -430,24 +709,18 @@ class OrderControllerTest extends IntegrationTestBase {
 
         Cart cart = cartRepository.save(CartFixture.cart(memberId));
         CartItem cartItem = cartItemRepository.save(CartItemFixture.cartItem(cart, sku, 1));
+        MemberAddress address = savedAddress(memberId);
 
         String reqBody = """
             {
-                "cartItems": [%d],
-                "pointUsedAmount": 1000,
-                "orderAddress": {
-                    "receiverName": "홍길동",
-                    "phoneNumber": "01012341234",
-                    "zipCode": "12345",
-                    "address": "서울특별시 중구 서소문로 127",
-                    "sido": "서울특별시",
-                    "sigungu": "중구"
-                }
+                "cartItemIds": [%d],
+                "addressId": %d,
+                "pointUsedAmount": 1000
             }
-            """.formatted(cartItem.getId());
+            """.formatted(cartItem.getId(), address.getId());
 
         // when & then
-        mockMvc.perform(post(ORDER_URL)
+        mockMvc.perform(post(ORDER_CART_URL)
                 .header("Authorization", userBearerToken(memberId))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(reqBody))
@@ -464,8 +737,8 @@ class OrderControllerTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("주문 생성 실패 - 재고 부족")
-    void createOrderFail_stockNotValid() throws Exception {
+    @DisplayName("장바구니 주문 생성 실패 - 재고 부족")
+    void createOrderCartFail_stockNotValid() throws Exception {
         // given
         Long memberId = 12L;
         ProductSku sku = savedDefaultSku(2);
@@ -473,24 +746,18 @@ class OrderControllerTest extends IntegrationTestBase {
 
         Cart cart = cartRepository.save(CartFixture.cart(memberId));
         CartItem cartItem = cartItemRepository.save(CartItemFixture.cartItem(cart, sku, 5));
+        MemberAddress address = savedAddress(memberId);
 
         String reqBody = """
             {
-                "cartItems": [%d],
-                "pointUsedAmount": 1000,
-                "orderAddress": {
-                    "receiverName": "홍길동",
-                    "phoneNumber": "01012341234",
-                    "zipCode": "12345",
-                    "address": "서울특별시 중구 서소문로 127",
-                    "sido": "서울특별시",
-                    "sigungu": "중구"
-                }
+                "cartItemIds": [%d],
+                "addressId": %d,
+                "pointUsedAmount": 1000
             }
-            """.formatted(cartItem.getId());
+            """.formatted(cartItem.getId(), address.getId());
 
         // when & then
-        mockMvc.perform(post(ORDER_URL)
+        mockMvc.perform(post(ORDER_CART_URL)
                 .header("Authorization", userBearerToken(memberId))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(reqBody))
@@ -507,8 +774,8 @@ class OrderControllerTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("주문 생성 실패 - 여러 항목이 각각의 사유로 실패")
-    void createOrderFail_multipleInvalidItems() throws Exception {
+    @DisplayName("장바구니 주문 생성 실패 - 여러 항목이 각각의 사유로 실패")
+    void createOrderCartFail_multipleInvalidItems() throws Exception {
         // given
         Long memberId = 13L;
         ProductSku pausedSku = savedDefaultSku(10);
@@ -519,24 +786,18 @@ class OrderControllerTest extends IntegrationTestBase {
         Cart cart = cartRepository.save(CartFixture.cart(memberId));
         CartItem item1 = cartItemRepository.save(CartItemFixture.cartItem(cart, pausedSku, 1));
         CartItem item2 = cartItemRepository.save(CartItemFixture.cartItem(cart, lowStockSku, 5));
+        MemberAddress address = savedAddress(memberId);
 
         String reqBody = """
             {
-                "cartItems": [%d, %d],
-                "pointUsedAmount": 0,
-                "orderAddress": {
-                    "receiverName": "홍길동",
-                    "phoneNumber": "01012341234",
-                    "zipCode": "12345",
-                    "address": "서울특별시 중구 서소문로 127",
-                    "sido": "서울특별시",
-                    "sigungu": "중구"
-                }
+                "cartItemIds": [%d, %d],
+                "addressId": %d,
+                "pointUsedAmount": 0
             }
-            """.formatted(item1.getId(), item2.getId());
+            """.formatted(item1.getId(), item2.getId(), address.getId());
 
         // when & then
-        mockMvc.perform(post(ORDER_URL)
+        mockMvc.perform(post(ORDER_CART_URL)
                 .header("Authorization", userBearerToken(memberId))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(reqBody))
@@ -552,8 +813,272 @@ class OrderControllerTest extends IntegrationTestBase {
         assertThat(orderRepository.count()).isEqualTo(0);
     }
 
+    @Test
+    @DisplayName("장바구니 주문 생성 실패 - 다른 회원의 배송지 지정")
+    void createOrderCartFail_addressNotOwnedByMember() throws Exception {
+        // given
+        Long memberId = 14L;
+        Long otherMemberId = 15L;
+        ProductSku sku = savedDefaultSku();
+        Cart cart = cartRepository.save(CartFixture.cart(memberId));
+        CartItem cartItem = cartItemRepository.save(CartItemFixture.cartItem(cart, sku, 1));
+        MemberAddress otherAddress = savedAddress(otherMemberId);
+
+        String reqBody = """
+            {
+                "cartItemIds": [%d],
+                "addressId": %d,
+                "pointUsedAmount": 0
+            }
+            """.formatted(cartItem.getId(), otherAddress.getId());
+
+        // when & then
+        mockMvc.perform(post(ORDER_CART_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value(MemberAddressError.NOT_FOUND_ADDRESS.getCode()));
+
+        assertThat(orderRepository.count()).isEqualTo(0);
+        assertThat(addressRepository.count()).isEqualTo(0);
+        assertThat(cartItemRepository.findById(cartItem.getId())).isPresent();
+    }
+
+    @Test
+    @DisplayName("장바구니 주문 생성 실패 - 배송지 ID 누락")
+    void createOrderCartFail_addressIdMissing() throws Exception {
+        // given
+        Long memberId = 16L;
+        ProductSku sku = savedDefaultSku();
+        Cart cart = cartRepository.save(CartFixture.cart(memberId));
+        CartItem cartItem = cartItemRepository.save(CartItemFixture.cartItem(cart, sku, 1));
+
+        String reqBody = """
+            {
+                "cartItemIds": [%d],
+                "pointUsedAmount": 0
+            }
+            """.formatted(cartItem.getId());
+
+        // when & then
+        mockMvc.perform(post(ORDER_CART_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value(CommonErrorCode.VALIDATION_ERROR.getCode()));
+
+        assertThat(orderRepository.count()).isEqualTo(0);
+    }
+
+
+    // ========== 바로 주문 생성 ==========
+
+    @Test
+    @DisplayName("바로 주문 생성 성공 - SKU별 수량이 맞게 연결되고 배송 메모가 저장됨")
+    void createOrderDirectSuccess() throws Exception {
+        // given
+        Long memberId = 72L;
+        ProductSku parcelSku = savedSku(DeliveryType.PARCEL, 10000L);
+        ProductSku installSku = savedSku(DeliveryType.INSTALLATION, 200000L);
+        MemberAddress address = savedAddress(memberId);
+
+        String reqBody = """
+            {
+                "orderSkus": [
+                    { "skuId": %d, "quantity": 1 },
+                    { "skuId": %d, "quantity": 2 }
+                ],
+                "addressId": %d,
+                "deliveryMemo": "문앞에 놓아주세요.",
+                "pointUsedAmount": 1000
+            }
+            """.formatted(installSku.getId(), parcelSku.getId(), address.getId());
+
+        // when & then
+        mockMvc.perform(post(ORDER_DIRECT_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.code").value("S201-01"))
+            .andExpect(jsonPath("$.message").value("주문이 생성되었습니다."))
+            .andExpect(jsonPath("$.data").isNumber());
+
+        // 금액 계산은 OrderCalculatorTest, 주소 복사는 OrderServiceTest에서 검증. 여기서는 SKU별 수량 연결과 요청 값 연결만 확인
+        assertThat(orderRepository.count()).isEqualTo(1);
+        assertThat(orderItemRepository.findAll())
+            .extracting(oi -> oi.getSku().getId(), OrderItem::getQuantity)
+            .containsExactlyInAnyOrder(
+                tuple(installSku.getId(), 1),
+                tuple(parcelSku.getId(), 2));
+        assertThat(addressRepository.findAll().getFirst().getDeliveryMemo()).isEqualTo("문앞에 놓아주세요.");
+    }
+
+    @Test
+    @DisplayName("바로 주문 생성 실패 - 같은 SKU가 중복 요청")
+    void createOrderDirectFail_duplicateSku() throws Exception {
+        // given
+        Long memberId = 73L;
+        ProductSku sku = savedDefaultSku();
+        MemberAddress address = savedAddress(memberId);
+
+        String reqBody = """
+            {
+                "orderSkus": [
+                    { "skuId": %d, "quantity": 1 },
+                    { "skuId": %d, "quantity": 2 }
+                ],
+                "addressId": %d,
+                "pointUsedAmount": 0
+            }
+            """.formatted(sku.getId(), sku.getId(), address.getId());
+
+        // when & then
+        mockMvc.perform(post(ORDER_DIRECT_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value(OrderErrorCode.DUPLICATE_SKU.getCode()));
+
+        assertThat(orderRepository.count()).isZero();
+    }
+
+    @Test
+    @DisplayName("바로 주문 생성 실패 - 존재하지 않는 SKU")
+    void createOrderDirectFail_notFoundSku() throws Exception {
+        // given
+        Long memberId = 74L;
+        ProductSku sku = savedDefaultSku();
+        MemberAddress address = savedAddress(memberId);
+
+        String reqBody = """
+            {
+                "orderSkus": [
+                    { "skuId": %d, "quantity": 1 },
+                    { "skuId": 999999, "quantity": 1 }
+                ],
+                "addressId": %d,
+                "pointUsedAmount": 0
+            }
+            """.formatted(sku.getId(), address.getId());
+
+        // when & then
+        mockMvc.perform(post(ORDER_DIRECT_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value(ProductErrorCode.NOT_FOUND_SKU.getCode()));
+
+        assertThat(orderRepository.count()).isZero();
+    }
+
+    @Test
+    @DisplayName("바로 주문 생성 실패 - 요청 수량이 재고보다 많음")
+    void createOrderDirectFail_stockNotValid() throws Exception {
+        // given
+        Long memberId = 75L;
+        ProductSku sku = savedDefaultSku(2);
+        MemberAddress address = savedAddress(memberId);
+
+        String reqBody = """
+            {
+                "orderSkus": [
+                    { "skuId": %d, "quantity": 5 }
+                ],
+                "addressId": %d,
+                "pointUsedAmount": 0
+            }
+            """.formatted(sku.getId(), address.getId());
+
+        // when & then
+        mockMvc.perform(post(ORDER_DIRECT_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value(OrderErrorCode.DIRECT_SKUS_NOT_VALID.getCode()))
+            .andExpect(jsonPath("$.data.length()").value(1))
+            .andExpect(jsonPath("$.data[0].code").value(OrderErrorCode.STOCK_NOT_VALID.getCode()));
+
+        assertThat(orderRepository.count()).isZero();
+        assertThat(productSkuRepository.findById(sku.getId()).orElseThrow().getReservedQuantity()).isZero();
+    }
+
+    @Test
+    @DisplayName("바로 주문 생성 실패 - 다른 회원의 배송지 지정")
+    void createOrderDirectFail_addressNotOwnedByMember() throws Exception {
+        // given
+        Long memberId = 76L;
+        Long otherMemberId = 77L;
+        ProductSku sku = savedDefaultSku();
+        MemberAddress otherAddress = savedAddress(otherMemberId);
+
+        String reqBody = """
+            {
+                "orderSkus": [
+                    { "skuId": %d, "quantity": 1 }
+                ],
+                "addressId": %d,
+                "pointUsedAmount": 0
+            }
+            """.formatted(sku.getId(), otherAddress.getId());
+
+        // when & then
+        mockMvc.perform(post(ORDER_DIRECT_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value(MemberAddressError.NOT_FOUND_ADDRESS.getCode()));
+
+        assertThat(orderRepository.count()).isZero();
+    }
+
+    @Test
+    @DisplayName("바로 주문 생성 실패 - 배송지 ID 누락")
+    void createOrderDirectFail_addressIdMissing() throws Exception {
+        // given
+        Long memberId = 78L;
+        ProductSku sku = savedDefaultSku();
+
+        String reqBody = """
+            {
+                "orderSkus": [
+                    { "skuId": %d, "quantity": 1 }
+                ],
+                "pointUsedAmount": 0
+            }
+            """.formatted(sku.getId());
+
+        // when & then
+        mockMvc.perform(post(ORDER_DIRECT_URL)
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value(CommonErrorCode.VALIDATION_ERROR.getCode()));
+
+        assertThat(orderRepository.count()).isZero();
+    }
+
 
     // ========== 헬퍼 메서드 ==========
+
+    private MemberAddress savedAddress(Long memberId) {
+        return memberAddressRepository.save(MemberAddressFixture.address(memberId, true));
+    }
 
     private ProductSku savedDefaultSku() {
         return savedDefaultSku(100);
@@ -566,10 +1091,23 @@ class OrderControllerTest extends IntegrationTestBase {
         return productSkuRepository.save(ProductSkuFixture.sku(product, 10000L, stock));
     }
 
-    private Order createOrderWithItem(Long memberId, ProductSku sku, Integer quantity) {
-        Order order = OrderFixture.order(memberId, 1000L);
-        OrderItemFixture.orderItem(order, sku, quantity);
-        order.calcFinalAmount();
+    private ProductSku savedSku(DeliveryType deliveryType, Long originalPrice) {
+        Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Product product = productRepository.save(
+            ProductFixture.product(category, "A " + deliveryType.name(), ProductType.COMPONENT, deliveryType));
+        product.activate();
+        return productSkuRepository.save(ProductSkuFixture.sku(product, originalPrice, 100));
+    }
+
+    private ProductSku savedSaleSku(Long originalPrice, Long discountPrice) {
+        Category category = categoryRepository.save(CategoryFixture.rootActive());
+        Product product = productRepository.save(ProductFixture.component(category, "A Desk"));
+        product.activate();
+        return productSkuRepository.save(ProductSkuFixture.sku(product, originalPrice, discountPrice, 100));
+    }
+
+    private Order createOrderCartWithItem(Long memberId, ProductSku sku, Integer quantity) {
+        Order order = OrderFixture.orderWithItem(memberId, 1000L, sku, quantity);
         order.prepare();
         orderRepository.save(order);
 
@@ -581,10 +1119,9 @@ class OrderControllerTest extends IntegrationTestBase {
         return order;
     }
 
-    private Order createOrderWithDelivery(Long memberId, ProductSku sku, Integer quantity, DeliveryType type) {
-        Order order = OrderFixture.order(memberId, 0L);
-        OrderItem item = OrderItemFixture.orderItem(order, sku, quantity);
-        order.calcFinalAmount();
+    private Order createOrderCartWithDelivery(Long memberId, ProductSku sku, Integer quantity, DeliveryType type) {
+        Order order = OrderFixture.orderWithItem(memberId, 0L, sku, quantity);
+        OrderItem item = order.getItems().get(0);
         order.prepare();
         orderRepository.save(order);
 
@@ -600,11 +1137,10 @@ class OrderControllerTest extends IntegrationTestBase {
         return order;
     }
 
-    private Order createOrderWithMultipleDeliveries(Long memberId, ProductSku parcelSku, ProductSku installSku) {
-        Order order = OrderFixture.order(memberId, 0L);
-        OrderItem parcelItem = OrderItemFixture.orderItem(order, parcelSku, 1);
-        OrderItem installItem = OrderItemFixture.orderItem(order, installSku, 1);
-        order.calcFinalAmount();
+    private Order createOrderCartWithMultipleDeliveries(Long memberId, ProductSku parcelSku, ProductSku installSku) {
+        Order order = OrderFixture.orderWithItems(memberId, 0L, parcelSku, installSku);
+        OrderItem parcelItem = order.getItems().get(0);
+        OrderItem installItem = order.getItems().get(1);
         order.prepare();
         orderRepository.save(order);
 

@@ -7,7 +7,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(description = "SKU 응답 DTO (관리자용)")
 public record SkuWithStockResDto(
     Long id,
-    Long price,
+    Long originalPrice,
     Long salePrice,
     Long discountRate,
     Integer stockQuantity,
@@ -18,12 +18,13 @@ public record SkuWithStockResDto(
     Boolean isSoldOut
 ) {
     public SkuWithStockResDto(
-        Long id, Long price, Long salePrice,
+        Long id, Long originalPrice, Long discountPrice,
         Integer stockQuantity, Integer reservedQuantity,
         SkuStatus status, String color, String material, Boolean isSoldOut
     ) {
         this(
-            id, price, PriceCalculator.effectivePrice(price, salePrice), PriceCalculator.discountRate(price, salePrice),
+            id, originalPrice, PriceCalculator.salePrice(originalPrice, discountPrice),
+            PriceCalculator.discountRate(originalPrice, PriceCalculator.salePrice(originalPrice, discountPrice)),
             stockQuantity, reservedQuantity,
             status, color, material, isSoldOut
         );

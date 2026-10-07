@@ -16,11 +16,12 @@ public record SkuResDto(
     Boolean isSoldOut
 ) {
     public SkuResDto(
-        Long id, Long price, Long salePrice,
+        Long id, Long originalPrice, Long discountPrice,
         SkuStatus status, String color, String material, Boolean isSoldOut
     ) {
         this(
-            id, price, PriceCalculator.effectivePrice(price, salePrice), PriceCalculator.discountRate(price, salePrice),
+            id, originalPrice, PriceCalculator.salePrice(originalPrice, discountPrice),
+            PriceCalculator.discountRate(originalPrice, PriceCalculator.salePrice(originalPrice, discountPrice)),
             status, color, material, isSoldOut
         );
     }

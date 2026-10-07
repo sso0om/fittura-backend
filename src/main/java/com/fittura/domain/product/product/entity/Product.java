@@ -53,7 +53,7 @@ public class Product extends BaseEntity {
     private ProductStatus status;
 
     @Column(nullable = false)
-    private Long basePrice = 0L;
+    private Long baseOriginalPrice = 0L;
 
     @Column(nullable = false)
     private Long baseSalePrice = 0L;
@@ -92,7 +92,7 @@ public class Product extends BaseEntity {
             .description(description)
             .productType(productType)
             .deliveryType(deliveryType)
-            .basePrice(0L)
+            .baseOriginalPrice(0L)
             .baseSalePrice(0L)
             .dimension(dimension)
             .status(ProductStatus.DISABLED)
@@ -133,8 +133,8 @@ public class Product extends BaseEntity {
     public void syncBasePrice() {
         ProductSku baseSku = getBaseSku();
 
-        this.basePrice = baseSku.getPrice();
-        this.baseSalePrice = baseSku.getEffectivePrice();
+        this.baseOriginalPrice = baseSku.getOriginalPrice();
+        this.baseSalePrice = baseSku.getSalePrice();
     }
 
 
@@ -180,14 +180,14 @@ public class Product extends BaseEntity {
             throw new ServiceException(ProductErrorCode.PRODUCT_HAVA_SKU);
         }
 
-        Comparator<ProductSku> byEffectivePrice = Comparator.comparing(ProductSku::getEffectivePrice);
+        Comparator<ProductSku> bySalePrice = Comparator.comparing(ProductSku::getSalePrice);
 
         return candidates.stream()
             .filter(ProductSku::isActive)
-            .min(byEffectivePrice)  // ACTIVE 후보 중 최저가
+            .min(bySalePrice)  // ACTIVE 후보 중 최저가
             .orElseGet(() ->        // ACTIVE가 없을 시 전체 후보 중 최저가
                 candidates.stream()
-                    .min(byEffectivePrice)
+                    .min(bySalePrice)
                     .orElseThrow()
             );
     }

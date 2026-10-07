@@ -1,9 +1,8 @@
 package com.fittura.domain.order.order.controller;
 
 import com.fittura.domain.order.facade.OrderFacade;
-import com.fittura.domain.order.order.dto.request.ClaimOrderReqDto;
-import com.fittura.domain.order.order.dto.request.OrderCreateReqDto;
-import com.fittura.domain.order.order.dto.request.OrderSearchCondition;
+import com.fittura.domain.order.order.dto.request.*;
+import com.fittura.domain.order.order.dto.response.OrderPreviewResDto;
 import com.fittura.domain.order.order.dto.response.OrderWithAllResDto;
 import com.fittura.domain.order.order.dto.response.OrderWithDeliveryResDto;
 import com.fittura.global.rsdata.RsData;
@@ -62,13 +61,45 @@ public class OrderController {
         return ResponseEntity.ok(RsData.success("주문이 조회되었습니다.", resDto));
     }
 
-    @PostMapping
-    @Operation(summary = "주문 생성", description = "주문 생성 API")
-    public ResponseEntity<RsData<Long>> createOrder(
+    @PostMapping("/preview/cart")
+    @Operation(summary = "주문 전 조회 (장바구니)", description = "장바구니에서 넘어온 주문 전 조회 API")
+    public ResponseEntity<RsData<OrderPreviewResDto>> getOrderPreviewCart(
         @LogInMemberId Long memberId,
-        @RequestBody @Valid OrderCreateReqDto reqDto
+        @RequestBody @Valid CartOrderPreviewReqDto reqDto
+        ) {
+        OrderPreviewResDto resDto = orderFacade.getOrderPreviewCart(memberId, reqDto);
+        return ResponseEntity.ok(RsData.success("주문 정보가 조회되었습니다.", resDto));
+    }
+
+    @PostMapping("/preview/direct")
+    @Operation(summary = "주문 전 조회(바로 주문)", description = "상품 선택 후 바로 주문으로 넘어온 주문 전 조회 API")
+    public ResponseEntity<RsData<OrderPreviewResDto>> getOrderPreviewDirect(
+        @LogInMemberId Long memberId,
+        @RequestBody @Valid DirectOrderPreviewReqDto reqDto
     ) {
-        Long orderId = orderFacade.createOrder(memberId, reqDto);
+        OrderPreviewResDto resDto =  orderFacade.getOrderPreviewDirect(memberId, reqDto);
+        return ResponseEntity.ok(RsData.success("주문 정보가 조회되었습니다.", resDto));
+    }
+
+    @PostMapping("/cart")
+    @Operation(summary = "장바구니 주문 생성", description = "장바구니에서 넘어온 주문 생성 API")
+    public ResponseEntity<RsData<Long>> createOrderCart(
+        @LogInMemberId Long memberId,
+        @RequestBody @Valid CartOrderCreateReqDto reqDto
+    ) {
+        Long orderId = orderFacade.createOrderCart(memberId, reqDto);
+        return ResponseEntity
+            .status(HttpStatus.CREATED)
+            .body(RsData.createSuccess("주문이 생성되었습니다.", orderId));
+    }
+
+    @PostMapping("/direct")
+    @Operation(summary = "바로 주문 생성", description = "상품 선택 후 바로 넘어온 주문 생성 API")
+    public ResponseEntity<RsData<Long>> createOrderDirect(
+        @LogInMemberId Long memberId,
+        @RequestBody @Valid DirectOrderCreateReqDto reqDto
+    ) {
+        Long orderId = orderFacade.createOrderDirect(memberId, reqDto);
         return ResponseEntity
             .status(HttpStatus.CREATED)
             .body(RsData.createSuccess("주문이 생성되었습니다.", orderId));

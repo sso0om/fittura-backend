@@ -210,7 +210,7 @@ public class ProductService {
         }
     }
 
-    private static void validateProductType(ProductType productType, boolean compositionsEmpty) {
+    private void validateProductType(ProductType productType, boolean compositionsEmpty) {
         if (productType == ProductType.COMPLETE && compositionsEmpty) {
             throw new ServiceException(ProductErrorCode.COMPLETE_HAVE_COMPOSITIONS);
         }

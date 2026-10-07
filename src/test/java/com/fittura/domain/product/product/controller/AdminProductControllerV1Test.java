@@ -221,7 +221,7 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
                     "height": 10.0,
                     "depth": 10.0,
                     "skus": [{
-                        "price": 90000,
+                        "originalPrice": 90000,
                         "stockQuantity": 50,
                         "colorId": %d,
                         "materialId": %d
@@ -280,7 +280,7 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
                     "height": 10.0,
                     "depth": 10.0,
                     "skus": [{
-                        "price": 4500,
+                        "originalPrice": 4500,
                         "stockQuantity": 100,
                         "colorId": %d,
                         "materialId": %d
@@ -328,7 +328,7 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
                     "height": 10.0,
                     "depth": 10.0,
                     "skus": [{
-                        "price": 4500,
+                        "originalPrice": 4500,
                         "stockQuantity": 100
                     }],
                     "attributes": [],
@@ -394,7 +394,7 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
                     "height": 10.0,
                     "depth": 10.0,
                     "skus": [{
-                        "price": 90000,
+                        "originalPrice": 90000,
                         "stockQuantity": 50
                     }],
                     "attributes": [],
@@ -428,7 +428,7 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
                     "height": 10.0,
                     "depth": 10.0,
                     "skus": [{
-                        "price": 4500,
+                        "originalPrice": 4500,
                         "stockQuantity": 100
                     }],
                     "attributes": [],
@@ -465,7 +465,7 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
                     "height": 10.0,
                     "depth": 10.0,
                     "skus": [{
-                        "price": 4500,
+                        "originalPrice": 4500,
                         "stockQuantity": 100
                     }],
                     "attributes": [],
@@ -502,7 +502,7 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
                     "height": 10.0,
                     "depth": 10.0,
                     "skus": [{
-                        "price": 4500,
+                        "originalPrice": 4500,
                         "stockQuantity": 100
                     }],
                     "attributes": [],
@@ -543,7 +543,7 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
                     "height": 10.0,
                     "depth": 10.0,
                     "skus": [{
-                        "price": 4500,
+                        "originalPrice": 4500,
                         "stockQuantity": 100,
                         "colorId": %d,
                         "materialId": %d
@@ -590,7 +590,7 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
                     "depth": 50.0,
                     "skus": [{
                         "id": %d,
-                        "price": 75000,
+                        "originalPrice": 75000,
                         "stockQuantity": 80,
                         "colorId": %d,
                         "materialId": %d
@@ -613,7 +613,7 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
 
         Product updated = productRepository.findById(product.getId()).orElseThrow();
         assertThat(updated.getName()).isEqualTo("New Name");
-        assertThat(updated.getBasePrice()).isEqualTo(75000);
+        assertThat(updated.getBaseOriginalPrice()).isEqualTo(75000);
 
         ProductSku updatedSku = productSkuRepository.findById(sku.getId()).orElseThrow();
         assertThat(updatedSku.getStockQuantity()).isEqualTo(80);
@@ -622,8 +622,8 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("단품 수정 성공 - salePrice 포함")
-    void updateComponentSuccess_withSalePrice() throws Exception {
+    @DisplayName("단품 수정 성공 - discountPrice 포함")
+    void updateComponentSuccess_withDiscountPrice() throws Exception {
         // given
         Category category = categoryRepository.save(CategoryFixture.rootActive());
         Color black = colorRepository.save(ColorFixture.color("Black"));
@@ -643,8 +643,8 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
                 "depth": 50.0,
                 "skus": [{
                     "id": %d,
-                    "price": 75000,
-                    "salePrice": 60000,
+                    "originalPrice": 75000,
+                    "discountPrice": 60000,
                     "stockQuantity": 80,
                     "colorId": %d,
                     "materialId": %d
@@ -664,12 +664,12 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
             .andExpect(jsonPath("$.message").value("제품이 수정되었습니다."));
 
         Product updated = productRepository.findById(product.getId()).orElseThrow();
-        assertThat(updated.getBasePrice()).isEqualTo(75000L);
+        assertThat(updated.getBaseOriginalPrice()).isEqualTo(75000L);
         assertThat(updated.getBaseSalePrice()).isEqualTo(60000L);
 
         ProductSku updatedSku = productSkuRepository.findById(sku.getId()).orElseThrow();
-        assertThat(updatedSku.getPrice()).isEqualTo(75000L);
-        assertThat(updatedSku.getSalePrice()).isEqualTo(60000L);
+        assertThat(updatedSku.getOriginalPrice()).isEqualTo(75000L);
+        assertThat(updatedSku.getDiscountPrice()).isEqualTo(60000L);
     }
 
     @Test
@@ -705,7 +705,7 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
                     "depth": 50.0,
                     "skus": [{
                         "id": %d,
-                        "price": 90000,
+                        "originalPrice": 90000,
                         "stockQuantity": 50,
                         "colorId": %d,
                         "materialId": %d
@@ -758,7 +758,7 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
                     "depth": 50.0,
                     "skus": [{
                         "id": %d,
-                        "price": 45000,
+                        "originalPrice": 45000,
                         "stockQuantity": 100,
                         "colorId": %d,
                         "materialId": %d
@@ -800,7 +800,7 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
                     "depth": 50.0,
                     "skus": [{
                         "id": null,
-                        "price": 75000,
+                        "originalPrice": 75000,
                         "stockQuantity": 80
                     }],
                     "attributes": [],
@@ -861,7 +861,7 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
                     "width": 150.0,
                     "height": 100.0,
                     "depth": 50.0,
-                    "skus": [{"price": 75000, "stockQuantity": 80}],
+                    "skus": [{"originalPrice": 75000, "stockQuantity": 80}],
                     "attributes": [],
                     "compositions": []
                 }
@@ -897,7 +897,7 @@ class AdminProductControllerV1Test extends IntegrationTestBase {
                     "depth": 50.0,
                     "skus": [{
                         "id": %d,
-                        "price": 45000,
+                        "originalPrice": 45000,
                         "stockQuantity": 100
                     }],
                     "attributes": [],

@@ -111,7 +111,7 @@ class CartServiceTest {
 
     @Test
     @DisplayName("장바구니 아이템 다건 조회 성공")
-    void getItemsByIdAndMemberSuccess() {
+    void getItemsByIdAndMemberForUpdateSuccess() {
         // given
         Long memberId = 1L;
         List<Long> itemIds = List.of(1L, 2L);
@@ -125,7 +125,7 @@ class CartServiceTest {
             .willReturn(List.of(item1, item2));
 
         // when
-        List<CartItem> result = cartService.getItemsByIdAndMember(itemIds, memberId);
+        List<CartItem> result = cartService.getItemsByIdAndMemberForUpdate(itemIds, memberId);
 
         // then
         assertThat(result).hasSize(2);
@@ -134,7 +134,7 @@ class CartServiceTest {
 
     @Test
     @DisplayName("장바구니 아이템 다건 조회 실패 - 일부 아이템이 해당 회원 것이 아님")
-    void getItemsByIdAndMemberFail_partialMatch() {
+    void getItemsByIdAndMemberForUpdateFail_partialMatch() {
         // given
         Long memberId = 1L;
         List<Long> itemIds = List.of(1L, 2L);
@@ -147,13 +147,13 @@ class CartServiceTest {
             .willReturn(List.of(item1));
 
         // when & then
-        assertThatThrownBy(() -> cartService.getItemsByIdAndMember(itemIds, memberId))
+        assertThatThrownBy(() -> cartService.getItemsByIdAndMemberForUpdate(itemIds, memberId))
             .isInstanceOf(ServiceException.class);
     }
 
     @Test
     @DisplayName("장바구니 아이템 다건 조회 실패 - 아이템 없음")
-    void getItemsByIdAndMemberFail_notFound() {
+    void getItemsByIdAndMemberForUpdateFail_notFound() {
         // given
         Long memberId = 1L;
         List<Long> itemIds = List.of(999L);
@@ -162,7 +162,7 @@ class CartServiceTest {
             .willReturn(List.of());
 
         // when & then
-        assertThatThrownBy(() -> cartService.getItemsByIdAndMember(itemIds, memberId))
+        assertThatThrownBy(() -> cartService.getItemsByIdAndMemberForUpdate(itemIds, memberId))
             .isInstanceOf(ServiceException.class);
     }
 
@@ -321,13 +321,23 @@ class CartServiceTest {
     void deleteCartItemsSuccess() {
         // given
         Long memberId = 1L;
-        Set<Long> skuIds = Set.of(1L, 2L);
+        Set<Long> cartItemIds = Set.of(1L, 2L);
 
         // when
-        cartService.deleteCartItems(memberId, skuIds);
+        cartService.deleteCartItems(memberId, cartItemIds);
 
         // then
-        verify(cartItemRepository).deleteByMemberIdAndSkuIds(memberId, skuIds);
+        verify(cartItemRepository).deleteCartItems(cartItemIds, memberId);
+    }
+
+    @Test
+    @DisplayName("장바구니 아이템 일괄 삭제 - 삭제할 아이템이 없으면 쿼리를 실행하지 않음")
+    void deleteCartItemsSuccess_emptyIds() {
+        // when
+        cartService.deleteCartItems(1L, Set.of());
+
+        // then
+        verify(cartItemRepository, never()).deleteCartItems(any(), anyLong());
     }
 
     @Test

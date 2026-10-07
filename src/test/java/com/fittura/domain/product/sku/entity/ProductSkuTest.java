@@ -23,7 +23,7 @@ class ProductSkuTest {
         ProductSku productSku = ProductSkuFixture.sku(product, 20000L, 20);
 
         assertThat(productSku.getProduct()).isEqualTo(product);
-        assertThat(productSku.getPrice()).isEqualTo(20000L);
+        assertThat(productSku.getOriginalPrice()).isEqualTo(20000L);
         assertThat(productSku.getStatus()).isEqualTo(SkuStatus.ACTIVE);
     }
 

@@ -23,10 +23,7 @@ import com.fittura.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -41,13 +38,22 @@ public class SkuService {
     public List<ProductSku> getSkusById(Set<Long> skuIds) {
         List<ProductSku> productSkus = productSkuRepository.findAllByIdInAndStatusNot(skuIds, SkuStatus.ARCHIVED);
 
-        if (productSkus.size() != skuIds.size()) {
-            throw new ServiceException(ProductErrorCode.NOT_FOUND_SKU);
-        }
-
+        validateAllFound(skuIds, productSkus);
         productSkus.forEach(this::validateSellable);
 
         return productSkus;
+    }
+
+    public List<ProductSku> getSkusWithDetailById(Set<Long> skuIds) {
+        List<ProductSku> productSkus = getAllWithDetailOrderById(skuIds);
+        validateAllFound(skuIds, productSkus);
+
+        return productSkus;
+    }
+
+    public List<ProductSku> getSkusWithDetailByIdForUpdate(Set<Long> skuIds) {
+        productSkuRepository.findAllByIdForUpdate(skuIds, SkuStatus.ARCHIVED);
+        return getSkusWithDetailById(skuIds);
     }
 
     public List<SkuResDto> getProductSkuResDto(Long productId) {
@@ -75,8 +81,8 @@ public class SkuService {
 
             ProductSku productSku = ProductSku.create(
                 product,
-                skuDto.price(),
-                skuDto.salePrice(),
+                skuDto.originalPrice(),
+                skuDto.discountPrice(),
                 skuDto.stockQuantity(),
                 color,
                 material
@@ -114,8 +120,8 @@ public class SkuService {
             if (dto.id() == null) {
                 ProductSku newSku = ProductSku.create(
                     product,
-                    dto.price(),
-                    dto.salePrice(),
+                    dto.originalPrice(),
+                    dto.discountPrice(),
                     dto.stockQuantity(),
                     color,
                     material
@@ -123,7 +129,7 @@ public class SkuService {
                 productSkuRepository.save(newSku);
             } else {
                 ProductSku sku = existingMap.get(dto.id());
-                sku.update(dto.price(), dto.salePrice(), dto.stockQuantity(), color, material);
+                sku.update(dto.originalPrice(), dto.discountPrice(), dto.stockQuantity(), color, material);
             }
         }
     }
@@ -282,11 +288,23 @@ public class SkuService {
         }
     }
 
+    private void validateAllFound(Set<Long> skuIds, List<ProductSku> productSkus) {
+        if (productSkus.size() != skuIds.size()) {
+            throw new ServiceException(ProductErrorCode.NOT_FOUND_SKU);
+        }
+    }
+
 
     // ===== 헬퍼 메서드 ====
 
     private List<ProductSku> getSkusByProductId(Long productId) {
         return productSkuRepository.findByProductIdAndStatusNot(productId, SkuStatus.ARCHIVED);
+    }
+
+    private List<ProductSku> getAllWithDetailOrderById(Set<Long> skuIds) {
+        return productSkuRepository.findAllWithDetailByIdInAndStatusNot(skuIds, SkuStatus.ARCHIVED).stream()
+            .sorted(Comparator.comparing(ProductSku::getId))
+            .toList();
     }
 
     private List<ProductComposition> getProductCompositions(Long productId) {

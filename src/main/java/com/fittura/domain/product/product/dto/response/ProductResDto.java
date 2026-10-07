@@ -13,7 +13,7 @@ public record ProductResDto(
     String name,
     ProductType productType,
     DeliveryType deliveryType,
-    Long basePrice,
+    Long baseOriginalPrice,
     Long baseSalePrice,
     Long discountRate,
     ProductStatus status,
@@ -23,11 +23,11 @@ public record ProductResDto(
 ) {
    public ProductResDto(
        Long id, String name, ProductType productType, DeliveryType deliveryType,
-       Long basePrice, Long baseSalePrice,
+       Long baseOriginalPrice, Long baseSalePrice,
        ProductStatus status, LocalDateTime createdDate, boolean isSoldOut, String mainImageUrl
    ) {
        this(id, name, productType, deliveryType,
-           basePrice, baseSalePrice, PriceCalculator.discountRate(basePrice, baseSalePrice),
+           baseOriginalPrice, baseSalePrice, PriceCalculator.discountRate(baseOriginalPrice, baseSalePrice),
            status, createdDate, isSoldOut, mainImageUrl);
    }
 }

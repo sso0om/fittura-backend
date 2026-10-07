@@ -4,16 +4,17 @@ import com.fittura.domain.category.entity.Category;
 import com.fittura.domain.category.repository.CategoryRepository;
 import com.fittura.domain.category.support.CategoryFixture;
 import com.fittura.domain.order.cart.entity.Cart;
+import com.fittura.domain.order.cart.entity.CartItem;
 import com.fittura.domain.order.cart.repository.CartItemRepository;
 import com.fittura.domain.order.cart.repository.CartRepository;
 import com.fittura.domain.order.cart.support.CartFixture;
 import com.fittura.domain.order.cart.support.CartItemFixture;
 import com.fittura.domain.order.order.constant.OrderStatus;
 import com.fittura.domain.order.order.entity.Order;
+import com.fittura.domain.order.order.entity.OrderItem;
 import com.fittura.domain.order.order.error.OrderErrorCode;
 import com.fittura.domain.order.order.repository.OrderRepository;
 import com.fittura.domain.order.order.support.OrderFixture;
-import com.fittura.domain.order.order.support.OrderItemFixture;
 import com.fittura.domain.payment.payment.constant.PaymentStatus;
 import com.fittura.domain.payment.payment.entity.Payment;
 import com.fittura.domain.payment.payment.error.PaymentErrorCode;
@@ -207,10 +208,10 @@ class PaymentControllerTest extends IntegrationTestBase {
         ProductSku sku = savedSkuWithPrice(7000L, 100);
         ProductSku sku2 = savedSkuWithPrice(7000L, 100);
         Cart cart = cartRepository.save(CartFixture.cart(memberId));
-        cartItemRepository.save(CartItemFixture.cartItem(cart, sku, 1));
+        CartItem cartItem = cartItemRepository.save(CartItemFixture.cartItem(cart, sku, 1));
         cartItemRepository.save(CartItemFixture.cartItem(cart, sku2, 2));
 
-        Order order = createOrderWithItem(memberId, sku, 1);
+        Order order = createCartOrder(memberId, cartItem);
         Payment payment = savedPayment(order);
 
         String reqBody = """
@@ -392,11 +393,19 @@ class PaymentControllerTest extends IntegrationTestBase {
     }
 
     private Order createOrderWithItem(Long memberId, ProductSku sku, Integer quantity) {
-        Order order = OrderFixture.order(memberId, 1000L);
-        OrderItemFixture.orderItem(order, sku, quantity);
-        order.calcFinalAmount();
+        Order order = OrderFixture.orderWithItem(memberId, 1000L, sku, quantity);
 
         sku.reserveQuantity(quantity);
+
+        return orderRepository.save(order);
+    }
+
+    private Order createCartOrder(Long memberId, CartItem cartItem) {
+        Order order = OrderFixture.order(memberId, 1000L);
+        OrderItem.create(order, cartItem);
+        order.calcAmount();
+
+        cartItem.getProductSku().reserveQuantity(cartItem.getQuantity());
 
         return orderRepository.save(order);
     }

@@ -8,6 +8,8 @@ import java.util.Collection;
 import java.util.List;
 
 public interface CartItemRepositoryCustom {
+    List<CartItem> findAllWithSku(List<Long> itemIds, Long memberId);
+
     List<CartItem> findAllWithSkuForUpdate(List<Long> itemIds, Long memberId);
 
     List<CartItemResDto> findCartItemDtosByCart(Long cartId);
