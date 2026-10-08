@@ -6,8 +6,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(description = "주문 제품 응답 DTO")
 public record OrderItemResDto(
     Long id,
+    Long productId,
     Long skuId,
     String productName,
+    String mainImageUrl,
     String skuIdentifier,
     Long originalPrice,
     Long salePrice,
