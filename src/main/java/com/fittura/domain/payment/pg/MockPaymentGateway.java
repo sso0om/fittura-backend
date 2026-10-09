@@ -26,6 +26,32 @@ public class MockPaymentGateway implements PaymentGateway {
         return stubbed != null ? stubbed : approved(command);
     }
 
+
+    // ===== stub =====
+
+    public void stub(String paymentKey, PgPaymentResponse response) {
+        responseMap.put(paymentKey, response);
+    }
+
+    public void stubRejected(String paymentKey, String errorCode, String errorMessage) {
+        stub(paymentKey, PgPaymentResponse.rejected(
+            paymentKey, null, errorJson(errorCode, errorMessage), errorCode, errorMessage
+        ));
+    }
+
+    public void stubUnknown(String paymentKey, String errorCode) {
+        stub(paymentKey, PgPaymentResponse.unknown(
+            paymentKey, null, errorJson(errorCode, null), errorCode
+        ));
+    }
+
+    public void clear() {
+        responseMap.clear();
+    }
+
+
+    // ===== 승인 =====
+
     private PgPaymentResponse approved(PgConfirmCommand command) {
         return new PgPaymentResponse(
             command.paymentKey(),
@@ -34,15 +60,16 @@ public class MockPaymentGateway implements PaymentGateway {
             command.amount(),
             LocalDateTime.now(),
             "{\"mock\":\"approved\"}",
+            null,
+            null,
             new PgCardResponse("11", "1234-56**-****-5678", 0, false, "00000000")
         );
     }
 
-    public void stub(String paymentKey, PgPaymentResponse response) {
-        responseMap.put(paymentKey, response);
-    }
 
-    public void clear() {
-        responseMap.clear();
+    // ===== 헬퍼 메서드 =====
+
+    private String errorJson(String errorCode, String errorMessage) {
+        return "{\"code\":\"%s\",\"message\":\"%s\"}".formatted(errorCode, errorMessage);
     }
 }
