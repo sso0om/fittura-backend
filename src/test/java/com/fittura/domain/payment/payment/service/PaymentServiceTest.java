@@ -156,6 +156,8 @@ class PaymentServiceTest {
             10000L,
             LocalDateTime.now().plusMinutes(1),
             "{mock raw response}",
+            null,
+            null,
             new PgCardResponse("11", "1234****", 0, false, "00000000")
         );
 
@@ -176,6 +178,8 @@ class PaymentServiceTest {
             totalAmount,
             LocalDateTime.now().plusMinutes(1),
             "{mock raw response}",
+            null,
+            null,
             new PgCardResponse("11", "1234****", 0, false, "00000000")
         );
     }

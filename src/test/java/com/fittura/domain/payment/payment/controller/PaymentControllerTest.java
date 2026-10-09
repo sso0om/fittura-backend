@@ -434,6 +434,8 @@ class PaymentControllerTest extends IntegrationTestBase {
             totalAmount,
             LocalDateTime.now().plusMinutes(1),
             "{mock raw response}",
+            null,
+            null,
             new PgCardResponse("11", "1234****", 0, false, "00000000")
         );
     }
