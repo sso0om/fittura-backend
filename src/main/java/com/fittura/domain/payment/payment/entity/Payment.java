@@ -100,6 +100,20 @@ public class Payment extends BaseEntity {
         this.rawResponse = rawResponse;
     }
 
+    public void fail(String rawResponse) {
+        if (this.status != PaymentStatus.PENDING) throw new ServiceException(PaymentErrorCode.NOT_PAYABLE_STATUS);
+
+        this.rawResponse = rawResponse;
+        this.status = PaymentStatus.FAILED;
+    }
+
+    public void unknown(String rawResponse) {
+        if (this.status != PaymentStatus.PENDING) throw new ServiceException(PaymentErrorCode.NOT_PAYABLE_STATUS);
+
+        this.rawResponse = rawResponse;
+        this.status = PaymentStatus.UNKNOWN;
+    }
+
     public void validatePayable() {
         if (this.status != PaymentStatus.PENDING) {
             throw new ServiceException(PaymentErrorCode.NOT_PAYABLE_STATUS);
