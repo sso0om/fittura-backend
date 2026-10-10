@@ -85,6 +85,11 @@ public class OrderService {
         addressRepository.save(orderAddress);
     }
 
+    public void deleteOrderAddressByOrder(Order order) {
+        if (!order.isPending() && !order.isExpired()) throw new ServiceException(OrderErrorCode.NOT_VALID_STATUS);
+        addressRepository.deleteByOrder(order);
+    }
+
 
     // ========== 취소/환불/교환 ==========
 

@@ -159,6 +159,10 @@ public class Order extends BaseEntity {
         return status == OrderStatus.PAID;
     }
 
+    public boolean isExpired() {
+        return status == OrderStatus.EXPIRED;
+    }
+
 
     //  ===== 유효성 검증 =====
 
