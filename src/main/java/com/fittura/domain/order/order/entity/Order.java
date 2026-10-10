@@ -178,7 +178,7 @@ public class Order extends BaseEntity {
                 return;
             case COMPLETED:
                 throw new ServiceException(OrderErrorCode.COMPLETED_CAN_NOT_CANCEL);
-            case PENDING, CANCELLED, RETURNED:
+            case PENDING, CANCELLED, RETURNED, EXPIRED:
                 throw new ServiceException(OrderErrorCode.NOT_VALID_STATUS);
             default:
                 throw new ServiceException(CommonErrorCode.INTERNAL_SERVER_ERROR);
