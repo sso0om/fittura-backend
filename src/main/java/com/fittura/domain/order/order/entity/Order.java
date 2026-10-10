@@ -146,6 +146,11 @@ public class Order extends BaseEntity {
         this.status = OrderStatus.CANCELLED;
     }
 
+    public void expired() {
+        validateExpirable();
+        this.status = OrderStatus.EXPIRED;
+    }
+
     public boolean isPending() {
         return this.status == OrderStatus.PENDING;
     }
@@ -173,6 +178,12 @@ public class Order extends BaseEntity {
                 throw new ServiceException(OrderErrorCode.NOT_VALID_STATUS);
             default:
                 throw new ServiceException(CommonErrorCode.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private void validateExpirable() {
+        if (this.status != OrderStatus.PENDING) {
+            throw new ServiceException(OrderErrorCode.NOT_VALID_STATUS);
         }
     }
 
