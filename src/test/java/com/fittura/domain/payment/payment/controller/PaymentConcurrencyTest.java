@@ -17,7 +17,7 @@ import com.fittura.domain.payment.payment.error.PgPaymentFailedException;
 import com.fittura.domain.payment.payment.repository.PaymentCardRepository;
 import com.fittura.domain.payment.payment.repository.PaymentRepository;
 import com.fittura.domain.payment.payment.support.PaymentFixture;
-import com.fittura.domain.payment.pg.MockPaymentGateway;
+import com.fittura.domain.payment.pg.mock.MockPaymentGateway;
 import com.fittura.domain.product.product.entity.Product;
 import com.fittura.domain.product.product.repository.ProductRepository;
 import com.fittura.domain.product.product.support.ProductFixture;

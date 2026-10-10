@@ -1,7 +1,11 @@
-package com.fittura.domain.payment.pg;
+package com.fittura.domain.payment.pg.mock;
 
 import com.fittura.domain.payment.payment.constant.PaymentStatus;
 import com.fittura.domain.payment.payment.constant.PgProvider;
+import com.fittura.domain.payment.pg.PaymentGateway;
+import com.fittura.domain.payment.pg.PgCardResponse;
+import com.fittura.domain.payment.pg.PgConfirmCommand;
+import com.fittura.domain.payment.pg.PgPaymentResponse;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 

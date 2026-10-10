@@ -20,7 +20,7 @@ import com.fittura.domain.payment.payment.entity.Payment;
 import com.fittura.domain.payment.payment.error.PaymentErrorCode;
 import com.fittura.domain.payment.payment.repository.PaymentRepository;
 import com.fittura.domain.payment.payment.support.PaymentFixture;
-import com.fittura.domain.payment.pg.MockPaymentGateway;
+import com.fittura.domain.payment.pg.mock.MockPaymentGateway;
 import com.fittura.domain.payment.pg.PgCardResponse;
 import com.fittura.domain.payment.pg.PgPaymentResponse;
 import com.fittura.domain.product.product.entity.Product;
