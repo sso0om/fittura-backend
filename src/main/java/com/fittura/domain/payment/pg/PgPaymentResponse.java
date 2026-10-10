@@ -28,7 +28,7 @@ public record PgPaymentResponse(
         return new PgPaymentResponse(
             key, number, PaymentStatus.UNKNOWN,
             null, null, rawResponse,
-            code, "결제 결과를 확인 중입니다.", null
+            code, null, null
         );
     }
 }
