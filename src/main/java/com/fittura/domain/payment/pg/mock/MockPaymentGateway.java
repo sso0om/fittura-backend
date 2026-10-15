@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
-@Profile({"dev", "test"})
+@Profile("(dev | test) & !toss")
 public class MockPaymentGateway implements PaymentGateway {
 
     private final Map<String, PgPaymentResponse> responseMap = new ConcurrentHashMap<>();
