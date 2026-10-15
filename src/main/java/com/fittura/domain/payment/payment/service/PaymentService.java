@@ -41,7 +41,7 @@ public class PaymentService {
             order.getId(), reqDto.pgProvider(), reqDto.paymentMethod(), order.getFinalAmount());
         paymentRepository.save(payment);
 
-        return PaymentPrepareResDto.from(payment);
+        return PaymentPrepareResDto.from(payment, order.getOrderName());
     }
 
     public void approvePayment(Payment payment, PgPaymentResponse paymentRes) {

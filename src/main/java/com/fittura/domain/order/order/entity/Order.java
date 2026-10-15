@@ -131,6 +131,11 @@ public class Order extends BaseEntity {
             .collect(Collectors.toSet());
     }
 
+    public String getOrderName() {
+        String firstName = items.getFirst().getProductName();
+        return items.size() > 1 ? firstName + " 외 " + items.size() + "건" : firstName;
+    }
+
 
     // ===== 상태 =====
 

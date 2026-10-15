@@ -17,6 +17,10 @@ import com.fittura.domain.payment.payment.repository.PaymentRepository;
 import com.fittura.domain.payment.payment.support.PaymentFixture;
 import com.fittura.domain.payment.pg.PgCardResponse;
 import com.fittura.domain.payment.pg.PgPaymentResponse;
+import com.fittura.domain.product.product.entity.Product;
+import com.fittura.domain.product.product.support.ProductFixture;
+import com.fittura.domain.product.sku.entity.ProductSku;
+import com.fittura.domain.product.sku.support.ProductSkuFixture;
 import com.fittura.global.exception.ServiceException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -52,7 +56,9 @@ class PaymentServiceTest {
     @DisplayName("결제 생성 성공")
     void createPaymentSuccess() {
         // given
-        Order order = OrderFixture.orderWithId(1L, 1L);
+        Product product = ProductFixture.complete("원목 탁자");
+        ProductSku sku = ProductSkuFixture.skuWithNoOption(product);
+        Order order = OrderFixture.orderWithIdAndItem(1L, sku, 10);
         PaymentPrepareReqDto reqDto = new PaymentPrepareReqDto(order.getId(), PgProvider.TOSS, PaymentMethod.CARD);
 
         // when
