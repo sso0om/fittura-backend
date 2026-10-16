@@ -81,7 +81,7 @@ public class TossPaymentGateway implements PaymentGateway {
 
     private PgPaymentResponse toResponse(PgConfirmCommand command, String rawResponse) {
         if (rawResponse == null || rawResponse.isBlank()) {
-            log.warn("토스 승인 응답 없음 orderId={}", command.paymentKey());
+            log.warn("토스 승인 응답 없음 orderId={}", command.paymentNumber());
             return unknown(command, rawResponse, "EMPTY_RESPONSE");
         }
 
