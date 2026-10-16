@@ -69,7 +69,7 @@ class PaymentServiceTest {
         assertThat(result.pgProvider()).isEqualTo(PgProvider.TOSS);
         assertThat(result.paymentMethod()).isEqualTo(PaymentMethod.CARD);
         assertThat(result.totalAmount()).isEqualTo(order.getFinalAmount());
-        assertThat(result.orderName()).isEqualTo(order.getOrderName());
+        assertThat(result.orderName()).isEqualTo("원목 탁자");
         verify(paymentRepository).save(any(Payment.class));
     }
 
