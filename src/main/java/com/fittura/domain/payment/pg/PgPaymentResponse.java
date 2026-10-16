@@ -11,7 +11,24 @@ public record PgPaymentResponse(
     Long totalAmount,
     LocalDateTime approvedDate,
     String rawResponse,
+    String errorCode,
+    String errorMessage,
 
     PgCardResponse card
 ) {
+    public static PgPaymentResponse rejected(String key, String number, String rawResponse, String code, String msg) {
+        return new PgPaymentResponse(
+            key, number, PaymentStatus.FAILED,
+            null, null, rawResponse,
+            code, msg, null
+        );
+    }
+
+    public static PgPaymentResponse unknown(String key, String number, String rawResponse, String code) {
+        return new PgPaymentResponse(
+            key, number, PaymentStatus.UNKNOWN,
+            null, null, rawResponse,
+            code, null, null
+        );
+    }
 }

@@ -24,6 +24,12 @@ public class OrderFixture {
         return order;
     }
 
+    public static Order orderWithIdAndItem(Long id, ProductSku sku, Integer quantity) {
+        Order order = orderWithItem(1L, 0L, sku, quantity);
+        ReflectionTestUtils.setField(order, "id", id);
+        return order;
+    }
+
     // 아이템 추가 후 금액 계산까지 끝낸 주문
     public static Order orderWithItem(Long memberId, Long pointUsedAmount, ProductSku sku, Integer quantity) {
         Order order = order(memberId, pointUsedAmount);

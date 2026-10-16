@@ -6,5 +6,6 @@ public enum OrderStatus {
     PREPARING,          // 상품 준비 중
     COMPLETED,          // 주문 완료 (배송 완료 후)
     CANCELLED,          // 취소 완료
-    RETURNED            // 반품 완료
+    RETURNED,           // 반품 완료
+    EXPIRED             // 거절 또는 이탈
 }

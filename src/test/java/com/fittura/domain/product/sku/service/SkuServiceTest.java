@@ -421,6 +421,41 @@ class SkuServiceTest {
     }
 
 
+    // ========== SKU 재고 예약 해제 ==========
+
+    @Test
+    @DisplayName("SKU 예약 해제 성공 - SKU id 오름차순으로 처리")
+    void releaseSkuSuccess() {
+        // given
+        Map<Long, Integer> quantityBySkuId = Map.of(2L, 5, 1L, 3);
+        given(productSkuRepository.releaseReservedStock(1L, 3)).willReturn(1);
+        given(productSkuRepository.releaseReservedStock(2L, 5)).willReturn(1);
+
+        // when
+        skuService.releaseSku(quantityBySkuId);
+
+        // then
+        InOrder inOrder = inOrder(productSkuRepository);
+        inOrder.verify(productSkuRepository).releaseReservedStock(1L, 3);
+        inOrder.verify(productSkuRepository).releaseReservedStock(2L, 5);
+    }
+
+    @Test
+    @DisplayName("SKU 예약 해제 실패 - 영향 행이 없으면 예외, 이후 SKU는 처리하지 않음")
+    void releaseSkuFail() {
+        // given
+        Map<Long, Integer> quantityBySkuId = Map.of(2L, 5, 1L, 3);
+        given(productSkuRepository.releaseReservedStock(1L, 3)).willReturn(0);
+
+        // when & then
+        assertThatThrownBy(() -> skuService.releaseSku(quantityBySkuId))
+            .isInstanceOf(ServiceException.class)
+            .extracting(e -> ((ServiceException) e).getErrorCode())
+            .isEqualTo(ProductErrorCode.STOCK_RELEASE_FAILED);
+        verify(productSkuRepository, never()).releaseReservedStock(2L, 5);
+    }
+
+
     // ========== 구성품 조회 ==========
 
     @Test

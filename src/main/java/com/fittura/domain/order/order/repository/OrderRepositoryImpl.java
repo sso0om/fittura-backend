@@ -22,6 +22,9 @@ import static com.fittura.domain.order.order.constant.OrderStatus.*;
 import static com.fittura.domain.order.order.entity.QOrder.order;
 import static com.fittura.domain.order.order.entity.QOrderAddress.orderAddress;
 import static com.fittura.domain.order.order.entity.QOrderItem.orderItem;
+import static com.fittura.domain.product.product.entity.QProduct.product;
+import static com.fittura.domain.product.product.entity.QProductImage.productImage;
+import static com.fittura.domain.product.sku.entity.QProductSku.productSku;
 
 @RequiredArgsConstructor
 public class OrderRepositoryImpl implements OrderRepositoryCustom {
@@ -137,8 +140,10 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
         List<OrderItemResDto> items = queryFactory
             .select(Projections.constructor(OrderItemResDto.class,
                 orderItem.id,
+                product.id,
                 orderItem.sku.id,
                 orderItem.productName,
+                productImage.imageUrl,
                 orderItem.skuIdentifier,
                 orderItem.originalPrice,
                 orderItem.salePrice,
@@ -148,6 +153,9 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
                 orderItem.status
             ))
             .from(orderItem)
+            .join(orderItem.sku, productSku)
+            .join(productSku.product, product)
+            .leftJoin(product.mainImage, productImage)
             .where(orderItem.order.id.eq(orderId))
             .orderBy(orderItem.id.asc())
             .fetch();

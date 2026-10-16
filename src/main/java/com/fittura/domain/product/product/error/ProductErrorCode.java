@@ -27,7 +27,10 @@ public enum ProductErrorCode implements ErrorCode {
     NOT_FOUND_PRODUCT(HttpStatus.NOT_FOUND, "P404-01", "존재하지 않는 상품입니다."),
     NOT_FOUND_SKU(HttpStatus.NOT_FOUND, "P404-02", "존재하지 않는 SKU 입니다."),
     NOT_FOUND_COLOR(HttpStatus.NOT_FOUND, "P404-03", "존재하지 않는 색상입니다."),
-    NOT_FOUND_MATERIAL(HttpStatus.NOT_FOUND, "P404-04", "존재하지 않는 재질입니다.");
+    NOT_FOUND_MATERIAL(HttpStatus.NOT_FOUND, "P404-04", "존재하지 않는 재질입니다."),
+
+    // 500
+    STOCK_RELEASE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "P500-01", "처리 중 오류가 발생했습니다.");
 
     private final HttpStatus status;
     private final String code;

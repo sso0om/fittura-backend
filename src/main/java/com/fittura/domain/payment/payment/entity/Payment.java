@@ -1,9 +1,8 @@
 package com.fittura.domain.payment.payment.entity;
 
-import com.fittura.domain.payment.payment.constant.PgFailureType;
-import com.fittura.domain.payment.payment.constant.PgProvider;
 import com.fittura.domain.payment.payment.constant.PaymentMethod;
 import com.fittura.domain.payment.payment.constant.PaymentStatus;
+import com.fittura.domain.payment.payment.constant.PgProvider;
 import com.fittura.domain.payment.payment.error.PaymentErrorCode;
 import com.fittura.global.exception.ServiceException;
 import com.fittura.global.jpa.entity.BaseEntity;
@@ -56,9 +55,6 @@ public class Payment extends BaseEntity {
     @Column(nullable = false)
     private Long cancelledAmount;
 
-    @Enumerated(EnumType.STRING)
-    private PgFailureType failureType;
-
     @Column(columnDefinition = "TEXT")
     private String rawResponse;
 
@@ -102,6 +98,20 @@ public class Payment extends BaseEntity {
         this.pgTransactionId = pgTransactionId;
         this.approvedDate = approvedDate;
         this.rawResponse = rawResponse;
+    }
+
+    public void fail(String rawResponse) {
+        if (this.status != PaymentStatus.PENDING) throw new ServiceException(PaymentErrorCode.NOT_PAYABLE_STATUS);
+
+        this.rawResponse = rawResponse;
+        this.status = PaymentStatus.FAILED;
+    }
+
+    public void unknown(String rawResponse) {
+        if (this.status != PaymentStatus.PENDING) throw new ServiceException(PaymentErrorCode.NOT_PAYABLE_STATUS);
+
+        this.rawResponse = rawResponse;
+        this.status = PaymentStatus.UNKNOWN;
     }
 
     public void validatePayable() {

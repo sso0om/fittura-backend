@@ -45,6 +45,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -202,6 +203,41 @@ class OrderServiceTest {
             memberAddress.getAddressDetail(), memberAddress.getSido(),
             memberAddress.getSigungu(), deliveryMemo
         );
+    }
+
+
+    // ========== 주문 주소 삭제 ==========
+
+    @Test
+    @DisplayName("주문 주소 삭제 성공 - PENDING, EXPIRED 주문")
+    void deleteOrderAddressByOrderSuccess() {
+        // given
+        Order pendingOrder = OrderFixture.order(1L);
+        Order expiredOrder = OrderFixture.order(1L);
+        expiredOrder.expired();
+
+        // when
+        orderService.deleteOrderAddressByOrder(pendingOrder);
+        orderService.deleteOrderAddressByOrder(expiredOrder);
+
+        // then
+        verify(addressRepository).deleteByOrder(pendingOrder);
+        verify(addressRepository).deleteByOrder(expiredOrder);
+    }
+
+    @Test
+    @DisplayName("주문 주소 삭제 실패 - PENDING, EXPIRED가 아닌 주문")
+    void deleteOrderAddressByOrderFail_invalidStatus() {
+        // given
+        Order order = OrderFixture.order(1L);
+        order.paid();
+
+        // when & then
+        assertThatThrownBy(() -> orderService.deleteOrderAddressByOrder(order))
+            .isInstanceOf(ServiceException.class)
+            .satisfies(e -> assertThat(((ServiceException) e).getErrorCode())
+                .isEqualTo(OrderErrorCode.NOT_VALID_STATUS));
+        verify(addressRepository, never()).deleteByOrder(any());
     }
 
 

@@ -12,16 +12,18 @@ public record PaymentPrepareResDto(
     String paymentNumber,
     PgProvider pgProvider,
     PaymentMethod paymentMethod,
-    Long totalAmount
+    Long totalAmount,
+    String orderName
 ) {
-    public static PaymentPrepareResDto from(Payment payment) {
+    public static PaymentPrepareResDto from(Payment payment, String orderName) {
         return new PaymentPrepareResDto(
             payment.getOrderId(),
             payment.getId(),
             payment.getPaymentNumber(),
             payment.getPgProvider(),
             payment.getPaymentMethod(),
-            payment.getTotalAmount()
+            payment.getTotalAmount(),
+            orderName
         );
     }
 }

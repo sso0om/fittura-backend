@@ -131,6 +131,11 @@ public class Order extends BaseEntity {
             .collect(Collectors.toSet());
     }
 
+    public String getOrderName() {
+        String firstName = items.getFirst().getProductName();
+        return items.size() > 1 ? firstName + " 외 " + (items.size() - 1) + "건" : firstName;
+    }
+
 
     // ===== 상태 =====
 
@@ -146,12 +151,21 @@ public class Order extends BaseEntity {
         this.status = OrderStatus.CANCELLED;
     }
 
+    public void expired() {
+        validateExpirable();
+        this.status = OrderStatus.EXPIRED;
+    }
+
     public boolean isPending() {
         return this.status == OrderStatus.PENDING;
     }
 
     public boolean isPaid() {
         return status == OrderStatus.PAID;
+    }
+
+    public boolean isExpired() {
+        return status == OrderStatus.EXPIRED;
     }
 
 
@@ -169,10 +183,16 @@ public class Order extends BaseEntity {
                 return;
             case COMPLETED:
                 throw new ServiceException(OrderErrorCode.COMPLETED_CAN_NOT_CANCEL);
-            case PENDING, CANCELLED, RETURNED:
+            case PENDING, CANCELLED, RETURNED, EXPIRED:
                 throw new ServiceException(OrderErrorCode.NOT_VALID_STATUS);
             default:
                 throw new ServiceException(CommonErrorCode.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private void validateExpirable() {
+        if (this.status != OrderStatus.PENDING) {
+            throw new ServiceException(OrderErrorCode.NOT_VALID_STATUS);
         }
     }
 

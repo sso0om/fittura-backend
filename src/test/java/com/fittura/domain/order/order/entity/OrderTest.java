@@ -111,6 +111,53 @@ class OrderTest {
     }
 
 
+    // ========== expired ==========
+
+    @Test
+    @DisplayName("expired 성공 - PENDING 주문을 EXPIRED로 변경")
+    void expiredSuccess() {
+        // given
+        Order order = OrderFixture.order(1L);
+
+        // when
+        order.expired();
+
+        // then
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.EXPIRED);
+    }
+
+    @Test
+    @DisplayName("expired 실패 - PENDING이 아닌 주문")
+    void expiredFail_notPending() {
+        // given
+        Order order = OrderFixture.order(1L);
+        order.paid();
+
+        // when & then
+        assertThatThrownBy(order::expired)
+            .isInstanceOf(ServiceException.class)
+            .extracting(e -> ((ServiceException) e).getErrorCode())
+            .isEqualTo(OrderErrorCode.NOT_VALID_STATUS);
+    }
+
+
+    // ========== validateCancel ==========
+
+    @Test
+    @DisplayName("validateCancel 실패 - EXPIRED 주문은 취소할 수 없음")
+    void validateCancelFail_expired() {
+        // given
+        Order order = OrderFixture.order(1L);
+        order.expired();
+
+        // when & then
+        assertThatThrownBy(order::validateCancel)
+            .isInstanceOf(ServiceException.class)
+            .extracting(e -> ((ServiceException) e).getErrorCode())
+            .isEqualTo(OrderErrorCode.NOT_VALID_STATUS);
+    }
+
+
     // ========== 헬퍼 메서드 ==========
 
     private Product product(DeliveryType deliveryType) {

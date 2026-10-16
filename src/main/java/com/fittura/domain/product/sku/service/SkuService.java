@@ -166,6 +166,15 @@ public class SkuService {
         });
     }
 
+    public void releaseSku(Map<Long, Integer> quantityBySkuId) {
+        new TreeMap<>(quantityBySkuId).forEach((skuId, quantity) -> {
+            int affected = productSkuRepository.releaseReservedStock(skuId, quantity);
+            if (affected == 0) {
+                throw new ServiceException(ProductErrorCode.STOCK_RELEASE_FAILED);
+            }
+        });
+    }
+
     public void restoreStock(Map<Long, Integer> quantityBySkuId) {
         quantityBySkuId.forEach(productSkuRepository::restoreStock);
     }

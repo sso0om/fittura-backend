@@ -35,13 +35,14 @@ public class PaymentService {
     }
 
     public PaymentPrepareResDto createPayment(Order order, PaymentPrepareReqDto reqDto) {
+        validateSupportedMethod(reqDto.paymentMethod());
         order.validatePayable();
 
         Payment payment = Payment.create(
             order.getId(), reqDto.pgProvider(), reqDto.paymentMethod(), order.getFinalAmount());
         paymentRepository.save(payment);
 
-        return PaymentPrepareResDto.from(payment);
+        return PaymentPrepareResDto.from(payment, order.getOrderName());
     }
 
     public void approvePayment(Payment payment, PgPaymentResponse paymentRes) {
@@ -54,6 +55,9 @@ public class PaymentService {
 
         paymentCardRepository.save(card);
     }
+
+
+    // ========== 유효성 검사 ==========
 
     public void validatePgResponse(Payment payment, PgPaymentResponse paymentRes) {
         if (paymentRes.status() != PaymentStatus.APPROVED) {
@@ -68,7 +72,13 @@ public class PaymentService {
         validateMethodDetail(payment.getPaymentMethod(), paymentRes);
     }
 
-    private static void validateMethodDetail(PaymentMethod method, PgPaymentResponse paymentRes) {
+    private void validateSupportedMethod(PaymentMethod method) {
+        if (method != PaymentMethod.CARD) {
+            throw new ServiceException(PaymentErrorCode.UNSUPPORTED_PAYMENT_METHOD);
+        }
+    }
+
+    private void validateMethodDetail(PaymentMethod method, PgPaymentResponse paymentRes) {
         boolean detailMissing = switch (method) {
             case CARD -> paymentRes.card() == null;
             // TODO: 지원 방식 추가

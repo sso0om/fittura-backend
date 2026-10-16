@@ -20,7 +20,7 @@ import com.fittura.domain.payment.payment.entity.Payment;
 import com.fittura.domain.payment.payment.error.PaymentErrorCode;
 import com.fittura.domain.payment.payment.repository.PaymentRepository;
 import com.fittura.domain.payment.payment.support.PaymentFixture;
-import com.fittura.domain.payment.pg.MockPaymentGateway;
+import com.fittura.domain.payment.pg.mock.MockPaymentGateway;
 import com.fittura.domain.payment.pg.PgCardResponse;
 import com.fittura.domain.payment.pg.PgPaymentResponse;
 import com.fittura.domain.product.product.entity.Product;
@@ -379,6 +379,60 @@ class PaymentControllerTest extends IntegrationTestBase {
     }
 
 
+    @Test
+    @DisplayName("결제 승인 실패 - PG 승인 거절")
+    void approvePaymentFail_pgRejected() throws Exception {
+        // given
+        Long memberId = 13L;
+        ProductSku sku = savedSkuWithPrice(7000L, 100);
+        Order order = createOrderWithItem(memberId, sku, 1);
+        Payment payment = savedPayment(order);
+        mockGateway.stubRejected(PAYMENT_KEY, "REJECT_CARD_COMPANY", "카드사에서 승인을 거절했습니다.");
+
+        String reqBody = """
+            {
+                "paymentKey": "%s"
+            }
+            """.formatted(PAYMENT_KEY);
+
+        // when & then
+        mockMvc.perform(post(PAYMENT_URL + "/" + payment.getId())
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value(PaymentErrorCode.PG_REJECTED.getCode()))
+            .andExpect(jsonPath("$.data").value("카드사에서 승인을 거절했습니다."));
+    }
+
+    @Test
+    @DisplayName("결제 승인 실패 - PG 결과 불명")
+    void approvePaymentFail_pgUnknown() throws Exception {
+        // given
+        Long memberId = 14L;
+        ProductSku sku = savedSkuWithPrice(7000L, 100);
+        Order order = createOrderWithItem(memberId, sku, 1);
+        Payment payment = savedPayment(order);
+        mockGateway.stubUnknown(PAYMENT_KEY, "FAILED_INTERNAL_SYSTEM_PROCESSING");
+
+        String reqBody = """
+            {
+                "paymentKey": "%s"
+            }
+            """.formatted(PAYMENT_KEY);
+
+        // when & then
+        mockMvc.perform(post(PAYMENT_URL + "/" + payment.getId())
+                .header("Authorization", userBearerToken(memberId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqBody))
+            .andDo(print())
+            .andExpect(status().isBadGateway())
+            .andExpect(jsonPath("$.code").value(PaymentErrorCode.PG_RESULT_UNKNOWN.getCode()));
+    }
+
+
     // ========== 헬퍼 메서드 ==========
 
     private ProductSku savedDefaultSku() {
@@ -434,6 +488,8 @@ class PaymentControllerTest extends IntegrationTestBase {
             totalAmount,
             LocalDateTime.now().plusMinutes(1),
             "{mock raw response}",
+            null,
+            null,
             new PgCardResponse("11", "1234****", 0, false, "00000000")
         );
     }
