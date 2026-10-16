@@ -69,7 +69,24 @@ class PaymentServiceTest {
         assertThat(result.pgProvider()).isEqualTo(PgProvider.TOSS);
         assertThat(result.paymentMethod()).isEqualTo(PaymentMethod.CARD);
         assertThat(result.totalAmount()).isEqualTo(order.getFinalAmount());
+        assertThat(result.orderName()).isEqualTo(order.getOrderName());
         verify(paymentRepository).save(any(Payment.class));
+    }
+
+    @Test
+    @DisplayName("결제 생성 실패 - 지원하지 않는 결제 수단")
+    void createPaymentFail_unsupportedMethod() {
+        // given
+        Order order = OrderFixture.orderWithId(1L, 1L);
+        PaymentPrepareReqDto reqDto = new PaymentPrepareReqDto(order.getId(), PgProvider.TOSS, PaymentMethod.TRANSFER);
+
+        // when & then
+        assertThatThrownBy(() -> paymentService.createPayment(order, reqDto))
+            .isInstanceOf(ServiceException.class)
+            .satisfies(e -> assertThat(((ServiceException) e).getErrorCode())
+                .isEqualTo(PaymentErrorCode.UNSUPPORTED_PAYMENT_METHOD));
+
+        verify(paymentRepository, never()).save(any(Payment.class));
     }
 
     @Test

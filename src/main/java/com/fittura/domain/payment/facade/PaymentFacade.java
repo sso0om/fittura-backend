@@ -15,10 +15,13 @@ import com.fittura.domain.payment.pg.PgConfirmCommand;
 import com.fittura.domain.payment.pg.PgPaymentResponse;
 import com.fittura.domain.product.sku.service.SkuService;
 import com.fittura.domain.payment.payment.error.PgPaymentFailedException;
+import com.fittura.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class PaymentFacade {
@@ -56,7 +59,13 @@ public class PaymentFacade {
             throw new PgPaymentFailedException(PaymentErrorCode.PG_RESULT_UNKNOWN);
         }
 
-        paymentService.validatePgResponse(payment, paymentRes);
+        try {
+            paymentService.validatePgResponse(payment, paymentRes);
+        } catch (ServiceException e) {
+            payment.unknown(paymentRes.rawResponse());
+            log.error("토스 승인했으나 결과 확정 실패 orderId={}", paymentRes.paymentNumber(), e);
+            throw new PgPaymentFailedException(PaymentErrorCode.PG_RESULT_UNKNOWN);
+        }
 
         paymentService.approvePayment(payment, paymentRes);
         skuService.confirmSku(order.getQuantityBySkuId());

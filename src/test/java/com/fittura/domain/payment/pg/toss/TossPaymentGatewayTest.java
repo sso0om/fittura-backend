@@ -68,7 +68,7 @@ class TossPaymentGatewayTest {
                     "issuerCode": "61",
                     "number": "12345678****123*",
                     "installmentPlanMonths": 0,
-                    "isInterestFree": false,
+                    "isInterestFree": true,
                     "approveNo": "00000000"
                   }
                 }
@@ -86,6 +86,8 @@ class TossPaymentGatewayTest {
         assertThat(result.approvedDate()).isEqualTo(LocalDateTime.of(2026, 10, 15, 10, 30));
         assertThat(result.card().issuerCode()).isEqualTo("61");
         assertThat(result.card().cardNumberMasked()).isEqualTo("12345678****123*");
+        assertThat(result.card().installmentMonths()).isZero();
+        assertThat(result.card().interestFree()).isTrue();
         assertThat(result.card().approvalNumber()).isEqualTo("00000000");
     }
 
@@ -168,7 +170,11 @@ class TossPaymentGatewayTest {
             Arguments.of("200인데 상태가 DONE이 아님",
                 withSuccess("""
                     {"paymentKey": "pay_key_1", "orderId": "PAY-20261015-abc", "status": "WAITING_FOR_DEPOSIT"}
-                    """, MediaType.APPLICATION_JSON), "UNEXPECTED_STATUS")
+                    """, MediaType.APPLICATION_JSON), "UNEXPECTED_STATUS"),
+            Arguments.of("200 DONE인데 승인 시각 누락",
+                withSuccess("""
+                    {"paymentKey": "pay_key_1", "orderId": "PAY-20261015-abc", "status": "DONE", "totalAmount": 10000}
+                    """, MediaType.APPLICATION_JSON), "INCOMPLETE_RESPONSE")
         );
     }
 
