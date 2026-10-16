@@ -98,6 +98,11 @@ public class TossPaymentGateway implements PaymentGateway {
             return unknown(command, rawResponse, "UNEXPECTED_STATUS");
         }
 
+        if (response.approvedAt() == null || response.totalAmount() == null) {
+            log.error("토스 승인 응답 필수 값 누락 orderId={}", command.paymentNumber());
+            return unknown(command, rawResponse, "INCOMPLETE_RESPONSE");
+        }
+
         return toApproved(response, rawResponse);
     }
 
